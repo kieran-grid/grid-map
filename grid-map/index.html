@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AUS Grid Explorer</title>
+  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.1.0/dist/maplibre-gl.css" />
+  <script src="https://unpkg.com/maplibre-gl@4.1.0/dist/maplibre-gl.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', sans-serif; background: #0d1117; color: #e6edf3; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+
+    /* ── Header ── */
+    #header {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 16px; background: #161b22; border-bottom: 1px solid #30363d;
+      z-index: 10; flex-shrink: 0;
+    }
+    #header h1 { font-size: 15px; font-weight: 600; color: #58a6ff; letter-spacing: 0.5px; }
+    #search {
+      flex: 1; max-width: 300px; padding: 6px 10px;
+      background: #21262d; border: 1px solid #30363d; border-radius: 6px;
+      color: #e6edf3; font-size: 13px;
+    }
+    #search:focus { outline: none; border-color: #58a6ff; }
+    #search-results {
+      position: absolute; top: 48px; left: 160px; width: 300px;
+      background: #21262d; border: 1px solid #30363d; border-radius: 6px;
+      z-index: 100; max-height: 200px; overflow-y: auto; display: none;
+    }
+    .search-item {
+      padding: 8px 12px; cursor: pointer; font-size: 13px; border-bottom: 1px solid #30363d;
+    }
+    .search-item:hover { background: #30363d; }
+    .badge {
+      display: inline-block; padding: 2px 6px; border-radius: 4px;
+      font-size: 11px; font-weight: 600; margin-left: 6px;
+    }
+    .badge-cp   { background: #1f6feb; }
+    .badge-line { background: #388bfd22; color: #79c0ff; border: 1px solid #388bfd; }
+
+    /* ── Body ── */
+    #body { display: flex; flex: 1; overflow: hidden; }
+
+    /* ── Sidebar ── */
+    #sidebar {
+      width: 240px; background: #161b22; border-right: 1px solid #30363d;
+      overflow-y: auto; flex-shrink: 0; padding: 12px;
+    }
+    .section-title {
+      font-size: 11px; font-weight: 600; color: #8b949e;
+      text-transform: uppercase; letter-spacing: 0.8px;
+      margin: 12px 0 6px;
+    }
+    .section-title:first-child { margin-top: 0; }
+    .layer-row {
+      display: flex; align-items: center; gap: 8px;
+      padding: 5px 0; cursor: pointer; font-size: 13px;
+    }
+    .layer-row input[type=checkbox] { accent-color: #58a6ff; cursor: pointer; }
+    .layer-dot {
+      width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+    }
+    .filter-group { margin-bottom: 8px; }
+    .filter-group label { font-size: 12px; color: #8b949e; display: block; margin-bottom: 3px; }
+    .filter-group select {
+      width: 100%; padding: 5px 8px; background: #21262d;
+      border: 1px solid #30363d; border-radius: 5px;
+      color: #e6edf3; font-size: 12px;
+    }
+    .filter-group select:focus { outline: none; border-color: #58a6ff; }
+
+    .legend-item { display: flex; align-items: center; gap: 8px; padding: 3px 0; font-size: 12px; }
+    .legend-line { height: 3px; width: 24px; border-radius: 2px; }
+
+    .stat-box {
+      background: #21262d; border: 1px solid #30363d; border-radius: 6px;
+      padding: 8px 10px; margin-bottom: 6px;
+    }
+    .stat-label { font-size: 11px; color: #8b949e; }
+    .stat-value { font-size: 18px; font-weight: 700; color: #58a6ff; }
+
+    /* ── Map ── */
+    #map { flex: 1; }
+
+    /* ── Popup ── */
+    .maplibregl-popup-content {
+      background: #161b22 !important; color: #e6edf3 !important;
+      border: 1px solid #30363d !important; border-radius: 8px !important;
+      padding: 14px 16px !important; max-width: 320px !important;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5) !important; font-size: 13px;
+    }
+    .maplibregl-popup-close-button { color: #8b949e !important; font-size: 16px !important; right: 8px !important; top: 6px !important; }
+    .popup-title { font-size: 14px; font-weight: 700; color: #58a6ff; margin-bottom: 10px; padding-right: 20px; line-height: 1.3; }
+    .popup-grid { display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; }
+    .popup-label { color: #8b949e; font-size: 12px; white-space: nowrap; }
+    .popup-value { color: #e6edf3; font-size: 12px; }
+    .popup-section { margin-top: 10px; padding-top: 10px; border-top: 1px solid #30363d; }
+    .popup-section-title { font-size: 11px; font-weight: 600; color: #8b949e; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 6px; }
+    .mlf-row { display: flex; justify-content: space-between; padding: 3px 0; font-size: 12px; border-bottom: 1px solid #21262d; }
+    .mlf-good  { color: #3fb950; }
+    .mlf-ok    { color: #d29922; }
+    .mlf-poor  { color: #f85149; }
+    .mlf-change-up   { color: #3fb950; font-size: 11px; }
+    .mlf-change-down { color: #f85149; font-size: 11px; }
+    .project-item { padding: 4px 0; font-size: 12px; border-bottom: 1px solid #21262d; }
+    .project-item:last-child { border: none; }
+    .rating-bar-wrap { margin-top: 6px; }
+    .rating-bar-bg { background: #21262d; border-radius: 4px; height: 8px; overflow: hidden; margin-top: 2px; }
+    .rating-bar-fill { height: 100%; border-radius: 4px; transition: width 0.4s; }
+
+    /* ── MLF Heatmap toggle ── */
+    #mlf-mode-btn {
+      padding: 5px 10px; border-radius: 5px; border: 1px solid #30363d;
+      background: #21262d; color: #e6edf3; font-size: 12px; cursor: pointer;
+      margin-top: 6px; width: 100%; text-align: center;
+    }
+    #mlf-mode-btn.active { background: #1f6feb; border-color: #58a6ff; }
+
+    /* ── Info panel (bottom) ── */
+    #info-bar {
+      position: absolute; bottom: 12px; left: 252px; right: 12px;
+      background: #161b22cc; border: 1px solid #30363d; border-radius: 8px;
+      padding: 8px 14px; display: flex; gap: 24px; pointer-events: none;
+      backdrop-filter: blur(4px); font-size: 12px; color: #8b949e;
+      z-index: 5;
+    }
+    #info-bar span { color: #e6edf3; }
+
+    /* scrollbar */
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+<!-- ── Header ── -->
+<div id="header">
+  <h1>⚡ AUS Grid Explorer</h1>
+  <input id="search" type="text" placeholder="Search substations, lines..." autocomplete="off" />
+  <div id="search-results"></div>
+</div>
+
+<!-- ── Body ── -->
+<div id="body">
+
+  <!-- ── Sidebar ── -->
+  <div id="sidebar">
+
+    <div class="section-title">Stats</div>
+    <div class="stat-box"><div class="stat-label">Transmission Lines</div><div class="stat-value" id="stat-lines">–</div></div>
+    <div class="stat-box"><div class="stat-label">Connection Points</div><div class="stat-value" id="stat-cps">–</div></div>
+    <div class="stat-box"><div class="stat-label">MLF Records</div><div class="stat-value" id="stat-mlfs">–</div></div>
+
+    <div class="section-title">Layers</div>
+    <label class="layer-row"><input type="checkbox" id="layer-lines" checked /><div class="layer-dot" style="background:#e06c75"></div>Transmission Lines</label>
+    <label class="layer-row"><input type="checkbox" id="layer-cps" checked /><div class="layer-dot" style="background:#61afef"></div>Connection Points</label>
+
+    <div class="section-title">Filters</div>
+    <div class="filter-group">
+      <label>Voltage (kV)</label>
+      <select id="filter-voltage">
+        <option value="">All voltages</option>
+        <option value="500">500 kV</option>
+        <option value="330">330 kV</option>
+        <option value="275">275 kV</option>
+        <option value="220">220 kV</option>
+        <option value="132">132 kV</option>
+        <option value="66">66 kV</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>State</label>
+      <select id="filter-state">
+        <option value="">All states</option>
+        <option value="New South Wales">NSW</option>
+        <option value="Victoria">VIC</option>
+        <option value="Queensland">QLD</option>
+        <option value="South Australia">SA</option>
+        <option value="Tasmania">TAS</option>
+        <option value="Western Australia">WA</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Status</label>
+      <select id="filter-status">
+        <option value="">All statuses</option>
+        <option value="Operational">Operational</option>
+        <option value="Under Construction">Under Construction</option>
+        <option value="Proposed">Proposed</option>
+      </select>
+    </div>
+
+    <div class="section-title">MLF View</div>
+    <button id="mlf-mode-btn">Show MLF Heatmap</button>
+
+    <div class="section-title">Legend – Lines</div>
+    <div class="legend-item"><div class="legend-line" style="background:#e06c75;height:4px"></div>500 kV</div>
+    <div class="legend-item"><div class="legend-line" style="background:#e5c07b;height:3px"></div>330 / 275 kV</div>
+    <div class="legend-item"><div class="legend-line" style="background:#98c379;height:2px"></div>220 kV</div>
+    <div class="legend-item"><div class="legend-line" style="background:#61afef;height:2px"></div>132 kV</div>
+    <div class="legend-item"><div class="legend-line" style="background:#56b6c2;height:1px"></div>66 kV and below</div>
+
+    <div class="section-title">Legend – MLF</div>
+    <div class="legend-item"><div class="legend-line" style="background:#3fb950;height:10px;border-radius:50%;width:10px"></div>&gt; 0.97</div>
+    <div class="legend-item"><div class="legend-line" style="background:#d29922;height:10px;border-radius:50%;width:10px"></div>0.93 – 0.97</div>
+    <div class="legend-item"><div class="legend-line" style="background:#f85149;height:10px;border-radius:50%;width:10px"></div>&lt; 0.93</div>
+
+  </div>
+
+  <!-- ── Map ── -->
+  <div id="map"></div>
+
+</div>
+
+<!-- ── Info bar ── -->
+<div id="info-bar">
+  Zoom: <span id="info-zoom">–</span>
+  &nbsp;|&nbsp; Centre: <span id="info-centre">–</span>
+  &nbsp;|&nbsp; Hover a feature for details
+</div>
+
+<script>
+// ─────────────────────────────────────────
+// MAP INIT
+// ─────────────────────────────────────────
+const map = new maplibregl.Map({
+  container: 'map',
+  style: {
+    version: 8,
+    sources: {
+      'carto-dark': {
+        type: 'raster',
+        tiles: ['https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png'],
+        tileSize: 256,
+        attribution: '© OpenStreetMap contributors, © CARTO'
+      }
+    },
+    layers: [{ id: 'background', type: 'raster', source: 'carto-dark' }]
+  },
+  center: [134.5, -26.5],
+  zoom: 4.5
+});
+
+map.addControl(new maplibregl.NavigationControl(), 'top-right');
+map.addControl(new maplibregl.ScaleControl({ maxWidth: 120, unit: 'metric' }), 'bottom-right');
+
+// ─────────────────────────────────────────
+// VOLTAGE COLOUR HELPER
+// ─────────────────────────────────────────
+function lineColour(kv) {
+  const v = parseFloat(kv) || 0;
+  if (v >= 500) return '#e06c75';
+  if (v >= 275) return '#e5c07b';
+  if (v >= 220) return '#98c379';
+  if (v >= 132) return '#61afef';
+  return '#56b6c2';
+}
+
+function lineWidth(kv) {
+  const v = parseFloat(kv) || 0;
+  if (v >= 500) return 3;
+  if (v >= 275) return 2.2;
+  if (v >= 220) return 1.8;
+  if (v >= 132) return 1.4;
+  return 0.9;
+}
+
+function mlfColour(mlf) {
+  if (!mlf) return '#8b949e';
+  if (mlf >= 0.97) return '#3fb950';
+  if (mlf >= 0.93) return '#d29922';
+  return '#f85149';
+}
+
+function mlfClass(mlf) {
+  if (!mlf) return '';
+  if (mlf >= 0.97) return 'mlf-good';
+  if (mlf >= 0.93) return 'mlf-ok';
+  return 'mlf-poor';
+}
+
+// ─────────────────────────────────────────
+// LOAD DATA
+// ─────────────────────────────────────────
+let linesData = null, cpData = null, mlfData = [];
+let mlfMode = false;
+let activeFilters = { voltage: '', state: '', status: '' };
+
+const popup = new maplibregl.Popup({ closeButton: true, maxWidth: '340px' });
+
+Promise.all([
+  fetch('data/transmission_lines.geojson').then(r => r.json()),
+  fetch('data/connection_points.geojson').then(r => r.json()),
+  fetch('data/mlf_2026_27.json').then(r => r.json()),
+]).then(([lines, cps, mlf]) => {
+  linesData = lines;
+  cpData = cps;
+  mlfData = mlf;
+
+  document.getElementById('stat-lines').textContent = lines.features.length.toLocaleString();
+  document.getElementById('stat-cps').textContent   = cps.features.length.toLocaleString();
+  document.getElementById('stat-mlfs').textContent  = mlf.length.toLocaleString();
+
+  // Build MLF lookup by cp_id and tni
+  window.mlfLookup = {};
+  mlf.forEach(r => {
+    const key = r.cp_id || r.tni;
+    if (!key || key === 'nan') return;
+    if (!window.mlfLookup[key]) window.mlfLookup[key] = [];
+    window.mlfLookup[key].push(r);
+  });
+
+  addLayers();
+  bindFilters();
+  bindSearch();
+  bindSidebar();
+});
+
+// ─────────────────────────────────────────
+// ADD MAP LAYERS
+// ─────────────────────────────────────────
+function addLayers() {
+  // Transmission lines
+  map.addSource('lines', { type: 'geojson', data: linesData });
+
+  map.addLayer({
+    id: 'lines-layer',
+    type: 'line',
+    source: 'lines',
+    layout: { 'line-join': 'round', 'line-cap': 'round' },
+    paint: {
+      'line-color': [
+        'interpolate', ['linear'], ['coalesce', ['get', 'voltage_kv'], 0],
+        0,   '#56b6c2',
+        66,  '#56b6c2',
+        132, '#61afef',
+        220, '#98c379',
+        275, '#e5c07b',
+        330, '#e5c07b',
+        500, '#e06c75'
+      ],
+      'line-width': [
+        'interpolate', ['linear'], ['coalesce', ['get', 'voltage_kv'], 0],
+        0, 0.8, 66, 0.8, 132, 1.4, 220, 1.8, 275, 2.2, 500, 3
+      ],
+      'line-opacity': 0.85
+    }
+  });
+
+  // Hover highlight for lines
+  map.addLayer({
+    id: 'lines-hover',
+    type: 'line',
+    source: 'lines',
+    layout: { 'line-join': 'round', 'line-cap': 'round' },
+    paint: { 'line-color': '#ffffff', 'line-width': 4, 'line-opacity': 0 }
+  });
+
+  // Connection points
+  map.addSource('cps', { type: 'geojson', data: cpData });
+
+  map.addLayer({
+    id: 'cps-layer',
+    type: 'circle',
+    source: 'cps',
+    paint: {
+      'circle-radius': ['interpolate', ['linear'], ['zoom'], 4, 4, 8, 8, 12, 12],
+      'circle-color': '#61afef',
+      'circle-stroke-width': 1.5,
+      'circle-stroke-color': '#161b22',
+      'circle-opacity': 0.9
+    }
+  });
+
+  map.addLayer({
+    id: 'cps-labels',
+    type: 'symbol',
+    source: 'cps',
+    minzoom: 7,
+    layout: {
+      'text-field': ['get', 'cp_name'],
+      'text-font': ['Open Sans Regular'],
+      'text-size': 11,
+      'text-offset': [0, 1.2],
+      'text-anchor': 'top',
+      'text-optional': true
+    },
+    paint: {
+      'text-color': '#e6edf3',
+      'text-halo-color': '#0d1117',
+      'text-halo-width': 1.5
+    }
+  });
+
+  bindMapEvents();
+}
+
+// ─────────────────────────────────────────
+// MAP EVENTS
+// ─────────────────────────────────────────
+function bindMapEvents() {
+  // Line click
+  map.on('click', 'lines-layer', e => {
+    const p = e.features[0].properties;
+    const mlfs = window.mlfLookup[p.line_id] || [];
+    let html = `<div class="popup-title">${p.name || 'Transmission Line'}</div>`;
+    html += `<div class="popup-grid">`;
+    html += `<span class="popup-label">Voltage</span><span class="popup-value">${p.voltage_kv || '–'} kV</span>`;
+    html += `<span class="popup-label">State</span><span class="popup-value">${p.state || '–'}</span>`;
+    html += `<span class="popup-label">Status</span><span class="popup-value">${p.status || '–'}</span>`;
+    html += `<span class="popup-label">Class</span><span class="popup-value">${p.line_class || '–'}</span>`;
+    html += `<span class="popup-label">Length</span><span class="popup-value">${p.length_m ? (p.length_m/1000).toFixed(1) + ' km' : '–'}</span>`;
+
+    if (p.current_rating_mva) {
+      const pct = Math.min(100, (parseFloat(p.current_rating_mva) / 2000 * 100));
+      html += `<span class="popup-label">Normal Rating</span><span class="popup-value">${p.current_rating_mva} MVA</span>`;
+      html += `<span class="popup-label">Emergency</span><span class="popup-value">${p.emergency_rating_mva || '–'} MVA</span>`;
+    }
+    if (p.line_id) html += `<span class="popup-label">Line ID</span><span class="popup-value">${p.line_id}</span>`;
+    html += `</div>`;
+
+    // Projects
+    const projects = tryParse(p.projects);
+    if (projects && projects.length) {
+      html += `<div class="popup-section"><div class="popup-section-title">Network Projects</div>`;
+      projects.slice(0, 3).forEach(proj => {
+        html += `<div class="project-item"><strong>${proj.project}</strong><br><span style="color:#8b949e">Timing: ${proj.timing} | Capex: ${proj.capex}</span></div>`;
+      });
+      html += `</div>`;
+    }
+
+    popup.setLngLat(e.lngLat).setHTML(html).addTo(map);
+  });
+
+  // CP click
+  map.on('click', 'cps-layer', e => {
+    const p = e.features[0].properties;
+    const cpMlfs = window.mlfLookup[p.cp_id] || [];
+    let html = `<div class="popup-title">${p.cp_name}</div>`;
+    html += `<div class="popup-grid">`;
+    html += `<span class="popup-label">ID</span><span class="popup-value">${p.cp_id}</span>`;
+    html += `<span class="popup-label">Voltage</span><span class="popup-value">${p.voltage_kv} kV</span>`;
+    if (p.current_rating_mva) {
+      html += `<span class="popup-label">Rating</span><span class="popup-value">${p.current_rating_mva} MVA</span>`;
+    }
+    if (p.cp_group && p.cp_group !== 'null') {
+      html += `<span class="popup-label">Group</span><span class="popup-value">${p.cp_group}</span>`;
+    }
+    const f50 = tryParse(p.forecast_load_50poe);
+    if (f50 && f50.FY2026) {
+      html += `<span class="popup-label">Load FY26 (50%)</span><span class="popup-value">${f50.FY2026} MVA</span>`;
+      html += `<span class="popup-label">Load FY30 (50%)</span><span class="popup-value">${f50.FY2030 || '–'} MVA</span>`;
+    }
+    html += `</div>`;
+
+    // Fault levels
+    const faults = tryParse(p.fault_levels);
+    if (faults && faults.length) {
+      html += `<div class="popup-section"><div class="popup-section-title">Fault Levels</div>`;
+      faults.slice(0, 3).forEach(fl => {
+        html += `<div class="mlf-row"><span>${fl.voltage_kv} kV</span><span>3Ph: ${fl.fault_3ph_max || '–'} kA max / ${fl.fault_3ph_min || '–'} kA min</span></div>`;
+      });
+      html += `</div>`;
+    }
+
+    // MLF
+    if (cpMlfs.length) {
+      html += `<div class="popup-section"><div class="popup-section-title">Marginal Loss Factors 2026-27</div>`;
+      cpMlfs.slice(0, 4).forEach(m => {
+        const cls = mlfClass(m.mlf_2026_27);
+        const chg = m.mlf_change != null
+          ? `<span class="${m.mlf_change >= 0 ? 'mlf-change-up' : 'mlf-change-down'}">${m.mlf_change >= 0 ? '▲' : '▼'}${Math.abs(m.mlf_change).toFixed(4)}</span>`
+          : '';
+        html += `<div class="mlf-row">
+          <span>${m.type} (${m.region})</span>
+          <span class="${cls}">${m.mlf_2026_27.toFixed(4)} ${chg}</span>
+        </div>`;
+      });
+      html += `</div>`;
+    }
+
+    // Projects
+    const projects = tryParse(p.projects);
+    if (projects && projects.length) {
+      html += `<div class="popup-section"><div class="popup-section-title">Network Projects</div>`;
+      projects.slice(0, 3).forEach(proj => {
+        html += `<div class="project-item"><strong>${proj.project}</strong><br><span style="color:#8b949e">${proj.driver} | ${proj.timing}</span></div>`;
+      });
+      html += `</div>`;
+    }
+
+    popup.setLngLat(e.lngLat).setHTML(html).addTo(map);
+    e.stopPropagation();
+  });
+
+  // Cursors
+  map.on('mouseenter', 'lines-layer', () => map.getCanvas().style.cursor = 'pointer');
+  map.on('mouseleave', 'lines-layer', () => map.getCanvas().style.cursor = '');
+  map.on('mouseenter', 'cps-layer',   () => map.getCanvas().style.cursor = 'pointer');
+  map.on('mouseleave', 'cps-layer',   () => map.getCanvas().style.cursor = '');
+
+  // Info bar
+  map.on('move', () => {
+    document.getElementById('info-zoom').textContent   = map.getZoom().toFixed(1);
+    const c = map.getCenter();
+    document.getElementById('info-centre').textContent = `${c.lat.toFixed(2)}, ${c.lng.toFixed(2)}`;
+  });
+  map.fire('move');
+}
+
+// ─────────────────────────────────────────
+// FILTERS
+// ─────────────────────────────────────────
+function bindFilters() {
+  ['filter-voltage', 'filter-state', 'filter-status'].forEach(id => {
+    document.getElementById(id).addEventListener('change', applyFilters);
+  });
+}
+
+function applyFilters() {
+  const voltage = document.getElementById('filter-voltage').value;
+  const state   = document.getElementById('filter-state').value;
+  const status  = document.getElementById('filter-status').value;
+
+  const lineFilter = ['all'];
+  if (voltage) lineFilter.push(['==', ['to-string', ['get', 'voltage_kv']], voltage]);
+  if (state)   lineFilter.push(['==', ['get', 'state'], state]);
+  if (status)  lineFilter.push(['==', ['get', 'status'], status]);
+
+  map.setFilter('lines-layer', lineFilter.length > 1 ? lineFilter : null);
+  map.setFilter('lines-hover', lineFilter.length > 1 ? lineFilter : null);
+}
+
+// ─────────────────────────────────────────
+// SIDEBAR TOGGLES
+// ─────────────────────────────────────────
+function bindSidebar() {
+  document.getElementById('layer-lines').addEventListener('change', e => {
+    const v = e.target.checked ? 'visible' : 'none';
+    map.setLayoutProperty('lines-layer', 'visibility', v);
+  });
+  document.getElementById('layer-cps').addEventListener('change', e => {
+    const v = e.target.checked ? 'visible' : 'none';
+    ['cps-layer', 'cps-labels'].forEach(id => map.setLayoutProperty(id, 'visibility', v));
+  });
+
+  // MLF heatmap mode
+  document.getElementById('mlf-mode-btn').addEventListener('click', () => {
+    mlfMode = !mlfMode;
+    document.getElementById('mlf-mode-btn').classList.toggle('active', mlfMode);
+
+    if (mlfMode) {
+      // Build MLF-coloured CP data
+      const mlf_cp = {
+        type: 'FeatureCollection',
+        features: cpData.features.map(f => {
+          const cpMlfs = window.mlfLookup[f.properties.cp_id] || [];
+          const genMlf = cpMlfs.find(m => m.type === 'Gen');
+          return { ...f, properties: { ...f.properties, _mlf: genMlf ? genMlf.mlf_2026_27 : null } };
+        })
+      };
+      map.getSource('cps').setData(mlf_cp);
+      map.setPaintProperty('cps-layer', 'circle-color', [
+        'case',
+        ['!=', ['get', '_mlf'], null],
+        ['interpolate', ['linear'], ['get', '_mlf'],
+          0.85, '#f85149',
+          0.93, '#d29922',
+          0.97, '#3fb950',
+          1.05, '#3fb950'
+        ],
+        '#8b949e'
+      ]);
+    } else {
+      map.getSource('cps').setData(cpData);
+      map.setPaintProperty('cps-layer', 'circle-color', '#61afef');
+    }
+  });
+}
+
+// ─────────────────────────────────────────
+// SEARCH
+// ─────────────────────────────────────────
+function bindSearch() {
+  const input   = document.getElementById('search');
+  const results = document.getElementById('search-results');
+
+  input.addEventListener('input', () => {
+    const q = input.value.trim().toLowerCase();
+    results.innerHTML = '';
+    if (q.length < 2) { results.style.display = 'none'; return; }
+
+    const hits = [];
+
+    cpData.features.forEach(f => {
+      if (f.properties.cp_name.toLowerCase().includes(q)) {
+        hits.push({ label: f.properties.cp_name, type: 'CP', coords: f.geometry.coordinates });
+      }
+    });
+
+    linesData.features.forEach(f => {
+      if (f.properties.name && f.properties.name.toLowerCase().includes(q)) {
+        const coords = f.geometry.coordinates;
+        const mid = coords[Math.floor(coords.length / 2)];
+        hits.push({ label: f.properties.name, type: 'Line', coords: mid });
+      }
+    });
+
+    hits.slice(0, 10).forEach(h => {
+      const el = document.createElement('div');
+      el.className = 'search-item';
+      el.innerHTML = `${h.label} <span class="badge ${h.type === 'CP' ? 'badge-cp' : 'badge-line'}">${h.type}</span>`;
+      el.addEventListener('click', () => {
+        map.flyTo({ center: h.coords, zoom: 10, duration: 800 });
+        results.style.display = 'none';
+        input.value = h.label;
+      });
+      results.appendChild(el);
+    });
+
+    results.style.display = hits.length ? 'block' : 'none';
+  });
+
+  document.addEventListener('click', e => {
+    if (!e.target.closest('#search') && !e.target.closest('#search-results')) {
+      results.style.display = 'none';
+    }
+  });
+}
+
+// ─────────────────────────────────────────
+// UTILS
+// ─────────────────────────────────────────
+function tryParse(val) {
+  if (!val || val === 'null' || val === '[]') return null;
+  if (typeof val === 'object') return val;
+  try { return JSON.parse(val.replace(/'/g, '"')); } catch { return null; }
+}
+</script>
+</body>
+</html>
