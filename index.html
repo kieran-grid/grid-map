@@ -193,7 +193,7 @@
     </div>
 
     <div class="section-title">MLF View</div>
-    <button id="mlf-mode-btn">Show MLF Heatmap</button>
+    <button id="mlf-mode-btn" class="active">MLF Heatmap ON</button>
 
     <div class="section-title">Legend – Lines</div>
     <div class="legend-item"><div class="legend-line" style="background:#e06c75;height:4px"></div>500 kV</div>
@@ -229,6 +229,7 @@ const map = new maplibregl.Map({
   container: 'map',
   style: {
     version: 8,
+    glyphs: 'https://fonts.openmaptiles.org/{fontstack}/{range}.pbf',
     sources: {
       'carto-dark': {
         type: 'raster',
@@ -294,10 +295,12 @@ Promise.all([
   fetch('transmission_lines.geojson').then(r => r.json()),
   fetch('substations.geojson').then(r => r.json()),
   fetch('mlf_2026_27.json').then(r => r.json()),
-]).then(([lines, cps, mlf]) => {
+  fetch('hhci.json').then(r => r.json()).catch(() => ({})),
+]).then(([lines, cps, mlf, hhci]) => {
   linesData = lines;
   cpData = cps;
   mlfData = mlf;
+  window.hhciData = hhci;
 
   document.getElementById('stat-lines').textContent = lines.features.length.toLocaleString();
   document.getElementById('stat-cps').textContent   = cps.features.length.toLocaleString();
@@ -368,8 +371,18 @@ function addLayers() {
     type: 'circle',
     source: 'cps',
     paint: {
-      'circle-radius': ['interpolate', ['linear'], ['zoom'], 4, 4, 8, 8, 12, 12],
-      'circle-color': '#61afef',
+      'circle-radius': ['interpolate', ['linear'], ['zoom'], 4, 4, 8, 7, 12, 11],
+      'circle-color': [
+        'case',
+        ['!=', ['get', 'mlf_gen_2026_27'], null],
+        ['interpolate', ['linear'], ['to-number', ['get', 'mlf_gen_2026_27'], 0],
+          0.85, '#f85149',
+          0.93, '#d29922',
+          0.97, '#3fb950',
+          1.05, '#3fb950'
+        ],
+        '#61afef'
+      ],
       'circle-stroke-width': 1.5,
       'circle-stroke-color': '#161b22',
       'circle-opacity': 0.9
@@ -415,13 +428,44 @@ function bindMapEvents() {
     html += `<span class="popup-label">Class</span><span class="popup-value">${p.line_class || '–'}</span>`;
     html += `<span class="popup-label">Length</span><span class="popup-value">${p.length_m ? (p.length_m/1000).toFixed(1) + ' km' : '–'}</span>`;
 
-    if (p.current_rating_mva) {
-      const pct = Math.min(100, (parseFloat(p.current_rating_mva) / 2000 * 100));
-      html += `<span class="popup-label">Normal Rating</span><span class="popup-value">${p.current_rating_mva} MVA</span>`;
-      html += `<span class="popup-label">Emergency</span><span class="popup-value">${p.emergency_rating_mva || '–'} MVA</span>`;
-    }
     if (p.line_id) html += `<span class="popup-label">Line ID</span><span class="popup-value">${p.line_id}</span>`;
     html += `</div>`;
+
+    // Ratings section
+    const hasRatings = p.dsn_cont_rating_n_mva || p.current_rating_mva;
+    if (hasRatings) {
+      const normRating  = p.dsn_cont_rating_n_mva  || p.current_rating_mva;
+      const emergRating = p.dsn_st_rating_n1_mva   || p.emergency_rating_mva;
+      const loadMW      = p.dsn_loading_n_mw;
+      const loadPct     = p.dsn_loading_pct_n;
+      const loadPctN1   = p.dsn_loading_pct_n1;
+
+      html += `<div class="popup-section"><div class="popup-section-title">Ratings & Loading</div>`;
+      html += `<div class="popup-grid">`;
+      html += `<span class="popup-label">Normal (N)</span><span class="popup-value">${normRating ? normRating.toLocaleString() + ' MVA' : '–'}</span>`;
+      html += `<span class="popup-label">Short-term (N-1)</span><span class="popup-value">${emergRating ? emergRating.toLocaleString() + ' MVA' : '–'}</span>`;
+      if (loadMW)  html += `<span class="popup-label">Max Demand Load</span><span class="popup-value">${loadMW.toFixed(0)} MW</span>`;
+      html += `</div>`;
+
+      if (loadPct != null || loadPctN1 != null) {
+        const pctN  = loadPct  != null ? (loadPct  * 100).toFixed(1)  : null;
+        const pctN1 = loadPctN1 != null ? (loadPctN1 * 100).toFixed(1) : null;
+        const colour = (loadPct > 0.85) ? '#f85149' : (loadPct > 0.65) ? '#d29922' : '#3fb950';
+        if (pctN) {
+          html += `<div class="rating-bar-wrap">
+            <div style="display:flex;justify-content:space-between;font-size:11px;color:#8b949e">
+              <span>N loading: <strong style="color:${colour}">${pctN}%</strong></span>
+              ${pctN1 ? `<span>N-1 loading: <strong>${pctN1}%</strong></span>` : ''}
+            </div>
+            <div class="rating-bar-bg"><div class="rating-bar-fill" style="width:${Math.min(100,parseFloat(pctN))}%;background:${colour}"></div></div>
+          </div>`;
+        }
+      }
+      if (p.dsn_critical_cont && p.dsn_critical_cont !== 'null') {
+        html += `<div style="font-size:11px;color:#8b949e;margin-top:5px">Critical contingency: ${p.dsn_critical_cont}</div>`;
+      }
+      html += `</div>`;
+    }
 
     // Projects
     const projects = tryParse(p.projects);
@@ -477,6 +521,39 @@ function bindMapEvents() {
         const cls = mlfClass(p.mlf_load_2026_27);
         html += `<div class="mlf-row"><span>Load (${p.mlf_region})</span><span class="${cls}">${parseFloat(p.mlf_load_2026_27).toFixed(4)}</span></div>`;
       }
+      html += `</div>`;
+    }
+
+    // Locational Reliability Factor
+    if (p.lrf_substation) {
+      const region = p.lrf_region || '';
+      const techs = [
+        { label: 'Wind',  nsw: p.lrf_wind_nsw,  qld: p.lrf_wind_qld,  sa: p.lrf_wind_sa,  vic: p.lrf_wind_vic  },
+        { label: 'Solar', nsw: p.lrf_solar_nsw, qld: p.lrf_solar_qld, sa: p.lrf_solar_sa, vic: p.lrf_solar_vic },
+        { label: 'BESS',  nsw: p.lrf_batt_nsw,  qld: p.lrf_batt_qld,  sa: p.lrf_batt_sa,  vic: p.lrf_batt_vic  },
+      ];
+      html += `<div class="popup-section"><div class="popup-section-title">Locational Reliability Factor (2026-28)</div>`;
+      html += `<div style="font-size:11px;color:#8b949e;margin-bottom:5px">Benefit of connecting each technology type at this node</div>`;
+      html += `<table style="width:100%;font-size:12px;border-collapse:collapse">`;
+      html += `<tr style="color:#8b949e"><th style="text-align:left;padding:2px 4px">Tech</th><th>NSW</th><th>QLD</th><th>SA</th><th>VIC</th></tr>`;
+      techs.forEach(t => {
+        const vals = [t.nsw, t.qld, t.sa, t.vic].map(v => {
+          const n = parseFloat(v) || 0;
+          const col = n > 0.1 ? '#3fb950' : n > 0.05 ? '#d29922' : '#8b949e';
+          return `<td style="text-align:center;color:${col};padding:2px 4px">${n > 0 ? n.toFixed(3) : '–'}</td>`;
+        });
+        html += `<tr><td style="padding:2px 4px">${t.label}</td>${vals.join('')}</tr>`;
+      });
+      html += `</table></div>`;
+    }
+
+    // VIC historical demand
+    const vicHist = tryParse(p.vic_demand_history);
+    if (vicHist && vicHist.length) {
+      html += `<div class="popup-section"><div class="popup-section-title">Historical Max Demand (VIC)</div>`;
+      vicHist.slice(0, 5).forEach(h => {
+        html += `<div class="mlf-row"><span>${h.season} ${h.year}</span><span>${h.mw} MW</span></div>`;
+      });
       html += `</div>`;
     }
 
@@ -546,9 +623,12 @@ function bindSidebar() {
   });
 
   // MLF heatmap mode
+  mlfMode = true;
   document.getElementById('mlf-mode-btn').addEventListener('click', () => {
     mlfMode = !mlfMode;
-    document.getElementById('mlf-mode-btn').classList.toggle('active', mlfMode);
+    const btn = document.getElementById('mlf-mode-btn');
+    btn.textContent = mlfMode ? 'MLF Heatmap ON' : 'MLF Heatmap OFF';
+    btn.classList.toggle('active', mlfMode);
 
     if (mlfMode) {
       map.setPaintProperty('cps-layer', 'circle-color', [
@@ -560,7 +640,7 @@ function bindSidebar() {
           0.97, '#3fb950',
           1.05, '#3fb950'
         ],
-        '#8b949e'
+        '#61afef'
       ]);
     } else {
       map.setPaintProperty('cps-layer', 'circle-color', '#61afef');
@@ -630,4 +710,3 @@ function tryParse(val) {
 </script>
 </body>
 </html>
-
