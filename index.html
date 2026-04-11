@@ -109,13 +109,13 @@
     .rating-bar-bg { background: #21262d; border-radius: 4px; height: 8px; overflow: hidden; margin-top: 2px; }
     .rating-bar-fill { height: 100%; border-radius: 4px; transition: width 0.4s; }
 
-    /* ── MLF Heatmap toggle ── */
-    #mlf-mode-btn {
+    /* ── Toggle buttons ── */
+    .toggle-btn {
       padding: 5px 10px; border-radius: 5px; border: 1px solid #30363d;
       background: #21262d; color: #e6edf3; font-size: 12px; cursor: pointer;
       margin-top: 6px; width: 100%; text-align: center;
     }
-    #mlf-mode-btn.active { background: #1f6feb; border-color: #58a6ff; }
+    .toggle-btn.active { background: #1f6feb; border-color: #58a6ff; }
 
     /* ── Info panel (bottom) ── */
     #info-bar {
@@ -192,8 +192,11 @@
       </select>
     </div>
 
-    <div class="section-title">MLF View</div>
-    <button id="mlf-mode-btn" class="active">MLF Heatmap ON</button>
+    <div class="section-title">Line View</div>
+    <button id="loading-mode-btn" class="toggle-btn">% Loading Layer OFF</button>
+
+    <div class="section-title">Substation View</div>
+    <button id="mlf-mode-btn" class="toggle-btn active">MLF Heatmap ON</button>
 
     <div class="section-title">Legend – Lines</div>
     <div class="legend-item"><div class="legend-line" style="background:#e06c75;height:4px"></div>500 kV</div>
@@ -201,6 +204,12 @@
     <div class="legend-item"><div class="legend-line" style="background:#98c379;height:2px"></div>220 kV</div>
     <div class="legend-item"><div class="legend-line" style="background:#61afef;height:2px"></div>132 kV</div>
     <div class="legend-item"><div class="legend-line" style="background:#56b6c2;height:1px"></div>66 kV and below</div>
+
+    <div class="section-title">Legend – % Loading</div>
+    <div class="legend-item"><div class="legend-line" style="background:#3fb950;height:4px"></div>&lt; 65%</div>
+    <div class="legend-item"><div class="legend-line" style="background:#d29922;height:4px"></div>65% – 85%</div>
+    <div class="legend-item"><div class="legend-line" style="background:#f85149;height:4px"></div>&gt; 85%</div>
+    <div style="font-size:11px;color:#8b949e;margin-top:3px">VIC only — max demand snapshot</div>
 
     <div class="section-title">Legend – MLF</div>
     <div class="legend-item"><div class="legend-line" style="background:#3fb950;height:10px;border-radius:50%;width:10px"></div>&gt; 0.97</div>
@@ -363,6 +372,27 @@ function addLayers() {
     paint: { 'line-color': '#ffffff', 'line-width': 4, 'line-opacity': 0 }
   });
 
+  // Loading % layer (hidden by default)
+  map.addLayer({
+    id: 'lines-loading',
+    type: 'line',
+    source: 'lines',
+    layout: { 'line-join': 'round', 'line-cap': 'round', 'visibility': 'none' },
+    filter: ['!=', ['get', 'best_loading_pct'], null],
+    paint: {
+      'line-color': [
+        'case',
+        ['>', ['to-number', ['get', 'best_loading_pct'], 0], 0.85], '#f85149',
+        ['>', ['to-number', ['get', 'best_loading_pct'], 0], 0.65], '#d29922',
+        '#3fb950'
+      ],
+      'line-width': [
+        'interpolate', ['linear'], ['zoom'], 4, 3, 8, 5, 12, 7
+      ],
+      'line-opacity': 0.9
+    }
+  });
+
   // Connection points
   map.addSource('cps', { type: 'geojson', data: cpData });
 
@@ -432,18 +462,19 @@ function bindMapEvents() {
     html += `</div>`;
 
     // Ratings section
-    const hasRatings = p.dsn_cont_rating_n_mva || p.current_rating_mva;
+    const hasRatings = p.best_norm_rating_mva || p.dsn_cont_rating_n_mva || p.current_rating_mva;
     if (hasRatings) {
-      const normRating  = p.dsn_cont_rating_n_mva  || p.current_rating_mva;
-      const emergRating = p.dsn_st_rating_n1_mva   || p.emergency_rating_mva;
+      const normRating  = p.best_norm_rating_mva  || p.dsn_cont_rating_n_mva  || p.current_rating_mva;
+      const emergRating = p.best_emerg_rating_mva || p.dsn_st_rating_n1_mva   || p.emergency_rating_mva;
       const loadMW      = p.dsn_loading_n_mw;
-      const loadPct     = p.dsn_loading_pct_n;
+      const loadPct     = p.best_loading_pct || p.dsn_loading_pct_n;
       const loadPctN1   = p.dsn_loading_pct_n1;
+      const ratingSource = p.rating_source || '';
 
-      html += `<div class="popup-section"><div class="popup-section-title">Ratings & Loading</div>`;
+      html += `<div class="popup-section"><div class="popup-section-title">Ratings & Loading${ratingSource ? ` <span style="color:#8b949e;font-weight:400">(${ratingSource})</span>` : ''}</div>`;
       html += `<div class="popup-grid">`;
-      html += `<span class="popup-label">Normal (N)</span><span class="popup-value">${normRating ? normRating.toLocaleString() + ' MVA' : '–'}</span>`;
-      html += `<span class="popup-label">Short-term (N-1)</span><span class="popup-value">${emergRating ? emergRating.toLocaleString() + ' MVA' : '–'}</span>`;
+      html += `<span class="popup-label">Normal (N)</span><span class="popup-value">${normRating ? parseFloat(normRating).toLocaleString() + ' MVA' : '–'}</span>`;
+      html += `<span class="popup-label">Short-term (N-1)</span><span class="popup-value">${emergRating ? parseFloat(emergRating).toLocaleString() + ' MVA' : '–'}</span>`;
       if (loadMW)  html += `<span class="popup-label">Max Demand Load</span><span class="popup-value">${loadMW.toFixed(0)} MW</span>`;
       html += `</div>`;
 
@@ -568,7 +599,6 @@ function bindMapEvents() {
     }
 
     popup.setLngLat(e.lngLat).setHTML(html).addTo(map);
-    e.stopPropagation();
   });
 
   // Cursors
@@ -624,11 +654,25 @@ function bindSidebar() {
 
   // MLF heatmap mode
   mlfMode = true;
+
+  // Loading layer toggle
+  let loadingMode = false;
+  document.getElementById('loading-mode-btn').addEventListener('click', () => {
+    loadingMode = !loadingMode;
+    const btn = document.getElementById('loading-mode-btn');
+    btn.textContent = loadingMode ? '% Loading Layer ON' : '% Loading Layer OFF';
+    btn.classList.toggle('active', loadingMode);
+    map.setLayoutProperty('lines-loading', 'visibility', loadingMode ? 'visible' : 'none');
+    // Dim voltage layer when loading layer is on
+    map.setPaintProperty('lines-layer', 'line-opacity', loadingMode ? 0.25 : 0.85);
+  });
+
   document.getElementById('mlf-mode-btn').addEventListener('click', () => {
     mlfMode = !mlfMode;
     const btn = document.getElementById('mlf-mode-btn');
     btn.textContent = mlfMode ? 'MLF Heatmap ON' : 'MLF Heatmap OFF';
     btn.classList.toggle('active', mlfMode);
+    btn.textContent = mlfMode ? 'MLF Heatmap ON' : 'MLF Heatmap OFF';
 
     if (mlfMode) {
       map.setPaintProperty('cps-layer', 'circle-color', [
