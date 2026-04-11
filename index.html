@@ -150,12 +150,12 @@
 
     <div class="section-title">Stats</div>
     <div class="stat-box"><div class="stat-label">Transmission Lines</div><div class="stat-value" id="stat-lines">–</div></div>
-    <div class="stat-box"><div class="stat-label">Connection Points</div><div class="stat-value" id="stat-cps">–</div></div>
+    <div class="stat-box"><div class="stat-label">Substations</div><div class="stat-value" id="stat-cps">–</div></div>
     <div class="stat-box"><div class="stat-label">MLF Records</div><div class="stat-value" id="stat-mlfs">–</div></div>
 
     <div class="section-title">Layers</div>
     <label class="layer-row"><input type="checkbox" id="layer-lines" checked /><div class="layer-dot" style="background:#e06c75"></div>Transmission Lines</label>
-    <label class="layer-row"><input type="checkbox" id="layer-cps" checked /><div class="layer-dot" style="background:#61afef"></div>Connection Points</label>
+    <label class="layer-row"><input type="checkbox" id="layer-cps" checked /><div class="layer-dot" style="background:#61afef"></div>Substations</label>
 
     <div class="section-title">Filters</div>
     <div class="filter-group">
@@ -291,9 +291,9 @@ let activeFilters = { voltage: '', state: '', status: '' };
 const popup = new maplibregl.Popup({ closeButton: true, maxWidth: '340px' });
 
 Promise.all([
-  fetch('data/transmission_lines.geojson').then(r => r.json()),
-  fetch('data/connection_points.geojson').then(r => r.json()),
-  fetch('data/mlf_2026_27.json').then(r => r.json()),
+  fetch('transmission_lines.geojson').then(r => r.json()),
+  fetch('substations.geojson').then(r => r.json()),
+  fetch('mlf_2026_27.json').then(r => r.json()),
 ]).then(([lines, cps, mlf]) => {
   linesData = lines;
   cpData = cps;
@@ -302,6 +302,8 @@ Promise.all([
   document.getElementById('stat-lines').textContent = lines.features.length.toLocaleString();
   document.getElementById('stat-cps').textContent   = cps.features.length.toLocaleString();
   document.getElementById('stat-mlfs').textContent  = mlf.length.toLocaleString();
+  // store globally
+  window.subsData = cps;
 
   // Build MLF lookup by cp_id and tni
   window.mlfLookup = {};
@@ -434,24 +436,20 @@ function bindMapEvents() {
     popup.setLngLat(e.lngLat).setHTML(html).addTo(map);
   });
 
-  // CP click
+  // Substation click
   map.on('click', 'cps-layer', e => {
     const p = e.features[0].properties;
-    const cpMlfs = window.mlfLookup[p.cp_id] || [];
-    let html = `<div class="popup-title">${p.cp_name}</div>`;
+    let html = `<div class="popup-title">${p.name || 'Substation'}</div>`;
     html += `<div class="popup-grid">`;
-    html += `<span class="popup-label">ID</span><span class="popup-value">${p.cp_id}</span>`;
-    html += `<span class="popup-label">Voltage</span><span class="popup-value">${p.voltage_kv} kV</span>`;
+    html += `<span class="popup-label">Voltage</span><span class="popup-value">${p.voltage || '–'} kV</span>`;
+    html += `<span class="popup-label">State</span><span class="popup-value">${p.state || '–'}</span>`;
+    html += `<span class="popup-label">Class</span><span class="popup-value">${p.class || '–'}</span>`;
+    html += `<span class="popup-label">Status</span><span class="popup-value">${p.operationalstatus || '–'}</span>`;
+    if (p.suburb && p.suburb !== '') {
+      html += `<span class="popup-label">Suburb</span><span class="popup-value">${p.suburb}</span>`;
+    }
     if (p.current_rating_mva) {
       html += `<span class="popup-label">Rating</span><span class="popup-value">${p.current_rating_mva} MVA</span>`;
-    }
-    if (p.cp_group && p.cp_group !== 'null') {
-      html += `<span class="popup-label">Group</span><span class="popup-value">${p.cp_group}</span>`;
-    }
-    const f50 = tryParse(p.forecast_load_50poe);
-    if (f50 && f50.FY2026) {
-      html += `<span class="popup-label">Load FY26 (50%)</span><span class="popup-value">${f50.FY2026} MVA</span>`;
-      html += `<span class="popup-label">Load FY30 (50%)</span><span class="popup-value">${f50.FY2030 || '–'} MVA</span>`;
     }
     html += `</div>`;
 
@@ -460,29 +458,30 @@ function bindMapEvents() {
     if (faults && faults.length) {
       html += `<div class="popup-section"><div class="popup-section-title">Fault Levels</div>`;
       faults.slice(0, 3).forEach(fl => {
-        html += `<div class="mlf-row"><span>${fl.voltage_kv} kV</span><span>3Ph: ${fl.fault_3ph_max || '–'} kA max / ${fl.fault_3ph_min || '–'} kA min</span></div>`;
+        html += `<div class="mlf-row"><span>${fl.voltage_kv} kV</span><span>3Ph max: ${fl.fault_3ph_max || '–'} kA | min: ${fl.fault_3ph_min || '–'} kA</span></div>`;
       });
       html += `</div>`;
     }
 
     // MLF
-    if (cpMlfs.length) {
+    if (p.mlf_gen_2026_27 || p.mlf_load_2026_27) {
       html += `<div class="popup-section"><div class="popup-section-title">Marginal Loss Factors 2026-27</div>`;
-      cpMlfs.slice(0, 4).forEach(m => {
-        const cls = mlfClass(m.mlf_2026_27);
-        const chg = m.mlf_change != null
-          ? `<span class="${m.mlf_change >= 0 ? 'mlf-change-up' : 'mlf-change-down'}">${m.mlf_change >= 0 ? '▲' : '▼'}${Math.abs(m.mlf_change).toFixed(4)}</span>`
+      if (p.mlf_gen_2026_27) {
+        const cls = mlfClass(p.mlf_gen_2026_27);
+        const chg = p.mlf_change != null
+          ? `<span class="${p.mlf_change >= 0 ? 'mlf-change-up' : 'mlf-change-down'}">${p.mlf_change >= 0 ? '▲' : '▼'}${Math.abs(p.mlf_change).toFixed(4)}</span>`
           : '';
-        html += `<div class="mlf-row">
-          <span>${m.type} (${m.region})</span>
-          <span class="${cls}">${m.mlf_2026_27.toFixed(4)} ${chg}</span>
-        </div>`;
-      });
+        html += `<div class="mlf-row"><span>Generator (${p.mlf_region})</span><span class="${cls}">${parseFloat(p.mlf_gen_2026_27).toFixed(4)} ${chg}</span></div>`;
+      }
+      if (p.mlf_load_2026_27) {
+        const cls = mlfClass(p.mlf_load_2026_27);
+        html += `<div class="mlf-row"><span>Load (${p.mlf_region})</span><span class="${cls}">${parseFloat(p.mlf_load_2026_27).toFixed(4)}</span></div>`;
+      }
       html += `</div>`;
     }
 
     // Projects
-    const projects = tryParse(p.projects);
+    const projects = tryParse(p.cp_projects);
     if (projects && projects.length) {
       html += `<div class="popup-section"><div class="popup-section-title">Network Projects</div>`;
       projects.slice(0, 3).forEach(proj => {
@@ -552,16 +551,25 @@ function bindSidebar() {
     document.getElementById('mlf-mode-btn').classList.toggle('active', mlfMode);
 
     if (mlfMode) {
-      // Build MLF-coloured CP data
-      const mlf_cp = {
-        type: 'FeatureCollection',
-        features: cpData.features.map(f => {
-          const cpMlfs = window.mlfLookup[f.properties.cp_id] || [];
-          const genMlf = cpMlfs.find(m => m.type === 'Gen');
-          return { ...f, properties: { ...f.properties, _mlf: genMlf ? genMlf.mlf_2026_27 : null } };
-        })
-      };
-      map.getSource('cps').setData(mlf_cp);
+      map.setPaintProperty('cps-layer', 'circle-color', [
+        'case',
+        ['!=', ['get', 'mlf_gen_2026_27'], null],
+        ['interpolate', ['linear'], ['to-number', ['get', 'mlf_gen_2026_27'], 0],
+          0.85, '#f85149',
+          0.93, '#d29922',
+          0.97, '#3fb950',
+          1.05, '#3fb950'
+        ],
+        '#8b949e'
+      ]);
+    } else {
+      map.setPaintProperty('cps-layer', 'circle-color', '#61afef');
+    }
+  });
+}
+
+function _unused() {
+    if (false) {
       map.setPaintProperty('cps-layer', 'circle-color', [
         'case',
         ['!=', ['get', '_mlf'], null],
@@ -573,11 +581,8 @@ function bindSidebar() {
         ],
         '#8b949e'
       ]);
-    } else {
-      map.getSource('cps').setData(cpData);
-      map.setPaintProperty('cps-layer', 'circle-color', '#61afef');
     }
-  });
+}
 }
 
 // ─────────────────────────────────────────
@@ -595,8 +600,8 @@ function bindSearch() {
     const hits = [];
 
     cpData.features.forEach(f => {
-      if (f.properties.cp_name.toLowerCase().includes(q)) {
-        hits.push({ label: f.properties.cp_name, type: 'CP', coords: f.geometry.coordinates });
+      if (f.properties.name && f.properties.name.toLowerCase().includes(q)) {
+        hits.push({ label: f.properties.name, type: 'Substation', coords: f.geometry.coordinates });
       }
     });
 
