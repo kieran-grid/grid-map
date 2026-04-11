@@ -568,22 +568,6 @@ function bindSidebar() {
   });
 }
 
-function _unused() {
-    if (false) {
-      map.setPaintProperty('cps-layer', 'circle-color', [
-        'case',
-        ['!=', ['get', '_mlf'], null],
-        ['interpolate', ['linear'], ['get', '_mlf'],
-          0.85, '#f85149',
-          0.93, '#d29922',
-          0.97, '#3fb950',
-          1.05, '#3fb950'
-        ],
-        '#8b949e'
-      ]);
-    }
-}
-}
 
 // ─────────────────────────────────────────
 // SEARCH
@@ -646,3 +630,4 @@ function tryParse(val) {
 </script>
 </body>
 </html>
+
