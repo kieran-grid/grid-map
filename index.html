@@ -159,6 +159,13 @@
     <label class="layer-row"><input type="checkbox" id="layer-cps" checked /><div class="layer-dot" style="background:#d84040"></div>Substations</label>
     <label class="layer-row"><input type="checkbox" id="layer-sub-labels" checked /><div class="layer-dot" style="background:#8b949e;border-radius:2px"></div>Substation Names</label>
     <label class="layer-row"><input type="checkbox" id="layer-comp" checked /><div class="layer-dot" style="background:#f0883e;border:2px solid #fff;border-radius:2px"></div>Competing Projects</label>
+    <div id="comp-status-filters" style="padding:4px 0 4px 20px;display:flex;flex-wrap:wrap;gap:4px">
+      <label style="font-size:11px;display:flex;align-items:center;gap:3px;cursor:pointer"><input type="checkbox" class="comp-status-cb" value="Operating" checked /><span style="color:#3fb950">Operating</span></label>
+      <label style="font-size:11px;display:flex;align-items:center;gap:3px;cursor:pointer"><input type="checkbox" class="comp-status-cb" value="Construction" checked /><span style="color:#d29922">Construction</span></label>
+      <label style="font-size:11px;display:flex;align-items:center;gap:3px;cursor:pointer"><input type="checkbox" class="comp-status-cb" value="Planned" checked /><span style="color:#58a6ff">Planned</span></label>
+      <label style="font-size:11px;display:flex;align-items:center;gap:3px;cursor:pointer"><input type="checkbox" class="comp-status-cb" value="Repowering" /><span style="color:#c080ff">Repowering</span></label>
+      <label style="font-size:11px;display:flex;align-items:center;gap:3px;cursor:pointer"><input type="checkbox" class="comp-status-cb" value="Decommissioned" /><span style="color:#6e7681">Decommissioned</span></label>
+    </div>
 
     <div class="section-title">Filters</div>
     <div class="filter-group">
@@ -232,6 +239,7 @@
     <div class="legend-item"><div class="legend-line" style="background:#3fb950;height:10px;border-radius:2px;width:10px;border:1.5px solid #fff"></div>Operating</div>
     <div class="legend-item"><div class="legend-line" style="background:#d29922;height:10px;border-radius:2px;width:10px;border:1.5px solid #fff"></div>Construction</div>
     <div class="legend-item"><div class="legend-line" style="background:#58a6ff;height:10px;border-radius:2px;width:10px;border:1.5px solid #fff"></div>Planned</div>
+    <div class="legend-item"><div class="legend-line" style="background:#c080ff;height:10px;border-radius:2px;width:10px;border:1.5px solid #fff"></div>Repowering</div>
     <div class="legend-item"><div class="legend-line" style="background:#6e7681;height:10px;border-radius:2px;width:10px;border:1.5px solid #fff"></div>Decommissioned / other</div>
 
   </div>
@@ -477,6 +485,7 @@ function addLayers() {
         'Operating',      '#3fb950',
         'Construction',   '#d29922',
         'Planned',        '#58a6ff',
+        'Repowering',     '#c080ff',
         'Decommissioned', '#6e7681',
         '#8b949e'
       ],
@@ -694,7 +703,7 @@ function bindMapEvents() {
     const p = e.features[0].properties;
     const statusColour = {
       'Operating': '#3fb950', 'Construction': '#d29922',
-      'Planned': '#58a6ff', 'Decommissioned': '#6e7681'
+      'Planned': '#58a6ff', 'Repowering': '#c080ff', 'Decommissioned': '#6e7681'
     }[p.dev_status] || '#8b949e';
 
     let html = `<div class="popup-title">${p.name || 'Competing Project'}</div>`;
@@ -806,7 +815,21 @@ function bindSidebar() {
   });
   document.getElementById('layer-comp').addEventListener('change', e => {
     map.setLayoutProperty('comp-layer', 'visibility', e.target.checked ? 'visible' : 'none');
+    document.getElementById('comp-status-filters').style.opacity = e.target.checked ? '1' : '0.4';
   });
+
+  function applyCompStatusFilter() {
+    const checked = [...document.querySelectorAll('.comp-status-cb:checked')].map(cb => cb.value);
+    if (checked.length === 0) {
+      map.setFilter('comp-layer', ['==', 'dev_status', '__none__']);
+    } else {
+      map.setFilter('comp-layer', ['in', ['get', 'dev_status'], ['literal', checked]]);
+    }
+  }
+  document.querySelectorAll('.comp-status-cb').forEach(cb => {
+    cb.addEventListener('change', applyCompStatusFilter);
+  });
+  applyCompStatusFilter();
 
   // MLF heatmap mode
   mlfMode = true;
