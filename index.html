@@ -517,6 +517,9 @@ function addLayers() {
   map.addSource('nem-regions', { type: 'geojson', data: window.nemRegionsData });
   map.addSource('nem-interconnectors', { type: 'geojson', data: window.nemInterData });
 
+  // Point source at midpoints of each interconnector line for reliable label placement
+  map.addSource('nem-inter-points', { type: 'geojson', data: buildInterPoints(window.nemInterData) });
+
   map.addLayer({
     id: 'nem-regions-fill',
     type: 'fill',
@@ -567,22 +570,24 @@ function addLayers() {
     }
   });
 
+  // Flow labels at fixed midpoints — always visible regardless of zoom/line length
   map.addLayer({
     id: 'nem-flow-labels',
     type: 'symbol',
-    source: 'nem-interconnectors',
+    source: 'nem-inter-points',
     layout: {
       visibility: 'none',
       'text-field': ['coalesce', ['get', 'flow_label'], ['get', 'name']],
       'text-font': ['Open Sans Regular'],
-      'text-size': 11,
-      'symbol-placement': 'line-center',
-      'text-offset': [0, -1.5]
+      'text-size': 12,
+      'text-anchor': 'center',
+      'text-allow-overlap': true,
+      'text-ignore-placement': true
     },
     paint: {
       'text-color': '#79c0ff',
-      'text-halo-color': 'rgba(0,0,0,0.9)',
-      'text-halo-width': 2
+      'text-halo-color': 'rgba(13,17,23,0.95)',
+      'text-halo-width': 14
     }
   });
 
@@ -1202,6 +1207,24 @@ function updateNEMLayers() {
     }
   });
   map.getSource('nem-interconnectors').setData(inters);
+  map.getSource('nem-inter-points').setData(buildInterPoints(inters));
+}
+
+function buildInterPoints(interGj) {
+  return {
+    type: 'FeatureCollection',
+    features: (interGj.features || []).map(ft => ({
+      type: 'Feature',
+      geometry: {
+        type: 'Point',
+        coordinates: [
+          ft.properties.mid_lng ?? ft.geometry.coordinates[Math.floor(ft.geometry.coordinates.length / 2)][0],
+          ft.properties.mid_lat ?? ft.geometry.coordinates[Math.floor(ft.geometry.coordinates.length / 2)][1]
+        ]
+      },
+      properties: { ...ft.properties }
+    }))
+  };
 }
 </script>
 </body>
