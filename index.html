@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AUS Grid Explorer</title>
+  <title>GridXplore Oz</title>
   <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.1.0/dist/maplibre-gl.css" />
   <script src="https://unpkg.com/maplibre-gl@4.1.0/dist/maplibre-gl.js"></script>
   <style>
@@ -137,7 +137,7 @@
 
 <!-- ── Header ── -->
 <div id="header">
-  <h1>⚡ AUS Grid Explorer</h1>
+  <h1>⚡ GridXplore Oz</h1>
   <input id="search" type="text" placeholder="Search substations, lines..." autocomplete="off" />
   <div id="search-results"></div>
 </div>
@@ -155,8 +155,8 @@
     <div class="stat-box"><div class="stat-label">Competing Projects</div><div class="stat-value" id="stat-comp">–</div></div>
 
     <div class="section-title">Layers</div>
-    <label class="layer-row"><input type="checkbox" id="layer-lines" checked /><div class="layer-dot" style="background:#e06c75"></div>Transmission Lines</label>
-    <label class="layer-row"><input type="checkbox" id="layer-cps" checked /><div class="layer-dot" style="background:#61afef"></div>Substations</label>
+    <label class="layer-row"><input type="checkbox" id="layer-lines" checked /><div class="layer-dot" style="background:#f08020"></div>Transmission Lines</label>
+    <label class="layer-row"><input type="checkbox" id="layer-cps" checked /><div class="layer-dot" style="background:#d84040"></div>Substations</label>
     <label class="layer-row"><input type="checkbox" id="layer-sub-labels" checked /><div class="layer-dot" style="background:#8b949e;border-radius:2px"></div>Substation Names</label>
     <label class="layer-row"><input type="checkbox" id="layer-comp" checked /><div class="layer-dot" style="background:#f0883e;border:2px solid #fff;border-radius:2px"></div>Competing Projects</label>
 
@@ -202,11 +202,12 @@
     <button id="mlf-mode-btn" class="toggle-btn active">MLF Heatmap ON</button>
 
     <div class="section-title">Legend – Lines</div>
-    <div class="legend-item"><div class="legend-line" style="background:#e06c75;height:4px"></div>500 kV</div>
-    <div class="legend-item"><div class="legend-line" style="background:#e5c07b;height:3px"></div>330 / 275 kV</div>
-    <div class="legend-item"><div class="legend-line" style="background:#98c379;height:2px"></div>220 kV</div>
-    <div class="legend-item"><div class="legend-line" style="background:#61afef;height:2px"></div>132 kV</div>
-    <div class="legend-item"><div class="legend-line" style="background:#56b6c2;height:1px"></div>66 kV and below</div>
+    <div class="legend-item"><div class="legend-line" style="background:#ffe033;height:4px"></div>500 kV</div>
+    <div class="legend-item"><div class="legend-line" style="background:#f08020;height:3px"></div>330 kV</div>
+    <div class="legend-item"><div class="legend-line" style="background:#d040c0;height:3px"></div>275 kV</div>
+    <div class="legend-item"><div class="legend-line" style="background:#4496e0;height:2px"></div>220 kV</div>
+    <div class="legend-item"><div class="legend-line" style="background:#d84040;height:2px"></div>132 / 110 kV</div>
+    <div class="legend-item"><div class="legend-line" style="background:#8b5e3c;height:1px"></div>66 kV and below</div>
 
     <div class="section-title">Legend – % Loading</div>
     <div class="legend-item"><div class="legend-line" style="background:#3fb950;height:4px"></div>&lt; 65%</div>
@@ -214,10 +215,18 @@
     <div class="legend-item"><div class="legend-line" style="background:#f85149;height:4px"></div>&gt; 85%</div>
     <div style="font-size:11px;color:#8b949e;margin-top:3px">VIC only — max demand snapshot</div>
 
-    <div class="section-title">Legend – MLF</div>
-    <div class="legend-item"><div class="legend-line" style="background:#3fb950;height:10px;border-radius:50%;width:10px"></div>&gt; 0.97</div>
-    <div class="legend-item"><div class="legend-line" style="background:#d29922;height:10px;border-radius:50%;width:10px"></div>0.93 – 0.97</div>
-    <div class="legend-item"><div class="legend-line" style="background:#f85149;height:10px;border-radius:50%;width:10px"></div>&lt; 0.93</div>
+    <div class="section-title">Legend – Substations</div>
+    <div class="legend-item"><div class="legend-line" style="background:#ffe033;height:8px;border-radius:50%;width:8px"></div>500 kV</div>
+    <div class="legend-item"><div class="legend-line" style="background:#f08020;height:8px;border-radius:50%;width:8px"></div>330 kV</div>
+    <div class="legend-item"><div class="legend-line" style="background:#d040c0;height:8px;border-radius:50%;width:8px"></div>275 kV</div>
+    <div class="legend-item"><div class="legend-line" style="background:#4496e0;height:8px;border-radius:50%;width:8px"></div>220 kV</div>
+    <div class="legend-item"><div class="legend-line" style="background:#d84040;height:8px;border-radius:50%;width:8px"></div>132 / 110 kV</div>
+    <div class="legend-item"><div class="legend-line" style="background:#8b5e3c;height:8px;border-radius:50%;width:8px"></div>66 kV and below</div>
+
+    <div class="section-title">Legend – MLF (when ON)</div>
+    <div class="legend-item"><div class="legend-line" style="background:#3fb950;height:8px;border-radius:50%;width:8px"></div>&gt; 0.97</div>
+    <div class="legend-item"><div class="legend-line" style="background:#d29922;height:8px;border-radius:50%;width:8px"></div>0.93 – 0.97</div>
+    <div class="legend-item"><div class="legend-line" style="background:#f85149;height:8px;border-radius:50%;width:8px"></div>&lt; 0.93</div>
 
     <div class="section-title">Legend – Competing Projects</div>
     <div class="legend-item"><div class="legend-line" style="background:#3fb950;height:10px;border-radius:2px;width:10px;border:1.5px solid #fff"></div>Operating</div>
@@ -270,11 +279,12 @@ map.addControl(new maplibregl.ScaleControl({ maxWidth: 120, unit: 'metric' }), '
 // ─────────────────────────────────────────
 function lineColour(kv) {
   const v = parseFloat(kv) || 0;
-  if (v >= 500) return '#e06c75';
-  if (v >= 275) return '#e5c07b';
-  if (v >= 220) return '#98c379';
-  if (v >= 132) return '#61afef';
-  return '#56b6c2';
+  if (v >= 500) return '#ffe033';
+  if (v >= 330) return '#f08020';
+  if (v >= 275) return '#d040c0';
+  if (v >= 220) return '#4496e0';
+  if (v >= 110) return '#d84040';
+  return '#8b5e3c';
 }
 
 function lineWidth(kv) {
@@ -314,7 +324,7 @@ Promise.all([
   fetch('substations.geojson').then(r => r.json()),
   fetch('mlf_2026_27.json').then(r => r.json()),
   fetch('hhci.json').then(r => r.json()).catch(() => ({})),
-  fetch('data/competing_projects.geojson').then(r => r.json()).catch(() => ({ type: 'FeatureCollection', features: [] })),
+  fetch('competing_projects.geojson').then(r => r.json()).catch(() => ({ type: 'FeatureCollection', features: [] })),
 ]).then(([lines, cps, mlf, hhci, comp]) => {
   linesData = lines;
   cpData = cps;
@@ -359,13 +369,14 @@ function addLayers() {
     paint: {
       'line-color': [
         'interpolate', ['linear'], ['coalesce', ['get', 'voltage_kv'], 0],
-        0,   '#56b6c2',
-        66,  '#56b6c2',
-        132, '#61afef',
-        220, '#98c379',
-        275, '#e5c07b',
-        330, '#e5c07b',
-        500, '#e06c75'
+        0,   '#8b5e3c',
+        66,  '#8b5e3c',
+        110, '#d84040',
+        132, '#d84040',
+        220, '#4496e0',
+        275, '#d040c0',
+        330, '#f08020',
+        500, '#ffe033'
       ],
       'line-width': [
         'interpolate', ['linear'], ['coalesce', ['get', 'voltage_kv'], 0],
@@ -413,16 +424,20 @@ function addLayers() {
     type: 'circle',
     source: 'cps',
     paint: {
-      'circle-radius': ['interpolate', ['linear'], ['zoom'], 4, 4, 8, 7, 12, 11],
+      'circle-radius': ['interpolate', ['linear'], ['zoom'], 4, 2, 8, 4, 12, 7],
       'circle-color': [
         'case',
-        ['!=', ['get', 'mlf_gen_2026_27'], null],
-        ['interpolate', ['linear'], ['to-number', ['get', 'mlf_gen_2026_27'], 0],
-          0.85, '#f85149', 0.93, '#d29922', 0.97, '#3fb950', 1.05, '#3fb950'
-        ],
-        '#61afef'
+        // MLF heatmap overrides voltage colour when mlfMode is on — handled via setPaintProperty
+        // Default: colour by highest voltage
+        ['>=', ['to-number', ['get', 'voltage'], 0], 500], '#ffe033',
+        ['>=', ['to-number', ['get', 'voltage'], 0], 330], '#f08020',
+        ['>=', ['to-number', ['get', 'voltage'], 0], 275], '#d040c0',
+        ['>=', ['to-number', ['get', 'voltage'], 0], 220], '#4496e0',
+        ['>=', ['to-number', ['get', 'voltage'], 0], 110], '#d84040',
+        ['>=', ['to-number', ['get', 'voltage'], 0], 66],  '#8b5e3c',
+        '#8b949e'
       ],
-      'circle-stroke-width': 1.5,
+      'circle-stroke-width': 1,
       'circle-stroke-color': '#161b22',
       'circle-opacity': 0.9
     }
@@ -587,6 +602,27 @@ function bindMapEvents() {
       faults.slice(0, 3).forEach(fl => {
         html += `<div class="mlf-row"><span>${fl.voltage_kv} kV</span><span>3Ph max: ${fl.fault_3ph_max || '–'} kA | min: ${fl.fault_3ph_min || '–'} kA</span></div>`;
       });
+      html += `</div>`;
+    }
+
+    // Transformers (220 kV+ substations from PSSE)
+    if (p.xfmr_count && parseFloat(p.voltage || 0) >= 220) {
+      const ratings = tryParse(p.xfmr_ratings) || [];
+      html += `<div class="popup-section"><div class="popup-section-title">Transformers (PSSE)</div>`;
+      if (ratings.length) {
+        // Group by (kv, norm) and count
+        const grouped = {};
+        ratings.forEach(r => {
+          const key = `${r.kv}_${r.norm}`;
+          if (!grouped[key]) grouped[key] = { kv: r.kv, norm: r.norm, emerg: r.emerg, count: 0 };
+          grouped[key].count++;
+        });
+        Object.values(grouped).sort((a, b) => b.norm - a.norm).forEach(g => {
+          const emergStr = g.emerg && g.emerg !== g.norm ? ` / ${g.emerg} emerg` : '';
+          html += `<div class="mlf-row"><span>${g.count} × ${g.norm} MVA${emergStr}</span><span style="color:#8b949e">${g.kv} kV side</span></div>`;
+        });
+      }
+      html += `<div style="font-size:11px;color:#8b949e;margin-top:3px">Min normal rating across PSSE seasonal snapshots</div>`;
       html += `</div>`;
     }
 
@@ -794,6 +830,16 @@ function bindSidebar() {
     btn.classList.toggle('active', mlfMode);
     btn.textContent = mlfMode ? 'MLF Heatmap ON' : 'MLF Heatmap OFF';
 
+    const voltageColour = [
+      'case',
+      ['>=', ['to-number', ['get', 'voltage'], 0], 500], '#ffe033',
+      ['>=', ['to-number', ['get', 'voltage'], 0], 330], '#f08020',
+      ['>=', ['to-number', ['get', 'voltage'], 0], 275], '#d040c0',
+      ['>=', ['to-number', ['get', 'voltage'], 0], 220], '#4496e0',
+      ['>=', ['to-number', ['get', 'voltage'], 0], 110], '#d84040',
+      ['>=', ['to-number', ['get', 'voltage'], 0], 66],  '#8b5e3c',
+      '#8b949e'
+    ];
     if (mlfMode) {
       map.setPaintProperty('cps-layer', 'circle-color', [
         'case',
@@ -801,10 +847,14 @@ function bindSidebar() {
         ['interpolate', ['linear'], ['to-number', ['get', 'mlf_gen_2026_27'], 0],
           0.85, '#f85149', 0.93, '#d29922', 0.97, '#3fb950', 1.05, '#3fb950'
         ],
-        '#61afef'
+        ['!=', ['get', 'mlf_load_2026_27'], null],
+        ['interpolate', ['linear'], ['to-number', ['get', 'mlf_load_2026_27'], 0],
+          0.85, '#f85149', 0.93, '#d29922', 0.97, '#3fb950', 1.05, '#3fb950'
+        ],
+        voltageColour
       ]);
     } else {
-      map.setPaintProperty('cps-layer', 'circle-color', '#61afef');
+      map.setPaintProperty('cps-layer', 'circle-color', voltageColour);
     }
   });
 }
