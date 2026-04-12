@@ -152,10 +152,13 @@
     <div class="stat-box"><div class="stat-label">Transmission Lines</div><div class="stat-value" id="stat-lines">–</div></div>
     <div class="stat-box"><div class="stat-label">Substations</div><div class="stat-value" id="stat-cps">–</div></div>
     <div class="stat-box"><div class="stat-label">MLF Records</div><div class="stat-value" id="stat-mlfs">–</div></div>
+    <div class="stat-box"><div class="stat-label">Competing Projects</div><div class="stat-value" id="stat-comp">–</div></div>
 
     <div class="section-title">Layers</div>
     <label class="layer-row"><input type="checkbox" id="layer-lines" checked /><div class="layer-dot" style="background:#e06c75"></div>Transmission Lines</label>
     <label class="layer-row"><input type="checkbox" id="layer-cps" checked /><div class="layer-dot" style="background:#61afef"></div>Substations</label>
+    <label class="layer-row"><input type="checkbox" id="layer-sub-labels" checked /><div class="layer-dot" style="background:#8b949e;border-radius:2px"></div>Substation Names</label>
+    <label class="layer-row"><input type="checkbox" id="layer-comp" checked /><div class="layer-dot" style="background:#f0883e;border:2px solid #fff;border-radius:2px"></div>Competing Projects</label>
 
     <div class="section-title">Filters</div>
     <div class="filter-group">
@@ -215,6 +218,12 @@
     <div class="legend-item"><div class="legend-line" style="background:#3fb950;height:10px;border-radius:50%;width:10px"></div>&gt; 0.97</div>
     <div class="legend-item"><div class="legend-line" style="background:#d29922;height:10px;border-radius:50%;width:10px"></div>0.93 – 0.97</div>
     <div class="legend-item"><div class="legend-line" style="background:#f85149;height:10px;border-radius:50%;width:10px"></div>&lt; 0.93</div>
+
+    <div class="section-title">Legend – Competing Projects</div>
+    <div class="legend-item"><div class="legend-line" style="background:#3fb950;height:10px;border-radius:2px;width:10px;border:1.5px solid #fff"></div>Operating</div>
+    <div class="legend-item"><div class="legend-line" style="background:#d29922;height:10px;border-radius:2px;width:10px;border:1.5px solid #fff"></div>Construction</div>
+    <div class="legend-item"><div class="legend-line" style="background:#58a6ff;height:10px;border-radius:2px;width:10px;border:1.5px solid #fff"></div>Planned</div>
+    <div class="legend-item"><div class="legend-line" style="background:#6e7681;height:10px;border-radius:2px;width:10px;border:1.5px solid #fff"></div>Decommissioned / other</div>
 
   </div>
 
@@ -294,26 +303,29 @@ function mlfClass(mlf) {
 // ─────────────────────────────────────────
 // LOAD DATA
 // ─────────────────────────────────────────
-let linesData = null, cpData = null, mlfData = [];
+let linesData = null, cpData = null, mlfData = [], compData = null;
 let mlfMode = false;
 let activeFilters = { voltage: '', state: '', status: '' };
 
-const popup = new maplibregl.Popup({ closeButton: true, maxWidth: '340px' });
+const popup = new maplibregl.Popup({ closeButton: true, maxWidth: '360px' });
 
 Promise.all([
   fetch('transmission_lines.geojson').then(r => r.json()),
   fetch('substations.geojson').then(r => r.json()),
   fetch('mlf_2026_27.json').then(r => r.json()),
   fetch('hhci.json').then(r => r.json()).catch(() => ({})),
-]).then(([lines, cps, mlf, hhci]) => {
+  fetch('data/competing_projects.geojson').then(r => r.json()).catch(() => ({ type: 'FeatureCollection', features: [] })),
+]).then(([lines, cps, mlf, hhci, comp]) => {
   linesData = lines;
   cpData = cps;
   mlfData = mlf;
+  compData = comp;
   window.hhciData = hhci;
 
   document.getElementById('stat-lines').textContent = lines.features.length.toLocaleString();
   document.getElementById('stat-cps').textContent   = cps.features.length.toLocaleString();
   document.getElementById('stat-mlfs').textContent  = mlf.length.toLocaleString();
+  document.getElementById('stat-comp').textContent  = comp.features.length.toLocaleString();
   // store globally
   window.subsData = cps;
 
@@ -420,11 +432,11 @@ function addLayers() {
     id: 'cps-labels',
     type: 'symbol',
     source: 'cps',
-    minzoom: 7,
+    minzoom: 5,
     layout: {
-      'text-field': ['get', 'cp_name'],
+      'text-field': ['get', 'name'],
       'text-font': ['Open Sans Regular'],
-      'text-size': 11,
+      'text-size': ['interpolate', ['linear'], ['zoom'], 5, 9, 8, 11, 12, 13],
       'text-offset': [0, 1.2],
       'text-anchor': 'top',
       'text-optional': true
@@ -433,6 +445,29 @@ function addLayers() {
       'text-color': '#e6edf3',
       'text-halo-color': '#0d1117',
       'text-halo-width': 1.5
+    }
+  });
+
+  // ── Competing projects ──────────────────────────────────────────────────
+  map.addSource('comp', { type: 'geojson', data: compData });
+
+  map.addLayer({
+    id: 'comp-layer',
+    type: 'circle',
+    source: 'comp',
+    paint: {
+      'circle-radius': ['interpolate', ['linear'], ['zoom'], 4, 4, 8, 6, 12, 9],
+      'circle-color': [
+        'match', ['get', 'dev_status'],
+        'Operating',      '#3fb950',
+        'Construction',   '#d29922',
+        'Planned',        '#58a6ff',
+        'Decommissioned', '#6e7681',
+        '#8b949e'
+      ],
+      'circle-stroke-width': 1.5,
+      'circle-stroke-color': '#ffffff',
+      'circle-opacity': 0.85
     }
   });
 
@@ -459,10 +494,10 @@ function bindMapEvents() {
     html += `</div>`;
 
     // Ratings section
-    const hasRatings = p.best_norm_rating_mva || p.dsn_cont_rating_n_mva || p.current_rating_mva;
+    const hasRatings = p.best_norm_rating_mva || p.dsn_cont_rating_n_mva || p.current_rating_mva || p.psse_norm_min_mva;
     if (hasRatings) {
-      const normRating  = p.best_norm_rating_mva  || p.dsn_cont_rating_n_mva  || p.current_rating_mva;
-      const emergRating = p.best_emerg_rating_mva || p.dsn_st_rating_n1_mva   || p.emergency_rating_mva;
+      const normRating  = p.best_norm_rating_mva  || p.dsn_cont_rating_n_mva  || p.current_rating_mva || p.psse_norm_min_mva;
+      const emergRating = p.best_emerg_rating_mva || p.dsn_st_rating_n1_mva   || p.emergency_rating_mva || p.psse_emerg_min_mva;
       const loadMW      = p.dsn_loading_n_mw;
       const loadPct     = p.best_loading_pct || p.dsn_loading_pct_n;
       const loadPctN1   = p.dsn_loading_pct_n1;
@@ -493,6 +528,26 @@ function bindMapEvents() {
         html += `<div style="font-size:11px;color:#8b949e;margin-top:5px">Critical contingency: ${p.dsn_critical_cont}</div>`;
       }
       html += `</div>`;
+    }
+
+    // PSSE seasonal ratings
+    if (p.psse_norm_min_mva) {
+      const normMin = parseFloat(p.psse_norm_min_mva);
+      const normMax = p.psse_norm_max_mva ? parseFloat(p.psse_norm_max_mva) : null;
+      const emergMin = p.psse_emerg_min_mva ? parseFloat(p.psse_emerg_min_mva) : null;
+      const emergMax = p.psse_emerg_max_mva ? parseFloat(p.psse_emerg_max_mva) : null;
+      html += `<div class="popup-section"><div class="popup-section-title">PSSE Ratings (${p.psse_seasons || 8} seasonal snapshots)</div>`;
+      html += `<div class="popup-grid">`;
+      const normStr = (normMax && normMax !== normMin) ? `${normMin.toLocaleString()} – ${normMax.toLocaleString()} MVA` : `${normMin.toLocaleString()} MVA`;
+      html += `<span class="popup-label">Normal (N)</span><span class="popup-value">${normStr}</span>`;
+      if (emergMin) {
+        const emergStr = (emergMax && emergMax !== emergMin) ? `${emergMin.toLocaleString()} – ${emergMax.toLocaleString()} MVA` : `${emergMin.toLocaleString()} MVA`;
+        html += `<span class="popup-label">Emergency (N-1)</span><span class="popup-value">${emergStr}</span>`;
+      }
+      if (p.psse_short_mva) {
+        html += `<span class="popup-label">Short-term (15 min)</span><span class="popup-value">${parseFloat(p.psse_short_mva).toLocaleString()} MVA</span>`;
+      }
+      html += `</div><div style="font-size:11px;color:#8b949e;margin-top:4px">Range = min–max across 8 seasonal snapshots (2024-25)</div></div>`;
     }
 
     // Projects
@@ -598,11 +653,73 @@ function bindMapEvents() {
     popup.setLngLat(e.lngLat).setHTML(html).addTo(map);
   });
 
+  // Competing project click
+  map.on('click', 'comp-layer', e => {
+    const p = e.features[0].properties;
+    const statusColour = {
+      'Operating': '#3fb950', 'Construction': '#d29922',
+      'Planned': '#58a6ff', 'Decommissioned': '#6e7681'
+    }[p.dev_status] || '#8b949e';
+
+    let html = `<div class="popup-title">${p.name || 'Competing Project'}</div>`;
+    html += `<div class="popup-grid">`;
+    if (p.company)     html += `<span class="popup-label">Company</span><span class="popup-value">${p.company}</span>`;
+    if (p.developer && p.developer !== p.company)
+                       html += `<span class="popup-label">Developer</span><span class="popup-value">${p.developer}</span>`;
+    html += `<span class="popup-label">Technology</span><span class="popup-value">${p.energy_source || '–'}</span>`;
+    if (p.capacity_mw) html += `<span class="popup-label">Capacity</span><span class="popup-value">${parseFloat(p.capacity_mw).toLocaleString()} MWac</span>`;
+    html += `<span class="popup-label">State</span><span class="popup-value">${p.state || '–'}</span>`;
+    html += `<span class="popup-label">Status</span><span class="popup-value" style="color:${statusColour};font-weight:600">${p.dev_status || '–'}</span>`;
+    if (p.startup_date) html += `<span class="popup-label">Start-Up</span><span class="popup-value">${p.startup_date}</span>`;
+    html += `</div>`;
+
+    // KCI section
+    if (p.kci_status || p.kci_type) {
+      const kciColours = {
+        'Active': '#3fb950', 'Complete': '#58a6ff',
+        'Withdrawn': '#f85149', 'Cancelled': '#f85149',
+        'On-Hold': '#d29922', 'On-hold': '#d29922', 'On Hold': '#d29922', 'OnHold': '#d29922',
+        'PWA Delivery': '#3fb950'
+      };
+      const kciCol = kciColours[p.kci_status] || '#8b949e';
+      html += `<div class="popup-section"><div class="popup-section-title">KCI Status</div>`;
+      html += `<div class="popup-grid">`;
+      if (p.kci_type)   html += `<span class="popup-label">Type</span><span class="popup-value">${p.kci_type}</span>`;
+      if (p.kci_status) html += `<span class="popup-label">Activity</span><span class="popup-value" style="color:${kciCol};font-weight:600">${p.kci_status}</span>`;
+      if (p.kci_tnsp)   html += `<span class="popup-label">TNSP</span><span class="popup-value">${p.kci_tnsp}</span>`;
+      if (p.kci_region) html += `<span class="popup-label">Region</span><span class="popup-value">${p.kci_region}</span>`;
+      if (p.kci_id)     html += `<span class="popup-label">KCI ID</span><span class="popup-value">${p.kci_id}</span>`;
+      html += `</div></div>`;
+    }
+
+    // MLF section (only if matched to an operational project)
+    if (p.mlf_gen_2026_27 || p.mlf_load_2026_27) {
+      html += `<div class="popup-section"><div class="popup-section-title">Marginal Loss Factors 2026-27</div>`;
+      if (p.mlf_gen_2026_27) {
+        const cls = mlfClass(parseFloat(p.mlf_gen_2026_27));
+        const chg = p.mlf_change != null
+          ? `<span class="${parseFloat(p.mlf_change) >= 0 ? 'mlf-change-up' : 'mlf-change-down'}">${parseFloat(p.mlf_change) >= 0 ? '▲' : '▼'}${Math.abs(parseFloat(p.mlf_change)).toFixed(4)}</span>`
+          : '';
+        html += `<div class="mlf-row"><span>Generator${p.mlf_duid ? ` (${p.mlf_duid})` : ''}</span><span class="${cls}">${parseFloat(p.mlf_gen_2026_27).toFixed(4)} ${chg}</span></div>`;
+      }
+      if (p.mlf_load_2026_27) {
+        const cls = mlfClass(parseFloat(p.mlf_load_2026_27));
+        html += `<div class="mlf-row"><span>Load</span><span class="${cls}">${parseFloat(p.mlf_load_2026_27).toFixed(4)}</span></div>`;
+      }
+      if (p.mlf_cp_id) html += `<div style="font-size:11px;color:#8b949e;margin-top:4px">Connection point: ${p.mlf_cp_id}</div>`;
+      html += `</div>`;
+    }
+
+    popup.setLngLat(e.lngLat).setHTML(html).addTo(map);
+  });
+
   // Cursors
   map.on('mouseenter', 'lines-layer', () => map.getCanvas().style.cursor = 'pointer');
   map.on('mouseleave', 'lines-layer', () => map.getCanvas().style.cursor = '');
   map.on('mouseenter', 'cps-layer',   () => map.getCanvas().style.cursor = 'pointer');
   map.on('mouseleave', 'cps-layer',   () => map.getCanvas().style.cursor = '');
+  map.on('mouseenter', 'comp-layer',  () => map.getCanvas().style.cursor = 'pointer');
+  map.on('mouseleave', 'comp-layer',  () => map.getCanvas().style.cursor = '');
 
   // Info bar
   map.on('move', () => {
@@ -647,6 +764,12 @@ function bindSidebar() {
   document.getElementById('layer-cps').addEventListener('change', e => {
     const v = e.target.checked ? 'visible' : 'none';
     ['cps-layer', 'cps-labels'].forEach(id => map.setLayoutProperty(id, 'visibility', v));
+  });
+  document.getElementById('layer-sub-labels').addEventListener('change', e => {
+    map.setLayoutProperty('cps-labels', 'visibility', e.target.checked ? 'visible' : 'none');
+  });
+  document.getElementById('layer-comp').addEventListener('change', e => {
+    map.setLayoutProperty('comp-layer', 'visibility', e.target.checked ? 'visible' : 'none');
   });
 
   // MLF heatmap mode
@@ -712,6 +835,12 @@ function bindSearch() {
         const coords = f.geometry.coordinates;
         const mid = coords[Math.floor(coords.length / 2)];
         hits.push({ label: f.properties.name, type: 'Line', coords: mid });
+      }
+    });
+
+    if (compData) compData.features.forEach(f => {
+      if (f.properties.name && f.properties.name.toLowerCase().includes(q)) {
+        hits.push({ label: f.properties.name, type: 'Project', coords: f.geometry.coordinates });
       }
     });
 
