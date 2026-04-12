@@ -513,6 +513,34 @@ function addLayers() {
     }
   });
 
+  // ── Competing project technology icons ───────────────────────────────
+  addTechIcons();
+
+  map.addLayer({
+    id: 'comp-icons',
+    type: 'symbol',
+    source: 'comp',
+    layout: {
+      'icon-image': [
+        'match', ['downcase', ['coalesce', ['get', 'energy_source'], '']],
+        ['solar pv', 'concentrated solar power (csp)', 'rooftop - c&i',
+         'rooftop - residential', 'solar power tower', 'floating pv'], 'tech-solar',
+        ['onshore wind', 'offshore wind'], 'tech-wind',
+        ['lithium-ion battery (lib)', 'battery (unspecified)', 'flow battery',
+         'compressed air energy storage (caes)', 'thermal energy storage (tes)'], 'tech-bess',
+        ['conventional hydro', 'pumped storage'], 'tech-hydro',
+        ['natural gas', 'gas (unspecified)', 'hydrogen electrolyzer'], 'tech-gas',
+        ['coal (unspecified)', 'black coal', 'lignite (brown coal)',
+         'waste coal', 'coal gas'], 'tech-coal',
+        ['biomass', 'biogas', 'biodegradeble waste', 'bioenergy (unspecified)', 'methane'], 'tech-biomass',
+        'tech-default'
+      ],
+      'icon-size': ['interpolate', ['linear'], ['zoom'], 4, 0.5, 8, 0.75, 12, 1.0],
+      'icon-allow-overlap': true,
+      'icon-ignore-placement': true
+    }
+  });
+
   // ── Live NEM Price layers (hidden by default) ────────────────────────
   map.addSource('nem-regions', { type: 'geojson', data: window.nemRegionsData });
   map.addSource('nem-interconnectors', { type: 'geojson', data: window.nemInterData });
@@ -947,9 +975,10 @@ function bindSidebar() {
   });
 
   // NEM price view toggle
-  const NEM_GRID_LAYERS = ['lines-layer', 'lines-hover', 'lines-loading', 'cps-layer', 'cps-labels', 'comp-layer'];
   const NEM_PRICE_LAYERS = ['nem-regions-fill', 'nem-regions-outline', 'nem-price-labels', 'nem-interconnectors-line', 'nem-flow-labels'];
-  let nemSavedVisibility = {};
+  // Checkboxes that control grid layers — unchecked when NEM view is on, restored on exit
+  const NEM_GRID_CBS = ['layer-satellite', 'layer-lines', 'layer-cps', 'layer-sub-labels', 'layer-comp'];
+  let nemSavedCbStates = {};
 
   document.getElementById('layer-nem').addEventListener('change', e => {
     const on = e.target.checked;
@@ -957,46 +986,51 @@ function bindSidebar() {
     const legendEl = document.getElementById('nem-legend');
 
     if (on) {
-      // Save and hide grid layers
-      NEM_GRID_LAYERS.forEach(id => {
-        try {
-          nemSavedVisibility[id] = map.getLayoutProperty(id, 'visibility') || 'visible';
-          map.setLayoutProperty(id, 'visibility', 'none');
-        } catch(e) {}
+      // Uncheck and fire each grid layer checkbox so its own handler hides the layers
+      NEM_GRID_CBS.forEach(id => {
+        const cb = document.getElementById(id);
+        nemSavedCbStates[id] = cb.checked;
+        if (cb.checked) { cb.checked = false; cb.dispatchEvent(new Event('change')); }
       });
+      // Also hide comp-icons (shares no checkbox)
+      try { map.setLayoutProperty('comp-icons', 'visibility', 'none'); } catch(_) {}
       // Show NEM layers
       NEM_PRICE_LAYERS.forEach(id => map.setLayoutProperty(id, 'visibility', 'visible'));
       statusEl.style.display = 'block';
       legendEl.style.display = 'block';
-      // Kick off first fetch and start polling
       fetchNEMData();
       window.nemPollTimer = setInterval(fetchNEMData, 5 * 60 * 1000);
     } else {
-      // Stop polling
       if (window.nemPollTimer) { clearInterval(window.nemPollTimer); window.nemPollTimer = null; }
-      // Hide NEM layers
       NEM_PRICE_LAYERS.forEach(id => map.setLayoutProperty(id, 'visibility', 'none'));
-      // Restore grid layers
-      NEM_GRID_LAYERS.forEach(id => {
-        try { map.setLayoutProperty(id, 'visibility', nemSavedVisibility[id] || 'visible'); } catch(e) {}
+      // Re-check grid checkboxes that were on before and fire their handlers
+      NEM_GRID_CBS.forEach(id => {
+        const cb = document.getElementById(id);
+        if (nemSavedCbStates[id] && !cb.checked) { cb.checked = true; cb.dispatchEvent(new Event('change')); }
       });
+      // Restore comp-icons if comp was visible
+      if (nemSavedCbStates['layer-comp']) {
+        try { map.setLayoutProperty('comp-icons', 'visibility', 'visible'); } catch(_) {}
+      }
       statusEl.style.display = 'none';
       legendEl.style.display = 'none';
     }
   });
 
   document.getElementById('layer-comp').addEventListener('change', e => {
-    map.setLayoutProperty('comp-layer', 'visibility', e.target.checked ? 'visible' : 'none');
+    const v = e.target.checked ? 'visible' : 'none';
+    map.setLayoutProperty('comp-layer', 'visibility', v);
+    try { map.setLayoutProperty('comp-icons', 'visibility', v); } catch(_) {}
     document.getElementById('comp-status-filters').style.opacity = e.target.checked ? '1' : '0.4';
   });
 
   function applyCompStatusFilter() {
     const checked = [...document.querySelectorAll('.comp-status-cb:checked')].map(cb => cb.value);
-    if (checked.length === 0) {
-      map.setFilter('comp-layer', ['==', 'dev_status', '__none__']);
-    } else {
-      map.setFilter('comp-layer', ['in', ['get', 'dev_status'], ['literal', checked]]);
-    }
+    const f = checked.length === 0
+      ? ['==', 'dev_status', '__none__']
+      : ['in', ['get', 'dev_status'], ['literal', checked]];
+    map.setFilter('comp-layer', f);
+    try { map.setFilter('comp-icons', f); } catch(_) {}
   }
   document.querySelectorAll('.comp-status-cb').forEach(cb => {
     cb.addEventListener('change', applyCompStatusFilter);
@@ -1208,6 +1242,125 @@ function updateNEMLayers() {
   });
   map.getSource('nem-interconnectors').setData(inters);
   map.getSource('nem-inter-points').setData(buildInterPoints(inters));
+}
+
+// ─────────────────────────────────────────
+// TECHNOLOGY ICONS (canvas-drawn, added to map sprite)
+// ─────────────────────────────────────────
+function addTechIcons() {
+  const S = 20;
+
+  function makeIcon(drawFn) {
+    const c = document.createElement('canvas');
+    c.width = S; c.height = S;
+    const ctx = c.getContext('2d');
+    // Dark halo pass for contrast on any circle colour
+    ctx.shadowColor = 'rgba(0,0,0,0.85)';
+    ctx.shadowBlur = 2;
+    drawFn(ctx, S);
+    return { width: S, height: S, data: new Uint8ClampedArray(ctx.getImageData(0, 0, S, S).data) };
+  }
+
+  // Solar — circle + 8 rays
+  map.addImage('tech-solar', makeIcon((ctx, s) => {
+    const cx = s/2, cy = s/2, r = s/5.5;
+    ctx.strokeStyle = '#ffe033'; ctx.lineWidth = 1.8;
+    for (let i = 0; i < 8; i++) {
+      const a = (i * Math.PI * 2) / 8;
+      ctx.beginPath();
+      ctx.moveTo(cx + Math.cos(a)*(r+1.5), cy + Math.sin(a)*(r+1.5));
+      ctx.lineTo(cx + Math.cos(a)*(r+4),   cy + Math.sin(a)*(r+4));
+      ctx.stroke();
+    }
+    ctx.fillStyle = '#ffe033';
+    ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.fill();
+  }));
+
+  // Wind turbine — hub + 3 elliptical blades
+  map.addImage('tech-wind', makeIcon((ctx, s) => {
+    const cx = s/2, cy = s/2;
+    ctx.fillStyle = '#e6edf3';
+    for (let i = 0; i < 3; i++) {
+      const a = (i * 2 * Math.PI / 3) - Math.PI/2;
+      ctx.save();
+      ctx.translate(cx, cy); ctx.rotate(a);
+      ctx.beginPath();
+      ctx.ellipse(0, -s/3.5, s/8, s/14, 0, 0, Math.PI*2);
+      ctx.fill();
+      ctx.restore();
+    }
+    ctx.fillStyle = '#8b949e';
+    ctx.beginPath(); ctx.arc(cx, cy, 2, 0, Math.PI*2); ctx.fill();
+  }));
+
+  // Battery — outline rect + terminal + partial fill
+  map.addImage('tech-bess', makeIcon((ctx, s) => {
+    const bw = s*0.55, bh = s*0.35, bx = (s-bw)/2, by = (s-bh)/2;
+    ctx.strokeStyle = '#e6edf3'; ctx.lineWidth = 1.5;
+    ctx.strokeRect(bx, by, bw, bh);
+    ctx.fillStyle = '#e6edf3';
+    ctx.fillRect(bx+bw, by+bh*0.3, 2.5, bh*0.4);
+    ctx.globalAlpha = 0.6;
+    ctx.fillRect(bx+2, by+2, (bw-4)*0.6, bh-4);
+    ctx.globalAlpha = 1;
+  }));
+
+  // Hydro — water-drop shape
+  map.addImage('tech-hydro', makeIcon((ctx, s) => {
+    const cx = s/2;
+    ctx.fillStyle = '#79c0ff';
+    ctx.beginPath();
+    ctx.moveTo(cx, 2);
+    ctx.bezierCurveTo(cx+s*0.33, s*0.38, cx+s*0.33, s*0.58, cx, s-2);
+    ctx.bezierCurveTo(cx-s*0.33, s*0.58, cx-s*0.33, s*0.38, cx, 2);
+    ctx.fill();
+  }));
+
+  // Gas / hydrogen — flame
+  map.addImage('tech-gas', makeIcon((ctx, s) => {
+    const cx = s/2;
+    ctx.fillStyle = '#f0883e';
+    ctx.beginPath();
+    ctx.moveTo(cx, 2);
+    ctx.bezierCurveTo(cx+s*0.3, s*0.25, cx+s*0.28, s*0.5, cx+s*0.12, s*0.62);
+    ctx.bezierCurveTo(cx+s*0.22, s*0.45, cx+s*0.08, s*0.38, cx, s-2);
+    ctx.bezierCurveTo(cx-s*0.08, s*0.38, cx-s*0.22, s*0.45, cx-s*0.12, s*0.62);
+    ctx.bezierCurveTo(cx-s*0.28, s*0.5, cx-s*0.3, s*0.25, cx, 2);
+    ctx.fill();
+  }));
+
+  // Coal — filled hexagon
+  map.addImage('tech-coal', makeIcon((ctx, s) => {
+    const cx = s/2, cy = s/2, r = s/3;
+    ctx.fillStyle = '#8b949e';
+    ctx.beginPath();
+    for (let i = 0; i < 6; i++) {
+      const a = (i * Math.PI / 3) - Math.PI/6;
+      i === 0 ? ctx.moveTo(cx+Math.cos(a)*r, cy+Math.sin(a)*r)
+              : ctx.lineTo(cx+Math.cos(a)*r, cy+Math.sin(a)*r);
+    }
+    ctx.closePath(); ctx.fill();
+  }));
+
+  // Biomass — leaf
+  map.addImage('tech-biomass', makeIcon((ctx, s) => {
+    const cx = s/2;
+    ctx.fillStyle = '#3fb950';
+    ctx.beginPath();
+    ctx.moveTo(cx, 2);
+    ctx.bezierCurveTo(cx+s*0.4, s*0.2, cx+s*0.4, s*0.7, cx, s-2);
+    ctx.bezierCurveTo(cx-s*0.4, s*0.7, cx-s*0.4, s*0.2, cx, 2);
+    ctx.fill();
+    // midrib
+    ctx.strokeStyle = 'rgba(0,0,0,0.3)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(cx, 2); ctx.lineTo(cx, s-2); ctx.stroke();
+  }));
+
+  // Default — small circle
+  map.addImage('tech-default', makeIcon((ctx, s) => {
+    ctx.fillStyle = 'rgba(255,255,255,0.6)';
+    ctx.beginPath(); ctx.arc(s/2, s/2, s/5, 0, Math.PI*2); ctx.fill();
+  }));
 }
 
 function buildInterPoints(interGj) {
