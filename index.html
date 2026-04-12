@@ -148,16 +148,14 @@
   <!-- ── Sidebar ── -->
   <div id="sidebar">
 
-    <div class="section-title">Stats</div>
-    <div class="stat-box"><div class="stat-label">Transmission Lines</div><div class="stat-value" id="stat-lines">–</div></div>
-    <div class="stat-box"><div class="stat-label">Substations</div><div class="stat-value" id="stat-cps">–</div></div>
-    <div class="stat-box"><div class="stat-label">MLF Records</div><div class="stat-value" id="stat-mlfs">–</div></div>
-    <div class="stat-box"><div class="stat-label">Competing Projects</div><div class="stat-value" id="stat-comp">–</div></div>
-
     <div class="section-title">Layers</div>
+    <label class="layer-row"><input type="checkbox" id="layer-satellite" /><div class="layer-dot" style="background:linear-gradient(135deg,#4a7c59,#2d4a8a);border-radius:2px"></div>Satellite</label>
     <label class="layer-row"><input type="checkbox" id="layer-lines" checked /><div class="layer-dot" style="background:#f08020"></div>Transmission Lines</label>
     <label class="layer-row"><input type="checkbox" id="layer-cps" checked /><div class="layer-dot" style="background:#d84040"></div>Substations</label>
     <label class="layer-row"><input type="checkbox" id="layer-sub-labels" checked /><div class="layer-dot" style="background:#8b949e;border-radius:2px"></div>Substation Names</label>
+    <label class="layer-row"><input type="checkbox" id="layer-nem" /><div class="layer-dot" style="background:linear-gradient(135deg,#3fb950,#d29922,#f85149);border-radius:2px"></div>Live NEM Prices</label>
+    <div id="nem-status" style="font-size:11px;color:#8b949e;padding:1px 0 4px 20px;display:none">–</div>
+
     <label class="layer-row"><input type="checkbox" id="layer-comp" checked /><div class="layer-dot" style="background:#f0883e;border:2px solid #fff;border-radius:2px"></div>Competing Projects</label>
     <div id="comp-status-filters" style="padding:4px 0 4px 20px;display:flex;flex-wrap:wrap;gap:4px">
       <label style="font-size:11px;display:flex;align-items:center;gap:3px;cursor:pointer"><input type="checkbox" class="comp-status-cb" value="Operating" checked /><span style="color:#3fb950">Operating</span></label>
@@ -242,6 +240,17 @@
     <div class="legend-item"><div class="legend-line" style="background:#c080ff;height:10px;border-radius:2px;width:10px;border:1.5px solid #fff"></div>Repowering</div>
     <div class="legend-item"><div class="legend-line" style="background:#6e7681;height:10px;border-radius:2px;width:10px;border:1.5px solid #fff"></div>Decommissioned / other</div>
 
+    <div id="nem-legend" style="display:none">
+      <div class="section-title">Legend – NEM Spot Price</div>
+      <div class="legend-item"><div class="legend-line" style="background:#9b59b6;height:12px;border-radius:3px;width:14px"></div>Negative</div>
+      <div class="legend-item"><div class="legend-line" style="background:#3fb950;height:12px;border-radius:3px;width:14px"></div>&lt; $50/MWh</div>
+      <div class="legend-item"><div class="legend-line" style="background:#d29922;height:12px;border-radius:3px;width:14px"></div>$50 – $150</div>
+      <div class="legend-item"><div class="legend-line" style="background:#f0883e;height:12px;border-radius:3px;width:14px"></div>$150 – $300</div>
+      <div class="legend-item"><div class="legend-line" style="background:#f85149;height:12px;border-radius:3px;width:14px"></div>$300 – $1,000</div>
+      <div class="legend-item"><div class="legend-line" style="background:#ff0000;height:12px;border-radius:3px;width:14px"></div>&gt; $1,000</div>
+      <div class="legend-item"><div class="legend-line" style="background:#58a6ff;height:3px;width:24px;border-radius:2px"></div>Interconnector flow</div>
+    </div>
+
   </div>
 
   <!-- ── Map ── -->
@@ -271,9 +280,18 @@ const map = new maplibregl.Map({
         tiles: ['https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png'],
         tileSize: 256,
         attribution: '© OpenStreetMap contributors, © CARTO'
+      },
+      'esri-satellite': {
+        type: 'raster',
+        tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
+        tileSize: 256,
+        attribution: '© Esri, Maxar, Earthstar Geographics'
       }
     },
-    layers: [{ id: 'background', type: 'raster', source: 'carto-dark' }]
+    layers: [
+      { id: 'background', type: 'raster', source: 'carto-dark' },
+      { id: 'satellite', type: 'raster', source: 'esri-satellite', layout: { visibility: 'none' } }
+    ]
   },
   center: [134.5, -26.5],
   zoom: 4.5
@@ -333,17 +351,17 @@ Promise.all([
   fetch('mlf_2026_27.json').then(r => r.json()),
   fetch('hhci.json').then(r => r.json()).catch(() => ({})),
   fetch('competing_projects.geojson').then(r => r.json()).catch(() => ({ type: 'FeatureCollection', features: [] })),
-]).then(([lines, cps, mlf, hhci, comp]) => {
+  fetch('nem_regions.geojson').then(r => r.json()).catch(() => ({ type: 'FeatureCollection', features: [] })),
+  fetch('nem_interconnectors.geojson').then(r => r.json()).catch(() => ({ type: 'FeatureCollection', features: [] })),
+]).then(([lines, cps, mlf, hhci, comp, nemRegions, nemInter]) => {
   linesData = lines;
   cpData = cps;
   mlfData = mlf;
   compData = comp;
   window.hhciData = hhci;
+  window.nemRegionsData = nemRegions;
+  window.nemInterData = nemInter;
 
-  document.getElementById('stat-lines').textContent = lines.features.length.toLocaleString();
-  document.getElementById('stat-cps').textContent   = cps.features.length.toLocaleString();
-  document.getElementById('stat-mlfs').textContent  = mlf.length.toLocaleString();
-  document.getElementById('stat-comp').textContent  = comp.features.length.toLocaleString();
   // store globally
   window.subsData = cps;
 
@@ -492,6 +510,79 @@ function addLayers() {
       'circle-stroke-width': 1.5,
       'circle-stroke-color': '#ffffff',
       'circle-opacity': 0.85
+    }
+  });
+
+  // ── Live NEM Price layers (hidden by default) ────────────────────────
+  map.addSource('nem-regions', { type: 'geojson', data: window.nemRegionsData });
+  map.addSource('nem-interconnectors', { type: 'geojson', data: window.nemInterData });
+
+  map.addLayer({
+    id: 'nem-regions-fill',
+    type: 'fill',
+    source: 'nem-regions',
+    layout: { visibility: 'none' },
+    paint: {
+      'fill-color': ['coalesce', ['get', 'price_color'], '#30363d'],
+      'fill-opacity': 0.55
+    }
+  });
+
+  map.addLayer({
+    id: 'nem-regions-outline',
+    type: 'line',
+    source: 'nem-regions',
+    layout: { visibility: 'none' },
+    paint: { 'line-color': '#8b949e', 'line-width': 1.5, 'line-opacity': 0.7 }
+  });
+
+  map.addLayer({
+    id: 'nem-price-labels',
+    type: 'symbol',
+    source: 'nem-regions',
+    layout: {
+      visibility: 'none',
+      'text-field': ['coalesce', ['get', 'price_label'], ['get', 'short']],
+      'text-font': ['Open Sans Bold'],
+      'text-size': 15,
+      'text-anchor': 'center',
+      'text-allow-overlap': true
+    },
+    paint: {
+      'text-color': '#ffffff',
+      'text-halo-color': 'rgba(0,0,0,0.75)',
+      'text-halo-width': 2
+    }
+  });
+
+  map.addLayer({
+    id: 'nem-interconnectors-line',
+    type: 'line',
+    source: 'nem-interconnectors',
+    layout: { visibility: 'none', 'line-join': 'round', 'line-cap': 'round' },
+    paint: {
+      'line-color': '#58a6ff',
+      'line-width': ['interpolate', ['linear'], ['zoom'], 4, 3, 8, 5],
+      'line-opacity': 0.9
+    }
+  });
+
+  map.addLayer({
+    id: 'nem-flow-labels',
+    type: 'symbol',
+    source: 'nem-interconnectors',
+    layout: {
+      visibility: 'none',
+      'text-field': ['coalesce', ['get', 'flow_label'], ['get', 'name']],
+      'text-font': ['Open Sans Regular'],
+      'text-size': 11,
+      'symbol-placement': 'line-center',
+      'text-offset': [0, -1.5]
+    },
+    paint: {
+      'text-color': '#79c0ff',
+      'text-halo-color': 'rgba(0,0,0,0.9)',
+      'text-halo-width': 2
     }
   });
 
@@ -758,13 +849,41 @@ function bindMapEvents() {
     popup.setLngLat(e.lngLat).setHTML(html).addTo(map);
   });
 
+  // NEM region click
+  map.on('click', 'nem-regions-fill', e => {
+    const p = e.features[0].properties;
+    const rid = p.regionid;
+    const d = window.nemRegionData ? window.nemRegionData[rid] : null;
+    let html = `<div class="popup-title">${p.name || rid}</div>`;
+    html += `<div class="popup-grid">`;
+    if (d) {
+      const price = d.PRICE != null ? `$${parseFloat(d.PRICE).toFixed(2)}/MWh` : '–';
+      const demand = d.TOTALDEMAND != null ? `${Math.round(d.TOTALDEMAND).toLocaleString()} MW` : '–';
+      const netInt = d.NETINTERCHANGE != null ? `${Math.round(d.NETINTERCHANGE).toLocaleString()} MW` : '–';
+      const priceCol = nemPriceColor(d.PRICE);
+      html += `<span class="popup-label">Spot Price</span><span class="popup-value" style="color:${priceCol};font-weight:700">${price}</span>`;
+      html += `<span class="popup-label">Total Demand</span><span class="popup-value">${demand}</span>`;
+      html += `<span class="popup-label">Net Interchange</span><span class="popup-value">${netInt}</span>`;
+    } else {
+      html += `<span class="popup-label">Region</span><span class="popup-value">${p.short || rid}</span>`;
+      html += `<span class="popup-label">Data</span><span class="popup-value" style="color:#8b949e">Enable NEM layer to fetch live data</span>`;
+    }
+    html += `</div>`;
+    if (d && d.SETTLEMENTDATE) {
+      html += `<div style="font-size:11px;color:#8b949e;margin-top:8px">Settlement: ${d.SETTLEMENTDATE}</div>`;
+    }
+    popup.setLngLat(e.lngLat).setHTML(html).addTo(map);
+  });
+
   // Cursors
-  map.on('mouseenter', 'lines-layer', () => map.getCanvas().style.cursor = 'pointer');
-  map.on('mouseleave', 'lines-layer', () => map.getCanvas().style.cursor = '');
-  map.on('mouseenter', 'cps-layer',   () => map.getCanvas().style.cursor = 'pointer');
-  map.on('mouseleave', 'cps-layer',   () => map.getCanvas().style.cursor = '');
-  map.on('mouseenter', 'comp-layer',  () => map.getCanvas().style.cursor = 'pointer');
-  map.on('mouseleave', 'comp-layer',  () => map.getCanvas().style.cursor = '');
+  map.on('mouseenter', 'lines-layer',        () => map.getCanvas().style.cursor = 'pointer');
+  map.on('mouseleave', 'lines-layer',        () => map.getCanvas().style.cursor = '');
+  map.on('mouseenter', 'cps-layer',          () => map.getCanvas().style.cursor = 'pointer');
+  map.on('mouseleave', 'cps-layer',          () => map.getCanvas().style.cursor = '');
+  map.on('mouseenter', 'comp-layer',         () => map.getCanvas().style.cursor = 'pointer');
+  map.on('mouseleave', 'comp-layer',         () => map.getCanvas().style.cursor = '');
+  map.on('mouseenter', 'nem-regions-fill',   () => map.getCanvas().style.cursor = 'pointer');
+  map.on('mouseleave', 'nem-regions-fill',   () => map.getCanvas().style.cursor = '');
 
   // Info bar
   map.on('move', () => {
@@ -813,6 +932,54 @@ function bindSidebar() {
   document.getElementById('layer-sub-labels').addEventListener('change', e => {
     map.setLayoutProperty('cps-labels', 'visibility', e.target.checked ? 'visible' : 'none');
   });
+  document.getElementById('layer-satellite').addEventListener('change', e => {
+    const on = e.target.checked;
+    map.setLayoutProperty('satellite', 'visibility', on ? 'visible' : 'none');
+    map.setLayoutProperty('background', 'visibility', on ? 'none' : 'visible');
+    // Boost label halos on satellite for legibility
+    map.setPaintProperty('cps-labels', 'text-halo-width', on ? 2 : 1);
+    map.setPaintProperty('cps-labels', 'text-halo-color', on ? 'rgba(0,0,0,0.85)' : 'rgba(0,0,0,0.6)');
+  });
+
+  // NEM price view toggle
+  const NEM_GRID_LAYERS = ['lines-layer', 'lines-hover', 'lines-loading', 'cps-layer', 'cps-labels', 'comp-layer'];
+  const NEM_PRICE_LAYERS = ['nem-regions-fill', 'nem-regions-outline', 'nem-price-labels', 'nem-interconnectors-line', 'nem-flow-labels'];
+  let nemSavedVisibility = {};
+
+  document.getElementById('layer-nem').addEventListener('change', e => {
+    const on = e.target.checked;
+    const statusEl = document.getElementById('nem-status');
+    const legendEl = document.getElementById('nem-legend');
+
+    if (on) {
+      // Save and hide grid layers
+      NEM_GRID_LAYERS.forEach(id => {
+        try {
+          nemSavedVisibility[id] = map.getLayoutProperty(id, 'visibility') || 'visible';
+          map.setLayoutProperty(id, 'visibility', 'none');
+        } catch(e) {}
+      });
+      // Show NEM layers
+      NEM_PRICE_LAYERS.forEach(id => map.setLayoutProperty(id, 'visibility', 'visible'));
+      statusEl.style.display = 'block';
+      legendEl.style.display = 'block';
+      // Kick off first fetch and start polling
+      fetchNEMData();
+      window.nemPollTimer = setInterval(fetchNEMData, 5 * 60 * 1000);
+    } else {
+      // Stop polling
+      if (window.nemPollTimer) { clearInterval(window.nemPollTimer); window.nemPollTimer = null; }
+      // Hide NEM layers
+      NEM_PRICE_LAYERS.forEach(id => map.setLayoutProperty(id, 'visibility', 'none'));
+      // Restore grid layers
+      NEM_GRID_LAYERS.forEach(id => {
+        try { map.setLayoutProperty(id, 'visibility', nemSavedVisibility[id] || 'visible'); } catch(e) {}
+      });
+      statusEl.style.display = 'none';
+      legendEl.style.display = 'none';
+    }
+  });
+
   document.getElementById('layer-comp').addEventListener('change', e => {
     map.setLayoutProperty('comp-layer', 'visibility', e.target.checked ? 'visible' : 'none');
     document.getElementById('comp-status-filters').style.opacity = e.target.checked ? '1' : '0.4';
@@ -946,6 +1113,95 @@ function tryParse(val) {
   if (!val || val === 'null' || val === '[]') return null;
   if (typeof val === 'object') return val;
   try { return JSON.parse(val.replace(/'/g, '"')); } catch { return null; }
+}
+
+// ─────────────────────────────────────────
+// LIVE NEM DATA
+// ─────────────────────────────────────────
+const NEM_API = 'https://visualisations.aemo.com.au/aemo/apps/api/report/ELEC_NEM_SUMMARY';
+window.nemRegionData = {};   // regionid → AEMO record
+window.nemFlowData   = {};   // interconnector id → flow record
+
+function nemPriceColor(price) {
+  if (price == null) return '#30363d';
+  if (price < 0)    return '#9b59b6';   // negative: purple
+  if (price < 50)   return '#3fb950';   // cheap: green
+  if (price < 150)  return '#d29922';   // medium: amber
+  if (price < 300)  return '#f0883e';   // high: orange
+  if (price < 1000) return '#f85149';   // very high: red
+  return '#ff0000';                      // extreme: bright red
+}
+
+async function fetchNEMData() {
+  const statusEl = document.getElementById('nem-status');
+  try {
+    const res = await fetch(NEM_API);
+    const json = await res.json();
+    const rows = json.ELEC_NEM_SUMMARY || json;
+
+    // Clear old flow data then repopulate (avoid stale entries)
+    window.nemFlowData = {};
+    rows.forEach(r => {
+      window.nemRegionData[r.REGIONID] = r;
+      if (r.INTERCONNECTORFLOWS) {
+        try {
+          const flows = JSON.parse(r.INTERCONNECTORFLOWS);
+          flows.forEach(f => {
+            if (!window.nemFlowData[f.name]) window.nemFlowData[f.name] = f;
+          });
+        } catch(e) {}
+      }
+    });
+
+    updateNEMLayers();
+
+    const now = new Date();
+    const t = now.toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit' });
+    if (statusEl) statusEl.textContent = `Updated ${t} · next in 5 min`;
+  } catch(err) {
+    console.warn('NEM fetch failed:', err);
+    if (statusEl) statusEl.textContent = 'Fetch failed – retrying in 5 min';
+  }
+}
+
+function updateNEMLayers() {
+  if (!map.getLayer('nem-regions-fill')) return;
+
+  // ── Update region GeoJSON with price data ──
+  const regions = JSON.parse(JSON.stringify(window.nemRegionsData));
+  regions.features.forEach(ft => {
+    const rid = ft.properties.regionid;
+    const d = window.nemRegionData[rid];
+    if (d) {
+      ft.properties.price_color = nemPriceColor(d.PRICE);
+      const priceFmt = d.PRICE != null ? `$${Math.round(d.PRICE).toLocaleString()}/MWh` : '–';
+      const demFmt   = d.TOTALDEMAND != null ? `${Math.round(d.TOTALDEMAND).toLocaleString()} MW` : '';
+      ft.properties.price_label = `${ft.properties.short}\n${priceFmt}\n${demFmt}`;
+    } else {
+      ft.properties.price_color = '#30363d';
+      ft.properties.price_label = ft.properties.short;
+    }
+  });
+  map.getSource('nem-regions').setData(regions);
+
+  // ── Update interconnector GeoJSON with flow data ──
+  const inters = JSON.parse(JSON.stringify(window.nemInterData));
+  inters.features.forEach(ft => {
+    const id  = ft.properties.id;
+    const f   = window.nemFlowData[id];
+    if (f && f.value != null) {
+      const mw  = Math.round(Math.abs(f.value));
+      const fromShort = ft.properties.from_region.replace('1', '');
+      const toShort   = ft.properties.to_region.replace('1', '');
+      const dir = f.value >= 0
+        ? `→ ${toShort} ${mw} MW`
+        : `→ ${fromShort} ${mw} MW`;
+      ft.properties.flow_label = `${ft.properties.name}\n${dir}`;
+    } else {
+      ft.properties.flow_label = ft.properties.name;
+    }
+  });
+  map.getSource('nem-interconnectors').setData(inters);
 }
 </script>
 </body>
