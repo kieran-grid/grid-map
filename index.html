@@ -203,8 +203,12 @@
     <div class="section-title">Line View</div>
     <button id="loading-mode-btn" class="toggle-btn">% Loading Layer OFF</button>
 
-    <div class="section-title">Substation View</div>
-    <button id="mlf-mode-btn" class="toggle-btn active">MLF Heatmap ON</button>
+    <div class="section-title">MLF Heatmap</div>
+    <div style="display:flex;gap:4px;margin-bottom:4px">
+      <button class="toggle-btn mlf-hm-btn active" id="mlf-hm-off"  data-mode="off"  style="flex:1;padding:4px 6px">Off</button>
+      <button class="toggle-btn mlf-hm-btn"        id="mlf-hm-gen"  data-mode="gen"  style="flex:1;padding:4px 6px">Gen</button>
+      <button class="toggle-btn mlf-hm-btn"        id="mlf-hm-load" data-mode="load" style="flex:1;padding:4px 6px">Load</button>
+    </div>
 
     <div class="section-title">Legend – Lines</div>
     <div class="legend-item"><div class="legend-line" style="background:#ffe033;height:4px"></div>500 kV</div>
@@ -228,10 +232,14 @@
     <div class="legend-item"><div class="legend-line" style="background:#d84040;height:8px;border-radius:50%;width:8px"></div>132 / 110 kV</div>
     <div class="legend-item"><div class="legend-line" style="background:#8b5e3c;height:8px;border-radius:50%;width:8px"></div>66 kV and below</div>
 
-    <div class="section-title">Legend – MLF (when ON)</div>
-    <div class="legend-item"><div class="legend-line" style="background:#3fb950;height:8px;border-radius:50%;width:8px"></div>&gt; 0.97</div>
-    <div class="legend-item"><div class="legend-line" style="background:#d29922;height:8px;border-radius:50%;width:8px"></div>0.93 – 0.97</div>
-    <div class="legend-item"><div class="legend-line" style="background:#f85149;height:8px;border-radius:50%;width:8px"></div>&lt; 0.93</div>
+    <div id="mlf-heatmap-legend" style="display:none">
+      <div class="section-title">Legend – MLF Heatmap</div>
+      <div class="legend-item"><div class="legend-line" style="background:rgb(40,185,50);height:10px;border-radius:2px;width:28px"></div>&gt; 1.04</div>
+      <div class="legend-item"><div class="legend-line" style="background:rgb(190,190,0);height:10px;border-radius:2px;width:28px"></div>0.97 – 1.04</div>
+      <div class="legend-item"><div class="legend-line" style="background:rgb(240,140,0);height:10px;border-radius:2px;width:28px"></div>0.93 – 0.97</div>
+      <div class="legend-item"><div class="legend-line" style="background:rgb(220,30,30);height:10px;border-radius:2px;width:28px"></div>&lt; 0.93</div>
+      <div style="font-size:11px;color:#8b949e;margin-top:3px">Gen: generator connection points<br>Load: substation load MLFs</div>
+    </div>
 
     <div class="section-title">Legend – Competing Projects</div>
     <div class="legend-item"><div class="legend-line" style="background:#3fb950;height:10px;border-radius:2px;width:10px;border:1.5px solid #fff"></div>Operating</div>
@@ -513,6 +521,27 @@ function addLayers() {
     }
   });
 
+  // ── MLF heatmap raster layers ─────────────────────────────────────────
+  // Bounds: [[west,north],[east,north],[east,south],[west,south]]
+  const MLF_BOUNDS = [[112.5,-10.0],[154.5,-10.0],[154.5,-44.5],[112.5,-44.5]];
+  map.addSource('mlf-gen-img',  { type: 'image', url: 'mlf_gen_heatmap.png',  coordinates: MLF_BOUNDS });
+  map.addSource('mlf-load-img', { type: 'image', url: 'mlf_load_heatmap.png', coordinates: MLF_BOUNDS });
+
+  map.addLayer({
+    id: 'mlf-gen-heatmap',
+    type: 'raster',
+    source: 'mlf-gen-img',
+    layout: { visibility: 'none' },
+    paint: { 'raster-opacity': 0.72, 'raster-fade-duration': 300 }
+  });
+  map.addLayer({
+    id: 'mlf-load-heatmap',
+    type: 'raster',
+    source: 'mlf-load-img',
+    layout: { visibility: 'none' },
+    paint: { 'raster-opacity': 0.72, 'raster-fade-duration': 300 }
+  });
+
   // ── Competing project technology icons ───────────────────────────────
   addTechIcons();
 
@@ -567,17 +596,28 @@ function addLayers() {
     paint: { 'line-color': '#8b949e', 'line-width': 1.5, 'line-opacity': 0.7 }
   });
 
+  // One label point per NEM region — avoids MultiPolygon label duplication
+  const NEM_LABEL_COORDS = {
+    'QLD1': [144.5, -22.5],
+    'NSW1': [147.5, -33.0],
+    'VIC1': [144.5, -37.0],
+    'SA1':  [135.5, -30.5],
+    'TAS1': [146.5, -42.0],
+  };
+  map.addSource('nem-region-points', { type: 'geojson', data: buildRegionPoints(window.nemRegionsData) });
+
   map.addLayer({
     id: 'nem-price-labels',
     type: 'symbol',
-    source: 'nem-regions',
+    source: 'nem-region-points',
     layout: {
       visibility: 'none',
       'text-field': ['coalesce', ['get', 'price_label'], ['get', 'short']],
       'text-font': ['Open Sans Bold'],
       'text-size': 15,
       'text-anchor': 'center',
-      'text-allow-overlap': true
+      'text-allow-overlap': true,
+      'text-ignore-placement': true
     },
     paint: {
       'text-color': '#ffffff',
@@ -976,6 +1016,7 @@ function bindSidebar() {
 
   // NEM price view toggle
   const NEM_PRICE_LAYERS = ['nem-regions-fill', 'nem-regions-outline', 'nem-price-labels', 'nem-interconnectors-line', 'nem-flow-labels'];
+  // Note: nem-region-points is a SOURCE not a layer — price label visibility is controlled via nem-price-labels
   // Checkboxes that control grid layers — unchecked when NEM view is on, restored on exit
   const NEM_GRID_CBS = ['layer-satellite', 'layer-lines', 'layer-cps', 'layer-sub-labels', 'layer-comp'];
   let nemSavedCbStates = {};
@@ -1037,9 +1078,6 @@ function bindSidebar() {
   });
   applyCompStatusFilter();
 
-  // MLF heatmap mode
-  mlfMode = true;
-
   // Loading layer toggle
   let loadingMode = false;
   document.getElementById('loading-mode-btn').addEventListener('click', () => {
@@ -1048,43 +1086,19 @@ function bindSidebar() {
     btn.textContent = loadingMode ? '% Loading Layer ON' : '% Loading Layer OFF';
     btn.classList.toggle('active', loadingMode);
     map.setLayoutProperty('lines-loading', 'visibility', loadingMode ? 'visible' : 'none');
-    // Dim voltage layer when loading layer is on
     map.setPaintProperty('lines-layer', 'line-opacity', loadingMode ? 0.25 : 0.85);
   });
 
-  document.getElementById('mlf-mode-btn').addEventListener('click', () => {
-    mlfMode = !mlfMode;
-    const btn = document.getElementById('mlf-mode-btn');
-    btn.textContent = mlfMode ? 'MLF Heatmap ON' : 'MLF Heatmap OFF';
-    btn.classList.toggle('active', mlfMode);
-    btn.textContent = mlfMode ? 'MLF Heatmap ON' : 'MLF Heatmap OFF';
-
-    const voltageColour = [
-      'case',
-      ['>=', ['to-number', ['get', 'voltage'], 0], 500], '#ffe033',
-      ['>=', ['to-number', ['get', 'voltage'], 0], 330], '#f08020',
-      ['>=', ['to-number', ['get', 'voltage'], 0], 275], '#d040c0',
-      ['>=', ['to-number', ['get', 'voltage'], 0], 220], '#4496e0',
-      ['>=', ['to-number', ['get', 'voltage'], 0], 110], '#d84040',
-      ['>=', ['to-number', ['get', 'voltage'], 0], 66],  '#8b5e3c',
-      '#8b949e'
-    ];
-    if (mlfMode) {
-      map.setPaintProperty('cps-layer', 'circle-color', [
-        'case',
-        ['!=', ['get', 'mlf_gen_2026_27'], null],
-        ['interpolate', ['linear'], ['to-number', ['get', 'mlf_gen_2026_27'], 0],
-          0.85, '#f85149', 0.93, '#d29922', 0.97, '#3fb950', 1.05, '#3fb950'
-        ],
-        ['!=', ['get', 'mlf_load_2026_27'], null],
-        ['interpolate', ['linear'], ['to-number', ['get', 'mlf_load_2026_27'], 0],
-          0.85, '#f85149', 0.93, '#d29922', 0.97, '#3fb950', 1.05, '#3fb950'
-        ],
-        voltageColour
-      ]);
-    } else {
-      map.setPaintProperty('cps-layer', 'circle-color', voltageColour);
-    }
+  // MLF heatmap — Off / Gen / Load
+  document.querySelectorAll('.mlf-hm-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const mode = btn.dataset.mode;
+      document.querySelectorAll('.mlf-hm-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      map.setLayoutProperty('mlf-gen-heatmap',  'visibility', mode === 'gen'  ? 'visible' : 'none');
+      map.setLayoutProperty('mlf-load-heatmap', 'visibility', mode === 'load' ? 'visible' : 'none');
+      document.getElementById('mlf-heatmap-legend').style.display = mode === 'off' ? 'none' : 'block';
+    });
   });
 }
 
@@ -1222,6 +1236,7 @@ function updateNEMLayers() {
     }
   });
   map.getSource('nem-regions').setData(regions);
+  map.getSource('nem-region-points').setData(buildRegionPoints(regions));
 
   // ── Update interconnector GeoJSON with flow data ──
   const inters = JSON.parse(JSON.stringify(window.nemInterData));
@@ -1361,6 +1376,27 @@ function addTechIcons() {
     ctx.fillStyle = 'rgba(255,255,255,0.6)';
     ctx.beginPath(); ctx.arc(s/2, s/2, s/5, 0, Math.PI*2); ctx.fill();
   }));
+}
+
+function buildRegionPoints(regionsGj) {
+  const LABEL_COORDS = {
+    'QLD1': [144.5, -22.5],
+    'NSW1': [147.5, -33.0],
+    'VIC1': [144.5, -37.0],
+    'SA1':  [135.5, -30.5],
+    'TAS1': [146.5, -42.0],
+  };
+  return {
+    type: 'FeatureCollection',
+    features: (regionsGj.features || []).map(ft => ({
+      type: 'Feature',
+      geometry: {
+        type: 'Point',
+        coordinates: LABEL_COORDS[ft.properties.regionid] || [135, -25]
+      },
+      properties: { ...ft.properties }
+    }))
+  };
 }
 
 function buildInterPoints(interGj) {
