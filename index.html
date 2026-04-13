@@ -149,9 +149,17 @@
   <div id="sidebar">
 
     <div class="section-title">View</div>
-    <div style="display:flex;gap:4px;margin-bottom:8px">
+    <div style="display:flex;gap:4px;margin-bottom:6px">
       <button id="view-map-btn"       class="toggle-btn active" style="flex:1;font-size:12px">Map</button>
       <button id="view-schematic-btn" class="toggle-btn"        style="flex:1;font-size:12px">Schematic</button>
+    </div>
+    <div style="font-size:10px;color:#8b949e;margin-bottom:3px;letter-spacing:0.4px">REGION</div>
+    <div id="state-nav" style="display:flex;gap:2px;margin-bottom:8px">
+      <button class="state-btn toggle-btn" data-state="QLD" style="flex:1;font-size:10px;padding:3px 2px">QLD</button>
+      <button class="state-btn toggle-btn" data-state="NSW" style="flex:1;font-size:10px;padding:3px 2px">NSW</button>
+      <button class="state-btn toggle-btn" data-state="VIC" style="flex:1;font-size:10px;padding:3px 2px">VIC</button>
+      <button class="state-btn toggle-btn" data-state="SA"  style="flex:1;font-size:10px;padding:3px 2px">SA</button>
+      <button class="state-btn toggle-btn" data-state="TAS" style="flex:1;font-size:10px;padding:3px 2px">TAS</button>
     </div>
 
     <div class="section-title">Layers</div>
@@ -239,6 +247,20 @@
       <div class="legend-item"><div class="legend-line" style="background:rgb(240,140,0);height:10px;border-radius:2px;width:28px"></div>0.93 – 0.97</div>
       <div class="legend-item"><div class="legend-line" style="background:rgb(220,30,30);height:10px;border-radius:2px;width:28px"></div>&lt; 0.93</div>
       <div style="font-size:11px;color:#8b949e;margin-top:3px">Gen: generator connection points<br>Load: substation load MLFs</div>
+    </div>
+
+    <div id="schematic-legend" style="display:none">
+      <div class="section-title">Legend – Schematic</div>
+      <div style="font-size:11px;color:#8b949e;margin-bottom:4px">Generator labels: Tech MW</div>
+      <div class="legend-item" style="font-size:11px"><span style="font-weight:700;color:#333;min-width:36px">W</span>Onshore / Offshore Wind</div>
+      <div class="legend-item" style="font-size:11px"><span style="font-weight:700;color:#333;min-width:36px">PV</span>Solar PV / CSP</div>
+      <div class="legend-item" style="font-size:11px"><span style="font-weight:700;color:#333;min-width:36px">BESS</span>Battery Storage</div>
+      <div class="legend-item" style="font-size:11px"><span style="font-weight:700;color:#333;min-width:36px">H</span>Conventional Hydro</div>
+      <div class="legend-item" style="font-size:11px"><span style="font-weight:700;color:#333;min-width:36px">PS</span>Pumped Storage</div>
+      <div class="legend-item" style="font-size:11px"><span style="font-weight:700;color:#333;min-width:36px">GT</span>Gas Turbine / OCGT</div>
+      <div class="legend-item" style="font-size:11px"><span style="font-weight:700;color:#333;min-width:36px">SG</span>Steam Generator (Coal)</div>
+      <div class="legend-item" style="font-size:11px"><span style="font-weight:700;color:#333;min-width:36px">BIO</span>Biomass / Biogas</div>
+      <div style="font-size:11px;color:#8b949e;margin-top:4px">Ring = transformer at substation<br>Labels show at zoom ≥ 6</div>
     </div>
 
     <div class="section-title">Legend – Projects</div>
@@ -646,6 +668,60 @@ function addLayers() {
       'icon-offset': [0, -18],
       'icon-allow-overlap': true,
       'icon-ignore-placement': true
+    }
+  });
+
+  // ── Generator labels (schematic mode only) ─────────────────────────
+  // Shows tech type + MW at each Operating/Construction project
+  map.addLayer({
+    id: 'gen-labels',
+    type: 'symbol',
+    source: 'comp',
+    minzoom: 6,
+    filter: ['in', ['get', 'dev_status'], ['literal', ['Operating', 'Construction']]],
+    layout: {
+      visibility: 'none',
+      'text-field': ['concat',
+        ['case',
+          ['in', ['downcase', ['coalesce', ['get', 'energy_source'], '']], ['literal',
+            ['onshore wind', 'offshore wind']]], 'W',
+          ['in', ['downcase', ['coalesce', ['get', 'energy_source'], '']], ['literal',
+            ['solar pv', 'concentrated solar power (csp)', 'rooftop - c&i',
+             'floating pv', 'solar power tower']]], 'PV',
+          ['in', ['downcase', ['coalesce', ['get', 'energy_source'], '']], ['literal',
+            ['lithium-ion battery (lib)', 'battery (unspecified)', 'flow battery',
+             'compressed air energy storage (caes)', 'thermal energy storage (tes)']]], 'BESS',
+          ['==', ['downcase', ['coalesce', ['get', 'energy_source'], '']], 'conventional hydro'], 'H',
+          ['==', ['downcase', ['coalesce', ['get', 'energy_source'], '']], 'pumped storage'], 'PS',
+          ['in', ['downcase', ['coalesce', ['get', 'energy_source'], '']], ['literal',
+            ['natural gas', 'gas (unspecified)', 'hydrogen electrolyzer']]], 'GT',
+          ['in', ['downcase', ['coalesce', ['get', 'energy_source'], '']], ['literal',
+            ['black coal', 'lignite (brown coal)', 'coal (unspecified)', 'waste coal', 'coal gas']]], 'SG',
+          ['in', ['downcase', ['coalesce', ['get', 'energy_source'], '']], ['literal',
+            ['biomass', 'biogas', 'bioenergy (unspecified)', 'methane']]], 'BIO',
+          'GEN'
+        ],
+        ' ',
+        ['case',
+          ['>', ['coalesce', ['to-number', ['get', 'capacity_mw']], 0], 0],
+          ['concat',
+            ['to-string', ['round', ['coalesce', ['to-number', ['get', 'capacity_mw']], 0]]],
+            'MW'],
+          ''
+        ]
+      ],
+      'text-font': ['Open Sans Bold'],
+      'text-size': ['interpolate', ['linear'], ['zoom'], 6, 8, 9, 10, 12, 12],
+      'text-anchor': 'left',
+      'text-offset': [1.0, 0.1],
+      'text-allow-overlap': false,
+      'text-ignore-placement': false,
+      'text-max-width': 10
+    },
+    paint: {
+      'text-color': '#1a1a2e',
+      'text-halo-color': 'rgba(240,242,245,0.9)',
+      'text-halo-width': 1.5
     }
   });
 
@@ -1466,7 +1542,7 @@ function bindSidebar() {
 
     if (on) {
       // White background — hide dark basemap
-      document.getElementById('map').style.backgroundColor = '#f0f2f5';
+      document.getElementById('map').style.backgroundColor = '#f5f5f2';
       map.setLayoutProperty('background', 'visibility', 'none');
       map.setLayoutProperty('satellite',  'visibility', 'none');
 
@@ -1477,19 +1553,32 @@ function bindSidebar() {
       ]);
       map.setPaintProperty('lines-layer', 'line-opacity', 1.0);
 
-      // Dark labels on light background
-      map.setPaintProperty('cps-labels', 'text-color',       '#1a1a2e');
-      map.setPaintProperty('cps-labels', 'text-halo-color',  'rgba(240,242,245,0.92)');
-      map.setPaintProperty('cps-labels', 'text-halo-width',  2.5);
+      // Larger substation nodes for SLD clarity
+      map.setPaintProperty('cps-layer', 'circle-radius', [
+        'interpolate', ['linear'], ['zoom'], 4, 3, 8, 6, 12, 10
+      ]);
+      map.setPaintProperty('cps-layer', 'circle-stroke-width', 1.5);
+      map.setPaintProperty('cps-layer', 'circle-stroke-color', '#888');
+
+      // Dark labels on light background, always visible, no minzoom
+      map.setLayerZoomRange('cps-labels', 0, 24);
       map.setLayoutProperty('cps-labels', 'text-optional', false);
+      map.setPaintProperty('cps-labels', 'text-color',       '#1a1a2e');
+      map.setPaintProperty('cps-labels', 'text-halo-color',  'rgba(245,245,242,0.95)');
+      map.setPaintProperty('cps-labels', 'text-halo-width',  2.5);
+      map.setLayoutProperty('cps-labels', 'text-size', [
+        'interpolate', ['linear'], ['zoom'], 4, 9, 8, 12, 12, 14
+      ]);
 
       // Show transformer rings
       map.setLayoutProperty('xfmr-layer', 'visibility', 'visible');
 
-      // Show operating + construction projects
+      // Show operating + construction projects with gen labels
       map.setLayoutProperty('comp-layer', 'visibility', 'visible');
       map.setFilter('comp-layer', ['in', ['get', 'dev_status'], ['literal', ['Operating', 'Construction']]]);
       try { map.setLayoutProperty('comp-icons', 'visibility', 'visible'); } catch(_) {}
+      map.setLayoutProperty('gen-labels', 'visibility', 'visible');
+      document.getElementById('schematic-legend').style.display = 'block';
 
     } else {
       // Restore dark map
@@ -1506,14 +1595,27 @@ function bindSidebar() {
       ]);
       map.setPaintProperty('lines-layer', 'line-opacity', 0.85);
 
+      // Restore substation node size
+      map.setPaintProperty('cps-layer', 'circle-radius', [
+        'interpolate', ['linear'], ['zoom'], 4, 2, 8, 4, 12, 7
+      ]);
+      map.setPaintProperty('cps-layer', 'circle-stroke-width', 1);
+      map.setPaintProperty('cps-layer', 'circle-stroke-color', '#161b22');
+
       // Restore label style for dark background
+      map.setLayerZoomRange('cps-labels', 5, 24);
+      map.setLayoutProperty('cps-labels', 'text-optional', true);
       map.setPaintProperty('cps-labels', 'text-color',      '#e6edf3');
       map.setPaintProperty('cps-labels', 'text-halo-color', 'rgba(0,0,0,0.6)');
       map.setPaintProperty('cps-labels', 'text-halo-width',  1);
-      map.setLayoutProperty('cps-labels', 'text-optional', true);
+      map.setLayoutProperty('cps-labels', 'text-size', [
+        'interpolate', ['linear'], ['zoom'], 5, 9, 8, 11, 12, 13
+      ]);
 
       // Hide schematic-only layers
       map.setLayoutProperty('xfmr-layer', 'visibility', 'none');
+      map.setLayoutProperty('gen-labels', 'visibility', 'none');
+      document.getElementById('schematic-legend').style.display = 'none';
 
       // Restore comp layer to user's checkbox state
       const compOn = document.getElementById('layer-comp').checked;
@@ -1531,6 +1633,26 @@ function bindSidebar() {
 
   document.getElementById('view-map-btn').addEventListener('click',       () => setSchematicMode(false));
   document.getElementById('view-schematic-btn').addEventListener('click', () => setSchematicMode(true));
+
+  // ── State navigation buttons ─────────────────────────────────────────────
+  const STATE_BOUNDS_NAV = {
+    'QLD': [137.5, -29.2, 154.0, -10.5],
+    'NSW': [140.9, -37.5, 153.6, -28.1],
+    'VIC': [140.9, -39.2, 150.0, -33.9],
+    'SA':  [129.0, -38.1, 141.0, -25.9],
+    'TAS': [143.8, -43.6, 148.5, -39.5],
+  };
+  document.querySelectorAll('.state-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const st = btn.dataset.state;
+      const b  = STATE_BOUNDS_NAV[st];
+      if (!b) return;
+      // Highlight active state button
+      document.querySelectorAll('.state-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      map.fitBounds([[b[0], b[1]], [b[2], b[3]]], { padding: 40, duration: 800 });
+    });
+  });
 
   // NEM price view toggle
   const NEM_PRICE_LAYERS = ['nem-regions-fill', 'nem-regions-outline', 'nem-price-labels', 'nem-interconnectors-line', 'nem-flow-labels'];
@@ -1551,8 +1673,9 @@ function bindSidebar() {
         nemSavedCbStates[id] = cb.checked;
         if (cb.checked) { cb.checked = false; cb.dispatchEvent(new Event('change')); }
       });
-      // Also hide comp-icons (shares no checkbox)
+      // Also hide comp-icons and gen-labels (share no checkbox)
       try { map.setLayoutProperty('comp-icons', 'visibility', 'none'); } catch(_) {}
+      map.setLayoutProperty('gen-labels', 'visibility', 'none');
       // Show NEM layers
       NEM_PRICE_LAYERS.forEach(id => map.setLayoutProperty(id, 'visibility', 'visible'));
       statusEl.style.display = 'block';
