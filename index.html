@@ -169,7 +169,7 @@
 
     <div class="section-title">Line View</div>
     <div style="display:flex;gap:4px;margin-bottom:4px">
-      <button id="loading-mode-btn"    class="toggle-btn" style="flex:1;padding:4px 4px;font-size:11px">% Loading: OFF</button>
+      <button id="loading-mode-btn"    class="toggle-btn" style="flex:1;padding:4px 4px;font-size:11px">% Loading (VIC): OFF</button>
       <button id="congestion-mode-btn" class="toggle-btn" style="flex:1;padding:4px 4px;font-size:11px">Congestion OFF</button>
     </div>
 
@@ -270,13 +270,13 @@
       <label>State</label>
       <select id="filter-state">
         <option value="">All states</option>
-        <option value="QLD">QLD</option>
-        <option value="NSW">NSW</option>
-        <option value="VIC">VIC</option>
-        <option value="SA">SA</option>
-        <option value="TAS">TAS</option>
-        <option value="WA">WA</option>
-        <option value="NT">NT</option>
+        <option value="Queensland">QLD</option>
+        <option value="New South Wales">NSW / ACT</option>
+        <option value="Victoria">VIC</option>
+        <option value="South Australia">SA</option>
+        <option value="Tasmania">TAS</option>
+        <option value="Western Australia">WA</option>
+        <option value="Northern Territory">NT</option>
       </select>
     </div>
     <div class="filter-group">
@@ -488,7 +488,7 @@ function addLayers() {
     type: 'line',
     source: 'lines',
     layout: { 'line-join': 'round', 'line-cap': 'round', 'visibility': 'none' },
-    filter: ['>', ['to-number', ['get', 'binding_pct'], 0], 1],
+    filter: ['>', ['to-number', ['get', 'binding_pct'], 0], 0],
     paint: {
       'line-color': [
         'case',
@@ -577,8 +577,8 @@ function addLayers() {
   // ── MLF heatmap raster layers ─────────────────────────────────────────
   // Bounds: [[west,north],[east,north],[east,south],[west,south]]
   const MLF_BOUNDS = [[112.5,-10.0],[154.5,-10.0],[154.5,-44.5],[112.5,-44.5]];
-  map.addSource('mlf-gen-img',  { type: 'image', url: 'mlf_gen_heatmap.png',  coordinates: MLF_BOUNDS });
-  map.addSource('mlf-load-img', { type: 'image', url: 'mlf_load_heatmap.png', coordinates: MLF_BOUNDS });
+  map.addSource('mlf-gen-img',  { type: 'image', url: 'mlf_gen_heatmap.png?v=4',  coordinates: MLF_BOUNDS });
+  map.addSource('mlf-load-img', { type: 'image', url: 'mlf_load_heatmap.png?v=4', coordinates: MLF_BOUNDS });
 
   map.addLayer({
     id: 'mlf-gen-heatmap',
@@ -633,7 +633,7 @@ function addLayers() {
     'case',
     ['>=', ['coalesce', ['get', 'voltage_kv'], 0], 500], '#ffe033',
     ['>=', ['coalesce', ['get', 'voltage_kv'], 0], 330], '#f08020',
-    ['>=', ['coalesce', ['get', 'voltage_kv'], 0], 275], '#f0a040',
+    ['>=', ['coalesce', ['get', 'voltage_kv'], 0], 275], '#d040c0',
     ['>=', ['coalesce', ['get', 'voltage_kv'], 0], 220], '#4496e0',
     ['>=', ['coalesce', ['get', 'voltage_kv'], 0], 132], '#d84040',
     ['>', ['coalesce',  ['get', 'voltage_kv'], 0], 0],   '#a060f0',
@@ -779,7 +779,7 @@ function addLayers() {
     layout: { visibility: 'none', 'line-join': 'round', 'line-cap': 'round' },
     paint: {
       'line-color': '#58a6ff',
-      'line-width': ['interpolate', ['linear'], ['zoom'], 4, 3, 8, 5],
+      'line-width': ['interpolate', ['linear'], ['zoom'], 4, 5, 8, 8],
       'line-opacity': 0.9
     }
   });
@@ -990,11 +990,16 @@ function bindMapEvents() {
     if (p.mlf_gen_2026_27 || p.mlf_load_2026_27) {
       html += `<div class="popup-section"><div class="popup-section-title">Marginal Loss Factors 2026-27</div>`;
       if (p.mlf_gen_2026_27) {
-        const cls = mlfClass(p.mlf_gen_2026_27);
+        const hasDual = p.mlf_gen_import_2026_27 != null && p.mlf_gen_export_2026_27 != null;
         const chg = p.mlf_change != null
           ? `<span class="${p.mlf_change >= 0 ? 'mlf-change-up' : 'mlf-change-down'}">${p.mlf_change >= 0 ? '▲' : '▼'}${Math.abs(p.mlf_change).toFixed(4)}</span>`
           : '';
-        html += `<div class="mlf-row"><span>Generator (${p.mlf_region})</span><span class="${cls}">${parseFloat(p.mlf_gen_2026_27).toFixed(4)} ${chg}</span></div>`;
+        if (hasDual) {
+          html += `<div class="mlf-row"><span>Export (discharge)</span><span class="${mlfClass(p.mlf_gen_export_2026_27)}">${parseFloat(p.mlf_gen_export_2026_27).toFixed(4)} ${chg}</span></div>`;
+          html += `<div class="mlf-row"><span>Import (charge)</span><span class="${mlfClass(p.mlf_gen_import_2026_27)}">${parseFloat(p.mlf_gen_import_2026_27).toFixed(4)}</span></div>`;
+        } else {
+          html += `<div class="mlf-row"><span>Generator (${p.mlf_region})</span><span class="${mlfClass(p.mlf_gen_2026_27)}">${parseFloat(p.mlf_gen_2026_27).toFixed(4)} ${chg}</span></div>`;
+        }
       }
       if (p.mlf_load_2026_27) {
         const cls = mlfClass(p.mlf_load_2026_27);
@@ -1150,17 +1155,21 @@ function bindMapEvents() {
     if (p.mlf_gen_2026_27 || p.mlf_load_2026_27) {
       html += `<div class="popup-section"><div class="popup-section-title">Marginal Loss Factors 2026-27</div>`;
       if (p.mlf_gen_2026_27) {
-        const cls = mlfClass(parseFloat(p.mlf_gen_2026_27));
+        const hasDual = p.mlf_gen_import_2026_27 != null && p.mlf_gen_export_2026_27 != null;
         const chg = p.mlf_change != null
           ? `<span class="${parseFloat(p.mlf_change) >= 0 ? 'mlf-change-up' : 'mlf-change-down'}">${parseFloat(p.mlf_change) >= 0 ? '▲' : '▼'}${Math.abs(parseFloat(p.mlf_change)).toFixed(4)}</span>`
           : '';
-        const genLabel = p.mlf_load_2026_27 ? 'Export (generation)' : `Generator${p.mlf_duid ? ` (${p.mlf_duid})` : ''}`;
-        html += `<div class="mlf-row"><span>${genLabel}${p.mlf_load_2026_27 && p.mlf_duid ? ` (${p.mlf_duid})` : ''}</span><span class="${cls}">${parseFloat(p.mlf_gen_2026_27).toFixed(4)} ${chg}</span></div>`;
+        if (hasDual) {
+          html += `<div class="mlf-row"><span>Export (discharge${p.mlf_duid ? ` · ${p.mlf_duid}` : ''})</span><span class="${mlfClass(parseFloat(p.mlf_gen_export_2026_27))}">${parseFloat(p.mlf_gen_export_2026_27).toFixed(4)} ${chg}</span></div>`;
+          html += `<div class="mlf-row"><span>Import (charge)</span><span class="${mlfClass(parseFloat(p.mlf_gen_import_2026_27))}">${parseFloat(p.mlf_gen_import_2026_27).toFixed(4)}</span></div>`;
+        } else {
+          const genLabel = `Generator${p.mlf_duid ? ` (${p.mlf_duid})` : ''}`;
+          html += `<div class="mlf-row"><span>${genLabel}</span><span class="${mlfClass(parseFloat(p.mlf_gen_2026_27))}">${parseFloat(p.mlf_gen_2026_27).toFixed(4)} ${chg}</span></div>`;
+        }
       }
       if (p.mlf_load_2026_27) {
         const cls = mlfClass(parseFloat(p.mlf_load_2026_27));
-        const loadLabel = p.mlf_gen_2026_27 ? 'Import (load)' : 'Load';
-        html += `<div class="mlf-row"><span>${loadLabel}</span><span class="${cls}">${parseFloat(p.mlf_load_2026_27).toFixed(4)}</span></div>`;
+        html += `<div class="mlf-row"><span>Load (import)</span><span class="${cls}">${parseFloat(p.mlf_load_2026_27).toFixed(4)}</span></div>`;
       }
       if (p.mlf_cp_id) html += `<div style="font-size:11px;color:#8b949e;margin-top:4px">Connection point: ${p.mlf_cp_id}</div>`;
       html += `</div>`;
@@ -1267,6 +1276,31 @@ function bindMapEvents() {
     popup.setLngLat(e.lngLat).setHTML(html).addTo(map);
   });
 
+  // Interconnector click popup
+  map.on('click', 'nem-interconnectors-line', e => {
+    const p = e.features[0].properties;
+    const posDir = `${p.from_region.replace('1','')} → ${p.to_region.replace('1','')}`;
+    const negDir = `${p.to_region.replace('1','')} → ${p.from_region.replace('1','')}`;
+    let html = `<div class="popup-title">${p.full_name}</div>`;
+    html += `<div class="popup-grid">`;
+    html += `<span class="popup-label">Type</span><span class="popup-value">${p.type} interconnector</span>`;
+    html += `<span class="popup-label">Transfer limit</span><span class="popup-value">${p.limit_pos_mw} MW (${posDir})</span>`;
+    html += `<span class="popup-label"></span><span class="popup-value">${p.limit_neg_mw} MW (${negDir})</span>`;
+
+    // Live flow if available
+    const flow = window.nemFlowData && window.nemFlowData[p.id];
+    if (flow && flow.value != null) {
+      const mw = Math.round(flow.value);
+      const dir = mw >= 0 ? posDir : negDir;
+      const pct = Math.round(Math.abs(mw) / (mw >= 0 ? p.limit_pos_mw : p.limit_neg_mw) * 100);
+      const col = pct > 90 ? '#f85149' : pct > 70 ? '#d29922' : '#3fb950';
+      html += `<span class="popup-label">Live flow</span><span class="popup-value" style="color:${col}">${Math.abs(mw)} MW → ${dir} <span style="color:#8b949e">(${pct}% of limit)</span></span>`;
+    }
+    html += `</div>`;
+    if (p.note) html += `<div style="font-size:11px;color:#8b949e;margin-top:8px;line-height:1.4">${p.note}</div>`;
+    popup.setLngLat(e.lngLat).setHTML(html).addTo(map);
+  });
+
   // ISP Upgrades click popup
   map.on('click', 'isp-point', e => showIspPopup(e));
   map.on('click', 'isp-line',  e => showIspPopup(e));
@@ -1300,8 +1334,10 @@ function bindMapEvents() {
   map.on('mouseleave', 'isp-point',          () => map.getCanvas().style.cursor = '');
   map.on('mouseenter', 'isp-line',           () => map.getCanvas().style.cursor = 'pointer');
   map.on('mouseleave', 'isp-line',           () => map.getCanvas().style.cursor = '');
-  map.on('mouseenter', 'nem-regions-fill',   () => map.getCanvas().style.cursor = 'pointer');
-  map.on('mouseleave', 'nem-regions-fill',   () => map.getCanvas().style.cursor = '');
+  map.on('mouseenter', 'nem-regions-fill',        () => map.getCanvas().style.cursor = 'pointer');
+  map.on('mouseleave', 'nem-regions-fill',        () => map.getCanvas().style.cursor = '');
+  map.on('mouseenter', 'nem-interconnectors-line',() => map.getCanvas().style.cursor = 'pointer');
+  map.on('mouseleave', 'nem-interconnectors-line',() => map.getCanvas().style.cursor = '');
 
   // Info bar
   map.on('move', () => {
@@ -1326,9 +1362,20 @@ function applyFilters() {
   const state   = document.getElementById('filter-state').value;
   const status  = document.getElementById('filter-status').value;
 
+  // State values in the data are full names; NSW also covers ACT lines + 4 abbreviated entries
+  const STATE_ALIASES = {
+    'Queensland':        ['Queensland'],
+    'New South Wales':   ['New South Wales', 'NSW', 'Australian Capital Territory'],
+    'Victoria':          ['Victoria'],
+    'South Australia':   ['South Australia'],
+    'Tasmania':          ['Tasmania'],
+    'Western Australia': ['Western Australia'],
+    'Northern Territory':['Northern Territory'],
+  };
+
   const lineFilter = ['all'];
   if (voltage) lineFilter.push(['==', ['to-string', ['get', 'voltage_kv']], voltage]);
-  if (state)   lineFilter.push(['==', ['get', 'state'], state]);
+  if (state)   lineFilter.push(['in', ['get', 'state'], ['literal', STATE_ALIASES[state] || [state]]]);
   if (status)  lineFilter.push(['==', ['get', 'status'], status]);
 
   map.setFilter('lines-layer', lineFilter.length > 1 ? lineFilter : null);
@@ -1436,17 +1483,17 @@ function bindSidebar() {
     const isOn = loadingState > 0;
     btn.classList.toggle('active', isOn);
     if (loadingState === 0) {
-      btn.textContent = '% Loading: OFF';
+      btn.textContent = '% Loading (VIC): OFF';
       map.setLayoutProperty('lines-loading', 'visibility', 'none');
       map.setPaintProperty('lines-layer', 'line-opacity', congestionMode ? 0.25 : 0.85);
     } else if (loadingState === 1) {
-      btn.textContent = '% Loading: N';
+      btn.textContent = '% Loading (VIC): N';
       map.setFilter('lines-loading', ['>', ['to-number', ['get', 'dsn_loading_pct_n'], 0], 0]);
       map.setPaintProperty('lines-loading', 'line-color', loadingColorExpr('dsn_loading_pct_n'));
       map.setLayoutProperty('lines-loading', 'visibility', 'visible');
       map.setPaintProperty('lines-layer', 'line-opacity', 0.25);
     } else {
-      btn.textContent = '% Loading: N-1';
+      btn.textContent = '% Loading (VIC): N-1';
       map.setFilter('lines-loading', ['>', ['to-number', ['get', 'dsn_loading_pct_n1'], 0], 0]);
       map.setPaintProperty('lines-loading', 'line-color', loadingColorExpr('dsn_loading_pct_n1'));
       map.setLayoutProperty('lines-loading', 'visibility', 'visible');
@@ -1634,7 +1681,8 @@ function buildCongestionChart(data) {
   const rawMin = Math.min(...allVals, 0);
   const pad    = Math.max((rawMax - rawMin) * 0.12, 20);
   const yMax   = rawMax + pad;
-  const yMin   = rawMin - pad;
+  // Always include 0 in the y range so the zero-line is always visible
+  const yMin   = Math.min(rawMin - pad, -pad * 0.3);
   const yRange = yMax - yMin || 1;
 
   const yPx = v => PT + iH * (1 - (v - yMin) / yRange);
@@ -1643,36 +1691,21 @@ function buildCongestionChart(data) {
 
   let svg = `<svg width="${W}" height="${H}" style="display:block;margin-top:8px;overflow:visible">`;
 
-  // Shaded fill: area between line and zero, coloured by headroom tightness
-  // Build polygon segments split by positive/negative
-  const fillSegs = [];
-  let curSeg = null;
+  // Per-week fill bars from 0 to headroom value, coloured by that week's tightness
+  const barW = iW / n;
   hrVals.forEach((v, i) => {
-    if (v == null) { if (curSeg) { fillSegs.push(curSeg); curSeg = null; } return; }
-    if (!curSeg) curSeg = [];
-    curSeg.push([xPx(i), yPx(v)]);
-  });
-  if (curSeg) fillSegs.push(curSeg);
-
-  fillSegs.forEach(seg => {
-    if (seg.length < 2) return;
-    // Above-zero fill (green/amber/red based on how little headroom)
-    const allHr = seg.map(p => p);  // already have y
-    const avgHr = hrVals.filter(v => v != null).reduce((a, b) => a + b, 0) / hrVals.filter(v => v != null).length;
-    const fillCol = avgHr < 0 ? '#f85149' : avgHr < 100 ? '#d29922' : '#3fb950';
-
-    const top = seg.map(p => `${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' ');
-    const bot = [...seg].reverse().map(p => `${p[0].toFixed(1)},${Math.min(zeroY, H - PB).toFixed(1)}`).join(' ');
-    svg += `<polygon points="${top} ${bot}" fill="${fillCol}" opacity="0.18"/>`;
+    if (v == null) return;
+    const col = v < 0 ? '#f85149' : v < 100 ? '#d29922' : '#3fb950';
+    const y0 = zeroY, y1 = yPx(v);
+    const top = Math.min(y0, y1), bh = Math.max(1, Math.abs(y0 - y1));
+    svg += `<rect x="${(xPx(i) - barW/2).toFixed(1)}" y="${top.toFixed(1)}" width="${barW.toFixed(1)}" height="${bh.toFixed(1)}" fill="${col}" opacity="0.2"/>`;
   });
 
-  // 0-line (constraint limit boundary)
-  if (zeroY >= PT && zeroY <= PT + iH) {
-    svg += `<line x1="${PL}" y1="${zeroY.toFixed(1)}" x2="${PL+iW}" y2="${zeroY.toFixed(1)}" stroke="#e6edf3" stroke-width="1" opacity="0.7" stroke-dasharray="4,3"/>`;
-    svg += `<text x="${PL-3}" y="${(zeroY+3).toFixed(1)}" text-anchor="end" fill="#e6edf3" font-size="8" opacity="0.8">0</text>`;
-  }
+  // 0-line — always visible now
+  svg += `<line x1="${PL}" y1="${zeroY.toFixed(1)}" x2="${PL+iW}" y2="${zeroY.toFixed(1)}" stroke="#e6edf3" stroke-width="1" opacity="0.7" stroke-dasharray="4,3"/>`;
+  svg += `<text x="${PL-3}" y="${(zeroY+3).toFixed(1)}" text-anchor="end" fill="#e6edf3" font-size="8" opacity="0.8">0</text>`;
 
-  // Headroom line — colour segments by tightness
+  // Headroom line
   const pts = hrVals.map((v, i) => v != null ? `${xPx(i).toFixed(1)},${yPx(v).toFixed(1)}` : null);
   let segments = [], cur = [];
   pts.forEach(p => {
