@@ -221,7 +221,7 @@
       <div class="legend-item"><div class="legend-line" style="background:#f0883e;height:8px;border-radius:50%;width:8px"></div>0.1 – 0.3</div>
       <div class="legend-item"><div class="legend-line" style="background:#f85149;height:8px;border-radius:50%;width:8px"></div>&lt; 0.1 — low benefit</div>
       <div class="legend-item"><div class="legend-line" style="background:#30363d;height:8px;border-radius:50%;width:8px"></div>No LRF data</div>
-      <div style="font-size:11px;color:#8b949e;margin-top:3px">AEMO ELI 2025 — best of Wind/Solar/BESS<br>for this node's NEM region</div>
+      <div style="font-size:11px;color:#8b949e;margin-top:3px">AEMO ELI 2025 — best of Wind/Solar<br>for this node's NEM region</div>
     </div>
 
     <div id="mlf-heatmap-legend" style="display:none">
@@ -703,6 +703,9 @@ function addLayers() {
       'icon-ignore-placement': true
     },
     paint: {
+      'icon-color': '#58a6ff',
+      'icon-halo-color': 'rgba(0,0,0,0.85)',
+      'icon-halo-width': 1.5,
       'icon-opacity': 0.95
     }
   });
@@ -935,7 +938,7 @@ function bindMapEvents() {
         ? `<span style="color:#d29922;font-size:10px"> &#9432; spatially inferred from nearby substations</span>`
         : '';
       html += `<div class="popup-section"><div class="popup-section-title">Locational Reliability Factor (2026-28)${lrfNote}</div>`;
-      html += `<div style="font-size:11px;color:#8b949e;margin-bottom:5px">Benefit of connecting each technology type at this node</div>`;
+      html += `<div style="font-size:11px;color:#8b949e;margin-bottom:5px">Reliability benefit of connecting Wind or Solar at this node (by NEM region)</div>`;
       html += `<table style="width:100%;font-size:12px;border-collapse:collapse">`;
       html += `<tr style="color:#8b949e"><th style="text-align:left;padding:2px 4px">Tech</th><th>NSW</th><th>QLD</th><th>SA</th><th>VIC</th></tr>`;
       techs.forEach(t => {
@@ -1067,19 +1070,33 @@ function bindMapEvents() {
         try {
           const flows = JSON.parse(d.INTERCONNECTORFLOWS);
           if (flows.length) {
-            html += `</div><div class="popup-section"><div class="popup-section-title">Interconnector Flows</div><div class="popup-grid">`;
+            html += `</div><div class="popup-section"><div class="popup-section-title">Interconnector Flows</div>`;
             flows.forEach(f => {
-              const mw      = Math.round(f.value);
-              const absMW   = Math.abs(mw).toLocaleString();
-              const isExp   = mw > 0;   // positive = from_region exporting (away from this region if it's to_region, or out if from_region)
-              const col     = isExp ? '#3fb950' : '#f0883e';
-              const dir     = isExp ? '\u25B2 out' : '\u25BC in';
-              const limit   = isExp ? f.exportlimit : f.importlimit;
-              const limitMW = limit != null ? Math.abs(Math.round(limit)).toLocaleString() : null;
-              const headroomMW = limit != null ? Math.abs(Math.abs(limit) - Math.abs(mw)) : null;
-              let valStr = `<span style="color:${col};font-weight:700">${dir} ${absMW} MW</span>`;
-              if (limitMW) valStr += ` <span style="color:#8b949e;font-size:11px">/ ${limitMW} MW limit</span>`;
-              html += `<span class="popup-label">${f.name}</span><span class="popup-value">${valStr}</span>`;
+              // Look up from/to regions from our GeoJSON
+              const inter = (window.nemInterData && window.nemInterData.features || [])
+                .find(ft => ft.properties.id === f.name);
+              const fromR = inter ? inter.properties.from_region.replace('1','') : '?';
+              const toR   = inter ? inter.properties.to_region.replace('1','')   : '?';
+
+              const mw     = Math.round(f.value);
+              const absMW  = Math.abs(mw).toLocaleString();
+              // positive = from_region → to_region
+              const srcR   = mw >= 0 ? fromR : toR;
+              const dstR   = mw >= 0 ? toR   : fromR;
+              const limit  = mw >= 0 ? f.exportlimit : f.importlimit;
+              const limAbs = limit != null ? Math.abs(Math.round(limit)) : null;
+              const pct    = limAbs ? Math.round(Math.abs(mw) / limAbs * 100) : null;
+
+              // Is this region exporting on this interconnector?
+              const shortR = rid.replace('1','');
+              const exporting = srcR === shortR;
+              const col = exporting ? '#3fb950' : '#f0883e';
+
+              html += `<div style="padding:4px 0;border-bottom:1px solid #21262d">`;
+              html += `<div style="font-size:12px;font-weight:600;color:#e6edf3">${f.name}</div>`;
+              html += `<div style="font-size:12px;color:${col}">${srcR} \u2192 ${dstR}: <strong>${absMW} MW</strong>`;
+              if (limAbs) html += ` <span style="color:#8b949e">/ ${limAbs.toLocaleString()} MW lim${pct != null ? ` (${pct}%)` : ''}</span>`;
+              html += `</div></div>`;
             });
           }
         } catch(e) {}
@@ -1549,10 +1566,10 @@ function updateNEMLayers() {
       const limitVal = exporting ? f.exportlimit : f.importlimit;
       const limitMW  = limitVal != null ? Math.abs(Math.round(limitVal)) : null;
       const mwLine   = limitMW ? `${mw} / ${limitMW} MW` : `${mw} MW`;
-      ft.properties.flow_label = `${ft.properties.name}\n${srcRegion} \u2192 ${dstRegion}\n${mwLine}`;
+      ft.properties.flow_label = `${srcRegion} \u2192 ${dstRegion}\n${mwLine}`;
     } else {
       ft.properties.flow_bearing = baseBearing;
-      ft.properties.flow_label   = `${ft.properties.name}\n${fromShort} \u2194 ${toShort}\nno data`;
+      ft.properties.flow_label   = `${ft.properties.name}\nno data`;
     }
   });
   map.getSource('nem-interconnectors').setData(inters);
@@ -1700,27 +1717,28 @@ function buildRegionPoints(regionsGj) {
 }
 
 function addFlowArrowIcon() {
-  // Upward-pointing filled arrow — MapLibre rotates it via icon-rotate
-  const S = 24;
+  // SDF (Signed Distance Field) arrow — drawn white so MapLibre can tint via icon-color
+  const S = 32;
   const c = document.createElement('canvas');
   c.width = S; c.height = S;
   const ctx = c.getContext('2d');
-  // Shadow for contrast on any background
-  ctx.shadowColor = 'rgba(0,0,0,0.9)';
-  ctx.shadowBlur = 3;
-  ctx.fillStyle = '#58a6ff';
-  // Draw upward triangle (arrow head)
+  ctx.fillStyle = 'white';
   const cx = S / 2;
+  // Arrow body (rectangle) + arrowhead
   ctx.beginPath();
-  ctx.moveTo(cx,     3);          // tip
-  ctx.lineTo(cx + 7, S - 5);     // bottom-right
-  ctx.lineTo(cx,     S - 9);     // notch
-  ctx.lineTo(cx - 7, S - 5);     // bottom-left
+  ctx.moveTo(cx,      3);          // tip
+  ctx.lineTo(cx + 9,  17);         // bottom-right of head
+  ctx.lineTo(cx + 4,  17);         // step in to body
+  ctx.lineTo(cx + 4,  S - 3);     // bottom-right of body
+  ctx.lineTo(cx - 4,  S - 3);     // bottom-left of body
+  ctx.lineTo(cx - 4,  17);         // step in to body
+  ctx.lineTo(cx - 9,  17);         // bottom-left of head
   ctx.closePath();
   ctx.fill();
   map.addImage('flow-arrow', {
     width: S, height: S,
-    data: new Uint8ClampedArray(ctx.getImageData(0, 0, S, S).data)
+    data: new Uint8ClampedArray(ctx.getImageData(0, 0, S, S).data),
+    sdf: true
   });
 }
 
