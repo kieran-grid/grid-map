@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NEM SLD – GridXplore Oz</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f5f5f2; color: #1a1a2e;
+      height: 100vh; display: flex; flex-direction: column; overflow: hidden;
+    }
+
+    /* ── Header ── */
+    #header {
+      flex-shrink: 0;
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+      padding: 8px 14px;
+      background: #1a1a2e; border-bottom: 2px solid #30363d;
+    }
+    #header h1 { font-size: 14px; color: #79c0ff; margin-right: 4px; white-space: nowrap; }
+    #header a  { font-size: 11px; color: #8b949e; text-decoration: none; margin-left: auto; }
+    #header a:hover { color: #e6edf3; }
+
+    .state-btn {
+      padding: 4px 12px; border: 1px solid #30363d; border-radius: 4px;
+      background: #21262d; color: #e6edf3; cursor: pointer; font-size: 12px;
+      font-weight: 600; letter-spacing: 0.3px;
+    }
+    .state-btn.active { background: #1f6feb; border-color: #58a6ff; color: #fff; }
+    .state-btn:hover:not(.active) { background: #30363d; }
+
+    .volt-legend { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-left: 8px; }
+    .vl { display: flex; align-items: center; gap: 4px; font-size: 10px; color: #8b949e; }
+    .vl-line { border-radius: 1px; }
+
+    #min-kv-wrap { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #8b949e; }
+    #min-kv-wrap select {
+      padding: 3px 6px; background: #21262d; border: 1px solid #30363d;
+      border-radius: 4px; color: #e6edf3; font-size: 11px;
+    }
+
+    /* ── SLD canvas ── */
+    #sld-container { flex: 1; position: relative; overflow: hidden; }
+    svg#sld { width: 100%; height: 100%; background: #fafaf7; display: block; }
+
+    /* ── Overlay messages ── */
+    #loading {
+      position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%,-50%);
+      font-size: 15px; color: #555;
+      background: rgba(250,250,247,0.9); padding: 12px 20px; border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+
+    /* ── Tooltip ── */
+    #tooltip {
+      position: absolute; pointer-events: none;
+      background: rgba(26,26,46,0.97); color: #e6edf3;
+      border: 1px solid #30363d; border-radius: 5px;
+      padding: 8px 12px; font-size: 12px; max-width: 240px;
+      line-height: 1.55; display: none; z-index: 20;
+    }
+    #tooltip strong { color: #79c0ff; }
+
+    /* ── Substation hit area ── */
+    .sub-hit { fill: transparent; stroke: none; cursor: default; }
+
+    /* ── Edge lines ── */
+    .edge { stroke-linecap: butt; }
+    .edge:hover { opacity: 0.65 !important; cursor: pointer; }
+  </style>
+</head>
+<body>
+
+<!-- ── Header ── -->
+<div id="header">
+  <h1>⚡ NEM Single Line Diagram</h1>
+
+  <div style="display:flex;gap:3px">
+    <button class="state-btn" data-state="Queensland">QLD</button>
+    <button class="state-btn" data-state="New South Wales">NSW</button>
+    <button class="state-btn active" data-state="Victoria">VIC</button>
+    <button class="state-btn" data-state="South Australia">SA</button>
+    <button class="state-btn" data-state="Tasmania">TAS</button>
+  </div>
+
+  <div id="min-kv-wrap">
+    Min kV:
+    <select id="min-kv">
+      <option value="66">66</option>
+      <option value="110">110</option>
+      <option value="132" selected>132</option>
+      <option value="220">220</option>
+      <option value="275">275</option>
+      <option value="330">330</option>
+    </select>
+  </div>
+
+  <div class="volt-legend">
+    <div class="vl"><div class="vl-line" style="width:22px;height:5px;background:#ffe033"></div>500kV</div>
+    <div class="vl"><div class="vl-line" style="width:22px;height:4px;background:#f08020"></div>330kV</div>
+    <div class="vl"><div class="vl-line" style="width:22px;height:3.5px;background:#d040c0"></div>275kV</div>
+    <div class="vl"><div class="vl-line" style="width:22px;height:3px;background:#4496e0"></div>220kV</div>
+    <div class="vl"><div class="vl-line" style="width:22px;height:2.5px;background:#d84040"></div>132/110kV</div>
+    <div class="vl"><div style="width:10px;height:10px;border-radius:50%;background:#3fb950;border:1.5px solid white"></div>Operating</div>
+    <div class="vl"><div style="width:10px;height:10px;border-radius:50%;background:#d29922;border:1.5px solid white"></div>Construction</div>
+    <div class="vl" style="font-size:9px;color:#555">⊕ = transformer</div>
+    <div class="vl" style="font-size:9px;color:#555">= = double circuit</div>
+  </div>
+
+  <a href="index.html">← Map View</a>
+</div>
+
+<!-- ── Canvas ── -->
+<div id="sld-container">
+  <svg id="sld"></svg>
+  <div id="loading">Loading…</div>
+  <div id="tooltip"></div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+//  CONSTANTS
+// ══════════════════════════════════════════════════════════════
+const VOLT_COLORS = {
+  500:'#ffe033', 330:'#f08020', 275:'#d040c0',
+  220:'#4496e0', 132:'#d84040', 110:'#d84040', 66:'#8b5e3c',
+};
+const VOLT_WIDTH = {
+  500:5, 330:4.5, 275:4, 220:3.5, 132:2.8, 110:2.8, 66:2,
+};
+
+const BUS_SPACING = 56;   // vertical spacing between bus bars
+const BUS_PAD     = 12;   // extra padding at each end of bus bar
+const BUS_SLOT_W  = 20;   // horizontal spacing per connection slot on bus bar
+const BUS_MIN_HW  = 50;   // minimum half-width of bus bar
+const XFMR_R      = 8;    // transformer circle radius
+const XFMR_GAP    = 3;    // gap between transformer circles
+const GEN_R       = 9;    // generator symbol radius
+const GEN_STEP    = 24;   // horizontal spacing between generators
+const SIM_TICKS   = 300;
+
+// ══════════════════════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════════════════════
+let allLines, allSubs, allProjects;
+let currentState = 'Victoria';
+let currentMinKv = 132;
+
+// ══════════════════════════════════════════════════════════════
+//  SVG / ZOOM SETUP
+// ══════════════════════════════════════════════════════════════
+const container = document.getElementById('sld-container');
+const svg  = d3.select('#sld');
+const mainG = svg.append('g').attr('id', 'main');
+
+const zoomBehavior = d3.zoom()
+  .scaleExtent([0.08, 12])
+  .on('zoom', ({ transform }) => mainG.attr('transform', transform));
+svg.call(zoomBehavior);
+
+const tooltipEl = document.getElementById('tooltip');
+function showTip(html, ex, ey) {
+  tooltipEl.innerHTML = html;
+  tooltipEl.style.display = 'block';
+  tooltipEl.style.left = (ex + 14) + 'px';
+  tooltipEl.style.top  = (ey - 8)  + 'px';
+}
+function hideTip() { tooltipEl.style.display = 'none'; }
+svg.on('mousemove', e => {
+  if (tooltipEl.style.display === 'block') {
+    tooltipEl.style.left = (e.offsetX + 14) + 'px';
+    tooltipEl.style.top  = (e.offsetY - 8)  + 'px';
+  }
+});
+
+// ══════════════════════════════════════════════════════════════
+//  DATA LOADING
+// ══════════════════════════════════════════════════════════════
+Promise.all([
+  fetch('transmission_lines.geojson').then(r => r.json()),
+  fetch('substations.geojson').then(r => r.json()),
+  fetch('competing_projects.geojson').then(r => r.json()),
+]).then(([l, s, p]) => {
+  allLines = l; allSubs = s; allProjects = p;
+  document.getElementById('loading').style.display = 'none';
+  renderState();
+});
+
+// ══════════════════════════════════════════════════════════════
+//  CONTROLS
+// ══════════════════════════════════════════════════════════════
+document.querySelectorAll('.state-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.state-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentState = btn.dataset.state;
+    renderState();
+  });
+});
+
+document.getElementById('min-kv').addEventListener('change', e => {
+  currentMinKv = parseInt(e.target.value);
+  renderState();
+});
+
+// ══════════════════════════════════════════════════════════════
+//  HELPERS
+// ══════════════════════════════════════════════════════════════
+function normSub(s) {
+  if (!s) return '';
+  s = s.replace(/\s+\([^)]+\)\s*$/, '');
+  s = s.replace(/\s+(terminal\s+station|terminal|substation|tee|tap)\s*$/gi, '');
+  s = s.replace(/\s+(north|south|east|west)\s*$/gi, '');
+  return s.trim();
+}
+
+function parseEps(name) {
+  if (!name) return null;
+  const m = name.match(/^(.+?)\s+to\s+(.+?)(?:\s+\([^)]+\))*\s*$/i);
+  return m ? [m[1].trim(), m[2].trim()] : null;
+}
+
+function techCode(es) {
+  if (!es) return 'GEN';
+  const l = es.toLowerCase();
+  if (l.includes('wind'))  return 'W';
+  if (l.includes('solar') || l.includes('csp') || l.includes('floating')) return 'PV';
+  if (l.includes('battery') || l.includes('lib') || l.includes('flow') || l.includes('caes')) return 'BESS';
+  if (l === 'conventional hydro')  return 'H';
+  if (l === 'pumped storage')      return 'PS';
+  if (l.includes('gas') || l.includes('electrolyzer')) return 'GT';
+  if (l.includes('coal'))  return 'SG';
+  if (l.includes('bio') || l.includes('methane')) return 'BIO';
+  return 'GEN';
+}
+
+function vc(kv)  { return VOLT_COLORS[kv] || '#8b5e3c'; }
+function vw(kv)  { return VOLT_WIDTH[kv]  || 2; }
+
+// ══════════════════════════════════════════════════════════════
+//  BUILD NETWORK
+// ══════════════════════════════════════════════════════════════
+function buildNetwork(stateName, minKv) {
+  const stateLines = allLines.features.filter(f =>
+    f.properties.state === stateName &&
+    (f.properties.voltage_kv || 0) >= minKv
+  );
+
+  const subMap  = new Map();   // normName -> sub object
+  const edgeMap = new Map();   // key -> edge object
+  const geoAcc  = new Map();   // subId -> {lng, lat, n}
+
+  function getSub(rawName) {
+    const id = normSub(rawName);
+    if (!id) return null;
+    if (!subMap.has(id)) {
+      subMap.set(id, {
+        id, label: id,
+        voltages: new Set(),
+        conCount: new Map(),   // kv -> count of connections (circuits treated as 1 edge)
+        xfmrCount: 0,
+        generators: [],
+        geo: null, x: 0, y: 0,
+      });
+    }
+    return subMap.get(id);
+  }
+
+  function accGeo(id, lng, lat) {
+    if (!geoAcc.has(id)) geoAcc.set(id, { lng: 0, lat: 0, n: 0 });
+    const g = geoAcc.get(id);
+    g.lng += lng; g.lat += lat; g.n++;
+  }
+
+  for (const f of stateLines) {
+    const kv  = parseInt(f.properties.voltage_kv) || 0;
+    const eps = parseEps(f.properties.name);
+    if (!eps) continue;
+    const [fr, to] = eps;
+    const frSub = getSub(fr);
+    const toSub = getSub(to);
+    if (!frSub || !toSub || frSub === toSub) continue;
+
+    frSub.voltages.add(kv);
+    toSub.voltages.add(kv);
+
+    const coords = f.geometry.coordinates;
+    accGeo(frSub.id, coords[0][0], coords[0][1]);
+    accGeo(toSub.id, coords[coords.length - 1][0], coords[coords.length - 1][1]);
+
+    // Deduplicate parallel circuits: same substation pair + voltage = one edge, count circuits
+    const eKey = [...[frSub.id, toSub.id].sort(), kv].join('\x00');
+    if (!edgeMap.has(eKey)) {
+      edgeMap.set(eKey, {
+        id: eKey, from: frSub.id, to: toSub.id,
+        voltage: kv, circuits: 0,
+        name: f.properties.name,
+      });
+    }
+    edgeMap.get(eKey).circuits++;
+  }
+
+  // Set average geo position
+  for (const [id, g] of geoAcc) {
+    const sub = subMap.get(id);
+    if (sub) sub.geo = { lng: g.lng / g.n, lat: g.lat / g.n };
+  }
+
+  // Sort voltages descending; compute connection counts per voltage (count unique edges, not circuits)
+  const edges = [...edgeMap.values()];
+  for (const sub of subMap.values()) {
+    sub.voltages = [...sub.voltages].sort((a, b) => b - a);
+    // conCount: how many distinct edges connect at each voltage
+    for (const e of edges) {
+      if (e.from === sub.id || e.to === sub.id) {
+        sub.conCount.set(e.voltage, (sub.conCount.get(e.voltage) || 0) + 1);
+      }
+    }
+  }
+
+  // Enrich with xfmr_count from substations.geojson
+  for (const sub of subMap.values()) {
+    const match = allSubs.features.find(s => {
+      const sn = normSub(s.properties.name);
+      const ss = s.properties.state;
+      return sn === sub.id && (ss === stateName || !ss);
+    });
+    if (match && (match.properties.xfmr_count || 0) > 0) {
+      sub.xfmrCount = match.properties.xfmr_count;
+    } else if (sub.voltages.length > 1) {
+      sub.xfmrCount = 2;
+    }
+  }
+
+  // Match operating/construction generators to nearest substation (≤ 0.7°)
+  const stateProj = allProjects.features.filter(f =>
+    f.properties.state === stateName &&
+    ['Operating', 'Construction'].includes(f.properties.dev_status)
+  );
+  for (const proj of stateProj) {
+    const [pLng, pLat] = proj.geometry.coordinates;
+    let best = null, bestD = 0.7;
+    for (const sub of subMap.values()) {
+      if (!sub.geo) continue;
+      const d = Math.hypot(pLng - sub.geo.lng, pLat - sub.geo.lat);
+      if (d < bestD) { bestD = d; best = sub; }
+    }
+    if (best) {
+      const p = proj.properties;
+      best.generators.push({
+        label: p.name,
+        tech: techCode(p.energy_source),
+        mw: Math.round(p.capacity_mw || 0),
+        status: p.dev_status,
+        es: p.energy_source || '–',
+      });
+    }
+  }
+
+  return { substations: subMap, edges };
+}
+
+// ══════════════════════════════════════════════════════════════
+//  LAYOUT  (geographic init → D3 force relaxation)
+// ══════════════════════════════════════════════════════════════
+function layoutNetwork({ substations, edges }) {
+  const W   = container.clientWidth  || 1300;
+  const H   = container.clientHeight || 820;
+  const PAD = 130;
+
+  const subsArr = [...substations.values()].filter(s => s.geo);
+  if (!subsArr.length) return;
+
+  const lngs   = subsArr.map(s => s.geo.lng);
+  const lats   = subsArr.map(s => s.geo.lat);
+  const minLng = Math.min(...lngs), maxLng = Math.max(...lngs);
+  const minLat = Math.min(...lats), maxLat = Math.max(...lats);
+  const lngR   = maxLng - minLng || 1;
+  const latR   = maxLat - minLat || 1;
+
+  // Initialise from geographic position
+  for (const sub of subsArr) {
+    sub.x = PAD + (sub.geo.lng - minLng) / lngR * (W - 2 * PAD);
+    sub.y = PAD + (1 - (sub.geo.lat - minLat) / latR) * (H - 2 * PAD);
+  }
+
+  // Compute per-substation collision radius based on bus bar width
+  function colRadius(sub) {
+    const maxHW = Math.max(...sub.voltages.map(kv => busHalfW(sub, kv)));
+    return maxHW + 55;
+  }
+
+  // D3 force simulation
+  const nodes = subsArr.map(s => ({ id: s.id, x: s.x, y: s.y, sub: s }));
+  const links = edges
+    .filter(e => substations.has(e.from) && substations.has(e.to))
+    .map(e => ({ source: e.from, target: e.to }));
+
+  const sim = d3.forceSimulation(nodes)
+    .force('link',    d3.forceLink(links).id(d => d.id).distance(190).strength(0.12))
+    .force('charge',  d3.forceManyBody().strength(-700))
+    .force('center',  d3.forceCenter(W / 2, H / 2).strength(0.04))
+    .force('collide', d3.forceCollide().radius(n => colRadius(n.sub)))
+    .stop();
+
+  for (let i = 0; i < SIM_TICKS; i++) sim.tick();
+
+  for (const node of nodes) {
+    const sub = substations.get(node.id);
+    if (sub) {
+      sub.x = Math.max(PAD, Math.min(W - PAD, node.x));
+      sub.y = Math.max(PAD, Math.min(H - PAD, node.y));
+    }
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+//  GEOMETRY HELPERS
+// ══════════════════════════════════════════════════════════════
+// Y offset of a voltage-level bus bar within a substation (relative to sub.y)
+function busRelY(sub, kv) {
+  return sub.voltages.indexOf(kv) * BUS_SPACING;
+}
+
+// Half-width of bus bar at a given voltage level
+function busHalfW(sub, kv) {
+  const n = sub.conCount.get(kv) || 1;
+  return Math.max(BUS_MIN_HW, n * BUS_SLOT_W + BUS_PAD);
+}
+
+// Total height of substation symbol (from top bus bar to bottom of generators)
+function subTotalH(sub) {
+  const busH = (sub.voltages.length - 1) * BUS_SPACING;
+  const genH = sub.generators.length > 0 ? GEN_R * 2 + 30 : 0;
+  return busH + genH;
+}
+
+// ══════════════════════════════════════════════════════════════
+//  CONNECTION POINT ASSIGNMENT
+//  Spreads connection stubs along bus bars in angular order
+//  so lines cross each other as little as possible.
+// ══════════════════════════════════════════════════════════════
+function computeConXOffsets({ substations, edges }) {
+  // Build per-(sub, kv) connection lists
+  const busCons = new Map();  // `${subId}|${kv}` → [{edge, otherId}]
+  for (const edge of edges) {
+    for (const [myId, otherId] of [[edge.from, edge.to], [edge.to, edge.from]]) {
+      const key = `${myId}|${edge.voltage}`;
+      if (!busCons.has(key)) busCons.set(key, []);
+      busCons.get(key).push({ edge, otherId });
+    }
+  }
+
+  // Sort connections by angle to other substation; assign x offsets evenly
+  const conX = new Map();  // `${edgeId}|${subId}` → xOffset
+
+  for (const [key, cons] of busCons) {
+    const [subId, kvStr] = key.split('|');
+    const kv  = parseInt(kvStr);
+    const sub = substations.get(subId);
+    if (!sub || !cons.length) continue;
+
+    cons.sort((a, b) => {
+      const as = substations.get(a.otherId);
+      const bs = substations.get(b.otherId);
+      if (!as || !bs) return 0;
+      return Math.atan2(as.y - sub.y, as.x - sub.x) -
+             Math.atan2(bs.y - sub.y, bs.x - sub.x);
+    });
+
+    const hw = busHalfW(sub, kv);
+    const n  = cons.length;
+
+    cons.forEach(({ edge }, i) => {
+      const xOff = n === 1 ? 0 : -hw + BUS_PAD + (2 * (hw - BUS_PAD) / (n - 1 || 1)) * i;
+      conX.set(`${edge.id}|${subId}`, xOff);
+    });
+  }
+
+  return conX;
+}
+
+// ══════════════════════════════════════════════════════════════
+//  DRAW
+// ══════════════════════════════════════════════════════════════
+function drawSLD({ substations, edges }) {
+  mainG.selectAll('*').remove();
+
+  const conX = computeConXOffsets({ substations, edges });
+
+  const edgesG = mainG.append('g').attr('class', 'edges-layer');
+  const subsG  = mainG.append('g').attr('class', 'subs-layer');
+
+  // ── Draw edges (behind substations) ─────────────────────────
+  for (const edge of edges) {
+    const fs = substations.get(edge.from);
+    const ts = substations.get(edge.to);
+    if (!fs || !ts) continue;
+
+    const fxOff = conX.get(`${edge.id}|${edge.from}`) ?? 0;
+    const txOff = conX.get(`${edge.id}|${edge.to}`)   ?? 0;
+
+    const x1 = fs.x + fxOff,  y1 = fs.y + busRelY(fs, edge.voltage);
+    const x2 = ts.x + txOff,  y2 = ts.y + busRelY(ts, edge.voltage);
+    const color = vc(edge.voltage);
+    const lw    = vw(edge.voltage);
+
+    const eg = edgesG.append('g').attr('class', 'edge-group');
+
+    if (edge.circuits >= 2) {
+      // Parallel offset perpendicular to line direction
+      const dx = x2 - x1, dy = y2 - y1;
+      const len = Math.hypot(dx, dy) || 1;
+      const off = 3.5;
+      const ox = -dy / len * off, oy = dx / len * off;
+
+      eg.append('line').attr('class','edge')
+        .attr('x1', x1+ox).attr('y1', y1+oy).attr('x2', x2+ox).attr('y2', y2+oy)
+        .attr('stroke', color).attr('stroke-width', lw).attr('opacity', 0.88);
+      eg.append('line').attr('class','edge')
+        .attr('x1', x1-ox).attr('y1', y1-oy).attr('x2', x2-ox).attr('y2', y2-oy)
+        .attr('stroke', color).attr('stroke-width', lw).attr('opacity', 0.88);
+
+      // Tick marks at 1/3 and 2/3 for >2 circuits
+      if (edge.circuits > 2) {
+        const mk = (t) => {
+          const mx = x1 + (x2-x1)*t, my = y1 + (y2-y1)*t;
+          const tlen = 8;
+          eg.append('line')
+            .attr('x1', mx - oy*tlen/len).attr('y1', my + ox*tlen/len)
+            .attr('x2', mx + oy*tlen/len).attr('y2', my - ox*tlen/len)
+            .attr('stroke', color).attr('stroke-width', 1.5).attr('opacity', 0.7);
+        };
+        mk(0.4); mk(0.6);
+      }
+    } else {
+      eg.append('line').attr('class','edge')
+        .attr('x1', x1).attr('y1', y1).attr('x2', x2).attr('y2', y2)
+        .attr('stroke', color).attr('stroke-width', lw).attr('opacity', 0.88);
+    }
+
+    // Circuit count label if > 2
+    if (edge.circuits > 2) {
+      eg.append('text')
+        .attr('x', (x1+x2)/2 + 4).attr('y', (y1+y2)/2 - 4)
+        .attr('font-size', 8).attr('fill', color).attr('opacity', 0.85)
+        .text(`×${edge.circuits}`);
+    }
+
+    // Invisible wide hit area for tooltip
+    eg.append('line')
+      .attr('x1', x1).attr('y1', y1).attr('x2', x2).attr('y2', y2)
+      .attr('stroke', 'transparent').attr('stroke-width', 14)
+      .style('cursor', 'pointer')
+      .on('mouseenter', (e) => showTip(
+        `<strong>${edge.name || '–'}</strong><br>` +
+        `${edge.voltage}kV &nbsp;|&nbsp; ${edge.circuits} circuit${edge.circuits>1?'s':''}<br>` +
+        `<span style="color:#8b949e;font-size:11px">${edge.from} → ${edge.to}</span>`,
+        e.offsetX, e.offsetY
+      ))
+      .on('mouseleave', hideTip);
+  }
+
+  // ── Draw substations (foreground) ───────────────────────────
+  for (const sub of substations.values()) {
+    const sg = subsG.append('g')
+      .attr('class', 'substation')
+      .attr('transform', `translate(${sub.x},${sub.y})`);
+
+    const volts = sub.voltages;
+    const maxHW = Math.max(...volts.map(kv => busHalfW(sub, kv)));
+
+    // ── Bus bars ──────────────────────────────────────────────
+    for (let i = 0; i < volts.length; i++) {
+      const kv  = volts[i];
+      const by  = i * BUS_SPACING;
+      const hw  = busHalfW(sub, kv);
+      const col = vc(kv);
+      const bw  = vw(kv);
+
+      // Bus bar line (flat, thick)
+      sg.append('line')
+        .attr('x1', -hw).attr('x2', hw)
+        .attr('y1', by).attr('y2', by)
+        .attr('stroke', col).attr('stroke-width', bw + 1)
+        .attr('stroke-linecap', 'square');
+
+      // Voltage kV label at right end
+      sg.append('text')
+        .attr('x', hw + 6).attr('y', by + 4)
+        .attr('font-size', 8).attr('fill', col)
+        .attr('font-weight', '600')
+        .text(`${kv}kV`);
+    }
+
+    // ── Transformer symbols between consecutive voltage levels ─
+    for (let i = 0; i < volts.length - 1; i++) {
+      const y1 = i * BUS_SPACING;
+      const y2 = (i + 1) * BUS_SPACING;
+
+      // Number of xfmr symbols to show (capped at 4, spaced horizontally)
+      const n     = Math.min(Math.max(sub.xfmrCount || 2, 1), 4);
+      const step  = 22;
+      const totalW = (n - 1) * step;
+
+      for (let t = 0; t < n; t++) {
+        const cx     = -totalW / 2 + t * step;
+        const topCY  = y1 + XFMR_GAP + XFMR_R + 3;
+        const botCY  = y2 - XFMR_GAP - XFMR_R - 3;
+
+        // Stubs from bus bars to circles
+        sg.append('line')
+          .attr('x1', cx).attr('y1', y1)
+          .attr('x2', cx).attr('y2', topCY - XFMR_R)
+          .attr('stroke', '#333').attr('stroke-width', 1.5);
+        sg.append('line')
+          .attr('x1', cx).attr('y1', y2)
+          .attr('x2', cx).attr('y2', botCY + XFMR_R)
+          .attr('stroke', '#333').attr('stroke-width', 1.5);
+
+        // Top circle (primary winding symbol)
+        sg.append('circle')
+          .attr('cx', cx).attr('cy', topCY).attr('r', XFMR_R)
+          .attr('stroke', '#333').attr('stroke-width', 1.5)
+          .attr('fill', 'rgba(250,250,247,0.95)');
+
+        // Bottom circle (secondary winding symbol)
+        sg.append('circle')
+          .attr('cx', cx).attr('cy', botCY).attr('r', XFMR_R)
+          .attr('stroke', '#333').attr('stroke-width', 1.5)
+          .attr('fill', 'rgba(250,250,247,0.95)');
+      }
+    }
+
+    // ── Generator symbols below bottom bus bar ─────────────────
+    if (sub.generators.length > 0) {
+      const lastBusY = (volts.length - 1) * BUS_SPACING;
+      const genY     = lastBusY + GEN_R + 22;
+      const n        = sub.generators.length;
+      const totalW   = (n - 1) * GEN_STEP;
+
+      sub.generators.forEach((gen, gi) => {
+        const gx  = -totalW / 2 + gi * GEN_STEP;
+        const col = gen.status === 'Operating' ? '#3fb950' : '#d29922';
+
+        // Stem from bus bar down to generator circle
+        sg.append('line')
+          .attr('x1', gx).attr('y1', lastBusY)
+          .attr('x2', gx).attr('y2', genY - GEN_R)
+          .attr('stroke', '#777').attr('stroke-width', 1);
+
+        const gg = sg.append('g')
+          .style('cursor', 'pointer')
+          .on('mouseenter', (e) => showTip(
+            `<strong>${gen.label}</strong><br>` +
+            `${gen.tech} &nbsp;${gen.mw > 0 ? gen.mw + 'MW' : ''}<br>` +
+            `<span style="color:#8b949e;font-size:11px">${gen.es}</span><br>` +
+            `<span style="color:${col}">${gen.status}</span>`,
+            e.offsetX, e.offsetY
+          ))
+          .on('mouseleave', hideTip);
+
+        gg.append('circle')
+          .attr('cx', gx).attr('cy', genY).attr('r', GEN_R)
+          .attr('fill', col).attr('opacity', 0.85)
+          .attr('stroke', '#fff').attr('stroke-width', 1.2);
+
+        gg.append('text')
+          .attr('x', gx).attr('y', genY + 3.5)
+          .attr('text-anchor', 'middle')
+          .attr('font-size', 6).attr('font-weight', 'bold').attr('fill', '#fff')
+          .text(gen.tech.slice(0, 4));
+      });
+
+      // Aggregate MW label below symbols
+      const totalMW = sub.generators.reduce((s, g) => s + g.mw, 0);
+      if (totalMW > 0) {
+        sg.append('text')
+          .attr('x', 0).attr('y', genY + GEN_R + 11)
+          .attr('text-anchor', 'middle').attr('font-size', 7).attr('fill', '#666')
+          .text(totalMW.toLocaleString() + 'MW');
+      }
+    }
+
+    // ── Substation name label (above top bus bar) ──────────────
+    sg.append('text')
+      .attr('x', 0).attr('y', -16)
+      .attr('text-anchor', 'middle')
+      .attr('font-weight', 'bold').attr('font-size', 10)
+      .attr('fill', '#1a1a2e')
+      .text(sub.label);
+
+    // ── Hit area for substation tooltip ───────────────────────
+    const totalH = subTotalH(sub);
+    sg.append('rect')
+      .attr('class', 'sub-hit')
+      .attr('x', -maxHW - 10)
+      .attr('y', -25)
+      .attr('width', (maxHW + 10) * 2)
+      .attr('height', totalH + 50)
+      .on('mouseenter', (e) => showTip(
+        `<strong>${sub.label}</strong><br>` +
+        `Voltages: ${sub.voltages.join(' / ')}kV<br>` +
+        (sub.xfmrCount > 0 ? `Transformers: ${sub.xfmrCount}<br>` : '') +
+        (sub.generators.length > 0 ?
+          `Generators: ${sub.generators.length} &nbsp;(${sub.generators.reduce((s,g)=>s+g.mw,0).toLocaleString()}MW)` : ''),
+        e.offsetX, e.offsetY
+      ))
+      .on('mouseleave', hideTip);
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+//  MAIN ENTRY
+// ══════════════════════════════════════════════════════════════
+function renderState() {
+  if (!allLines) return;
+  const loadEl = document.getElementById('loading');
+  loadEl.textContent = `Building ${currentState} SLD…`;
+  loadEl.style.display = 'block';
+
+  // Defer to allow the loading message to render first
+  setTimeout(() => {
+    const net = buildNetwork(currentState, currentMinKv);
+    layoutNetwork(net);
+    drawSLD(net);
+
+    // Fit to canvas
+    const W = container.clientWidth;
+    const H = container.clientHeight;
+    svg.call(zoomBehavior.transform, d3.zoomIdentity.translate(0, 0).scale(1));
+
+    loadEl.style.display = 'none';
+  }, 30);
+}
+</script>
+</body>
+</html>
