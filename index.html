@@ -165,43 +165,14 @@
       <label style="font-size:11px;display:flex;align-items:center;gap:3px;cursor:pointer"><input type="checkbox" class="comp-status-cb" value="Decommissioned" /><span style="color:#6e7681">Decommissioned</span></label>
     </div>
 
-    <div class="section-title">Filters</div>
-    <div class="filter-group">
-      <label>Voltage (kV)</label>
-      <select id="filter-voltage">
-        <option value="">All voltages</option>
-        <option value="500">500 kV</option>
-        <option value="330">330 kV</option>
-        <option value="275">275 kV</option>
-        <option value="220">220 kV</option>
-        <option value="132">132 kV</option>
-        <option value="66">66 kV</option>
-      </select>
-    </div>
-    <div class="filter-group">
-      <label>State</label>
-      <select id="filter-state">
-        <option value="">All states</option>
-        <option value="New South Wales">NSW</option>
-        <option value="Victoria">VIC</option>
-        <option value="Queensland">QLD</option>
-        <option value="South Australia">SA</option>
-        <option value="Tasmania">TAS</option>
-        <option value="Western Australia">WA</option>
-      </select>
-    </div>
-    <div class="filter-group">
-      <label>Status</label>
-      <select id="filter-status">
-        <option value="">All statuses</option>
-        <option value="Operational">Operational</option>
-        <option value="Under Construction">Under Construction</option>
-        <option value="Proposed">Proposed</option>
-      </select>
-    </div>
+    <div class="section-title">Substation View</div>
+    <button id="lrf-mode-btn" class="toggle-btn" style="margin-bottom:4px">LRF Layer OFF</button>
 
     <div class="section-title">Line View</div>
-    <button id="loading-mode-btn" class="toggle-btn">% Loading Layer OFF</button>
+    <div style="display:flex;gap:4px;margin-bottom:4px">
+      <button id="loading-mode-btn"    class="toggle-btn" style="flex:1;padding:4px 4px;font-size:11px">% Loading OFF</button>
+      <button id="congestion-mode-btn" class="toggle-btn" style="flex:1;padding:4px 4px;font-size:11px">Congestion OFF</button>
+    </div>
 
     <div class="section-title">MLF Heatmap</div>
     <div style="display:flex;gap:4px;margin-bottom:4px">
@@ -224,13 +195,34 @@
     <div class="legend-item"><div class="legend-line" style="background:#f85149;height:4px"></div>&gt; 85%</div>
     <div style="font-size:11px;color:#8b949e;margin-top:3px">VIC only — max demand snapshot</div>
 
-    <div class="section-title">Legend – Substations</div>
-    <div class="legend-item"><div class="legend-line" style="background:#ffe033;height:8px;border-radius:50%;width:8px"></div>500 kV</div>
-    <div class="legend-item"><div class="legend-line" style="background:#f08020;height:8px;border-radius:50%;width:8px"></div>330 kV</div>
-    <div class="legend-item"><div class="legend-line" style="background:#d040c0;height:8px;border-radius:50%;width:8px"></div>275 kV</div>
-    <div class="legend-item"><div class="legend-line" style="background:#4496e0;height:8px;border-radius:50%;width:8px"></div>220 kV</div>
-    <div class="legend-item"><div class="legend-line" style="background:#d84040;height:8px;border-radius:50%;width:8px"></div>132 / 110 kV</div>
-    <div class="legend-item"><div class="legend-line" style="background:#8b5e3c;height:8px;border-radius:50%;width:8px"></div>66 kV and below</div>
+    <div id="congestion-legend" style="display:none">
+      <div class="section-title">Legend – Congestion Binding %</div>
+      <div class="legend-item"><div class="legend-line" style="background:#f85149;height:4px"></div>&gt; 50% of intervals</div>
+      <div class="legend-item"><div class="legend-line" style="background:#f0883e;height:4px"></div>20 – 50%</div>
+      <div class="legend-item"><div class="legend-line" style="background:#d29922;height:4px"></div>5 – 20%</div>
+      <div class="legend-item"><div class="legend-line" style="background:#79c0ff;height:4px"></div>1 – 5%</div>
+      <div class="legend-item"><div class="legend-line" style="background:#30363d;height:4px"></div>&lt; 1% or no data</div>
+      <div style="font-size:11px;color:#8b949e;margin-top:3px">Jan 2025 – Feb 2026 — % of 5-min dispatch<br>intervals constraint was binding</div>
+    </div>
+
+    <div id="subs-voltage-legend">
+      <div class="section-title">Legend – Substations</div>
+      <div class="legend-item"><div class="legend-line" style="background:#ffe033;height:8px;border-radius:50%;width:8px"></div>500 kV</div>
+      <div class="legend-item"><div class="legend-line" style="background:#f08020;height:8px;border-radius:50%;width:8px"></div>330 kV</div>
+      <div class="legend-item"><div class="legend-line" style="background:#d040c0;height:8px;border-radius:50%;width:8px"></div>275 kV</div>
+      <div class="legend-item"><div class="legend-line" style="background:#4496e0;height:8px;border-radius:50%;width:8px"></div>220 kV</div>
+      <div class="legend-item"><div class="legend-line" style="background:#d84040;height:8px;border-radius:50%;width:8px"></div>132 / 110 kV</div>
+      <div class="legend-item"><div class="legend-line" style="background:#8b5e3c;height:8px;border-radius:50%;width:8px"></div>66 kV and below</div>
+    </div>
+    <div id="subs-lrf-legend" style="display:none">
+      <div class="section-title">Legend – LRF (near-term, local region)</div>
+      <div class="legend-item"><div class="legend-line" style="background:#3fb950;height:8px;border-radius:50%;width:8px"></div>&gt; 0.6 — high benefit</div>
+      <div class="legend-item"><div class="legend-line" style="background:#d29922;height:8px;border-radius:50%;width:8px"></div>0.3 – 0.6</div>
+      <div class="legend-item"><div class="legend-line" style="background:#f0883e;height:8px;border-radius:50%;width:8px"></div>0.1 – 0.3</div>
+      <div class="legend-item"><div class="legend-line" style="background:#f85149;height:8px;border-radius:50%;width:8px"></div>&lt; 0.1 — low benefit</div>
+      <div class="legend-item"><div class="legend-line" style="background:#30363d;height:8px;border-radius:50%;width:8px"></div>No LRF data</div>
+      <div style="font-size:11px;color:#8b949e;margin-top:3px">AEMO ELI 2025 — best of Wind/Solar/BESS<br>for this node's NEM region</div>
+    </div>
 
     <div id="mlf-heatmap-legend" style="display:none">
       <div class="section-title">Legend – MLF Heatmap</div>
@@ -256,7 +248,43 @@
       <div class="legend-item"><div class="legend-line" style="background:#f0883e;height:12px;border-radius:3px;width:14px"></div>$150 – $300</div>
       <div class="legend-item"><div class="legend-line" style="background:#f85149;height:12px;border-radius:3px;width:14px"></div>$300 – $1,000</div>
       <div class="legend-item"><div class="legend-line" style="background:#ff0000;height:12px;border-radius:3px;width:14px"></div>&gt; $1,000</div>
-      <div class="legend-item"><div class="legend-line" style="background:#58a6ff;height:3px;width:24px;border-radius:2px"></div>Interconnector flow</div>
+      <div class="legend-item"><div class="legend-line" style="background:#58a6ff;height:3px;width:24px;border-radius:2px"></div>Interconnector (arrow = flow dir)</div>
+    </div>
+
+    <div class="section-title">Filters</div>
+    <div class="filter-group">
+      <label>Voltage</label>
+      <select id="filter-voltage">
+        <option value="">All voltages</option>
+        <option value="500">500 kV</option>
+        <option value="330">330 kV</option>
+        <option value="275">275 kV</option>
+        <option value="220">220 kV</option>
+        <option value="132">132 / 110 kV</option>
+        <option value="66">66 kV and below</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>State</label>
+      <select id="filter-state">
+        <option value="">All states</option>
+        <option value="QLD">QLD</option>
+        <option value="NSW">NSW</option>
+        <option value="VIC">VIC</option>
+        <option value="SA">SA</option>
+        <option value="TAS">TAS</option>
+        <option value="WA">WA</option>
+        <option value="NT">NT</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Line Status</label>
+      <select id="filter-status">
+        <option value="">All statuses</option>
+        <option value="In Service">In Service</option>
+        <option value="Under Construction">Under Construction</option>
+        <option value="Proposed">Proposed</option>
+      </select>
     </div>
 
   </div>
@@ -450,6 +478,26 @@ function addLayers() {
     }
   });
 
+  // Congestion binding % layer (hidden by default, covers all lines)
+  map.addLayer({
+    id: 'lines-congestion',
+    type: 'line',
+    source: 'lines',
+    layout: { 'line-join': 'round', 'line-cap': 'round', 'visibility': 'none' },
+    paint: {
+      'line-color': [
+        'case',
+        ['>', ['to-number', ['get', 'binding_pct'], 0], 50],  '#f85149',
+        ['>', ['to-number', ['get', 'binding_pct'], 0], 20],  '#f0883e',
+        ['>', ['to-number', ['get', 'binding_pct'], 0], 5],   '#d29922',
+        ['>', ['to-number', ['get', 'binding_pct'], 0], 1],   '#79c0ff',
+        '#30363d'
+      ],
+      'line-width': ['interpolate', ['linear'], ['zoom'], 4, 2, 8, 4, 12, 6],
+      'line-opacity': 0.9
+    }
+  });
+
   // Connection points
   map.addSource('cps', { type: 'geojson', data: cpData });
 
@@ -505,7 +553,7 @@ function addLayers() {
     type: 'circle',
     source: 'comp',
     paint: {
-      'circle-radius': ['interpolate', ['linear'], ['zoom'], 4, 4, 8, 6, 12, 9],
+      'circle-radius': ['interpolate', ['linear'], ['zoom'], 4, 5, 8, 8, 12, 12],
       'circle-color': [
         'match', ['get', 'dev_status'],
         'Operating',      '#3fb950',
@@ -564,7 +612,8 @@ function addLayers() {
         ['biomass', 'biogas', 'biodegradeble waste', 'bioenergy (unspecified)', 'methane'], 'tech-biomass',
         'tech-default'
       ],
-      'icon-size': ['interpolate', ['linear'], ['zoom'], 4, 0.5, 8, 0.75, 12, 1.0],
+      'icon-size': ['interpolate', ['linear'], ['zoom'], 4, 0.45, 8, 0.65, 12, 0.9],
+      'icon-offset': [0, -18],
       'icon-allow-overlap': true,
       'icon-ignore-placement': true
     }
@@ -638,7 +687,27 @@ function addLayers() {
     }
   });
 
-  // Flow labels at fixed midpoints — always visible regardless of zoom/line length
+  // Flow direction arrow at midpoint, rotated by bearing
+  addFlowArrowIcon();
+  map.addLayer({
+    id: 'nem-inter-arrows',
+    type: 'symbol',
+    source: 'nem-inter-points',
+    layout: {
+      visibility: 'none',
+      'icon-image': 'flow-arrow',
+      'icon-size': ['interpolate', ['linear'], ['zoom'], 4, 0.7, 8, 1.1],
+      'icon-rotate': ['coalesce', ['get', 'flow_bearing'], 0],
+      'icon-rotation-alignment': 'map',
+      'icon-allow-overlap': true,
+      'icon-ignore-placement': true
+    },
+    paint: {
+      'icon-opacity': 0.95
+    }
+  });
+
+  // Flow labels at fixed midpoints
   map.addLayer({
     id: 'nem-flow-labels',
     type: 'symbol',
@@ -646,16 +715,17 @@ function addLayers() {
     layout: {
       visibility: 'none',
       'text-field': ['coalesce', ['get', 'flow_label'], ['get', 'name']],
-      'text-font': ['Open Sans Regular'],
+      'text-font': ['Open Sans Bold'],
       'text-size': 12,
       'text-anchor': 'center',
       'text-allow-overlap': true,
-      'text-ignore-placement': true
+      'text-ignore-placement': true,
+      'text-line-height': 1.3
     },
     paint: {
       'text-color': '#79c0ff',
-      'text-halo-color': 'rgba(13,17,23,0.95)',
-      'text-halo-width': 14
+      'text-halo-color': 'rgba(13,17,23,0.97)',
+      'text-halo-width': 16
     }
   });
 
@@ -736,6 +806,43 @@ function bindMapEvents() {
         html += `<span class="popup-label">Short-term (15 min)</span><span class="popup-value">${parseFloat(p.psse_short_mva).toLocaleString()} MVA</span>`;
       }
       html += `</div><div style="font-size:11px;color:#8b949e;margin-top:4px">Range = min–max across 8 seasonal snapshots (2024-25)</div></div>`;
+    }
+
+    // Constraint binding % + monthly headroom chart
+    if (p.binding_pct != null) {
+      const bpct = parseFloat(p.binding_pct);
+      const bColour = bpct > 50 ? '#f85149' : bpct > 20 ? '#f0883e' : bpct > 5 ? '#d29922' : bpct > 1 ? '#79c0ff' : '#8b949e';
+      html += `<div class="popup-section"><div class="popup-section-title">Congestion (Jan 2025 – Feb 2026)</div>`;
+      html += `<div class="popup-grid">`;
+      html += `<span class="popup-label">Avg binding</span><span class="popup-value" style="color:${bColour};font-weight:700">${bpct.toFixed(1)}% of intervals</span>`;
+      html += `</div>`;
+
+      // Monthly chart
+      const monthly = tryParse(p.monthly_stats) || [];
+      if (monthly.length >= 2) {
+        html += buildCongestionChart(monthly);
+      }
+
+      // Top constraints
+      const constrs = tryParse(p.binding_constraints) || [];
+      if (constrs.length) {
+        html += `<div style="margin-top:7px;font-size:11px;color:#8b949e;font-weight:600">Binding constraints:</div>`;
+        constrs.slice(0, 3).forEach(c => {
+          if (!c.id) return;
+          const cpct = c.binding_pct != null ? c.binding_pct.toFixed(1) + '%' : '–';
+          const desc = (c.desc || '')
+            .replace(/^Out\s*=\s*[^,]+,\s*/i, '')
+            .replace(/,?\s*Feedback$/i, '')
+            .replace(/,?\s*\(Wt\s*=.*$/i, '')
+            .slice(0, 85);
+          html += `<div style="font-size:11px;padding:3px 0;border-bottom:1px solid #21262d">
+            <span style="color:#e6edf3;font-weight:600">${c.id}</span>
+            <span style="color:${bColour};float:right;font-weight:600">${cpct}</span>
+            <br><span style="color:#8b949e">${desc}</span>
+          </div>`;
+        });
+      }
+      html += `</div>`;
     }
 
     // Projects
@@ -824,7 +931,10 @@ function bindMapEvents() {
         { label: 'Solar', nsw: p.lrf_solar_nsw, qld: p.lrf_solar_qld, sa: p.lrf_solar_sa, vic: p.lrf_solar_vic },
         { label: 'BESS',  nsw: p.lrf_batt_nsw,  qld: p.lrf_batt_qld,  sa: p.lrf_batt_sa,  vic: p.lrf_batt_vic  },
       ];
-      html += `<div class="popup-section"><div class="popup-section-title">Locational Reliability Factor (2026-28)</div>`;
+      const lrfNote = p.lrf_extrapolated
+        ? `<span style="color:#d29922;font-size:10px"> &#9432; spatially inferred from nearby substations</span>`
+        : '';
+      html += `<div class="popup-section"><div class="popup-section-title">Locational Reliability Factor (2026-28)${lrfNote}</div>`;
       html += `<div style="font-size:11px;color:#8b949e;margin-bottom:5px">Benefit of connecting each technology type at this node</div>`;
       html += `<table style="width:100%;font-size:12px;border-collapse:collapse">`;
       html += `<tr style="color:#8b949e"><th style="text-align:left;padding:2px 4px">Tech</th><th>NSW</th><th>QLD</th><th>SA</th><th>VIC</th></tr>`;
@@ -930,13 +1040,50 @@ function bindMapEvents() {
     let html = `<div class="popup-title">${p.name || rid}</div>`;
     html += `<div class="popup-grid">`;
     if (d) {
-      const price = d.PRICE != null ? `$${parseFloat(d.PRICE).toFixed(2)}/MWh` : '–';
-      const demand = d.TOTALDEMAND != null ? `${Math.round(d.TOTALDEMAND).toLocaleString()} MW` : '–';
-      const netInt = d.NETINTERCHANGE != null ? `${Math.round(d.NETINTERCHANGE).toLocaleString()} MW` : '–';
+      const price    = d.PRICE != null ? `$${parseFloat(d.PRICE).toFixed(2)}/MWh` : '–';
+      const demand   = d.TOTALDEMAND != null ? `${Math.round(d.TOTALDEMAND).toLocaleString()} MW` : '–';
+      const schedGen = d.SCHEDULEDGENERATION != null ? `${Math.round(d.SCHEDULEDGENERATION).toLocaleString()} MW` : null;
+      const semiGen  = d.SEMISCHEDULEDGENERATION != null ? `${Math.round(d.SEMISCHEDULEDGENERATION).toLocaleString()} MW` : null;
       const priceCol = nemPriceColor(d.PRICE);
+
+      // Net interchange: negative = region importing, positive = exporting
+      let netIntHtml = '–';
+      if (d.NETINTERCHANGE != null) {
+        const ni = Math.round(d.NETINTERCHANGE);
+        const absMW = Math.abs(ni).toLocaleString();
+        const importing = ni < 0;
+        const niCol = importing ? '#f0883e' : '#3fb950';
+        netIntHtml = `<span style="color:${niCol};font-weight:700">${importing ? '\u25BC' : '\u25B2'} ${absMW} MW ${importing ? 'net import' : 'net export'}</span>`;
+      }
+
       html += `<span class="popup-label">Spot Price</span><span class="popup-value" style="color:${priceCol};font-weight:700">${price}</span>`;
       html += `<span class="popup-label">Total Demand</span><span class="popup-value">${demand}</span>`;
-      html += `<span class="popup-label">Net Interchange</span><span class="popup-value">${netInt}</span>`;
+      html += `<span class="popup-label">Net Interchange</span>${netIntHtml}`;
+      if (schedGen) html += `<span class="popup-label">Scheduled Gen</span><span class="popup-value">${schedGen}</span>`;
+      if (semiGen)  html += `<span class="popup-label">Semi-sched Gen</span><span class="popup-value">${semiGen}</span>`;
+
+      // Interconnector flows for this region
+      if (d.INTERCONNECTORFLOWS) {
+        try {
+          const flows = JSON.parse(d.INTERCONNECTORFLOWS);
+          if (flows.length) {
+            html += `</div><div class="popup-section"><div class="popup-section-title">Interconnector Flows</div><div class="popup-grid">`;
+            flows.forEach(f => {
+              const mw      = Math.round(f.value);
+              const absMW   = Math.abs(mw).toLocaleString();
+              const isExp   = mw > 0;   // positive = from_region exporting (away from this region if it's to_region, or out if from_region)
+              const col     = isExp ? '#3fb950' : '#f0883e';
+              const dir     = isExp ? '\u25B2 out' : '\u25BC in';
+              const limit   = isExp ? f.exportlimit : f.importlimit;
+              const limitMW = limit != null ? Math.abs(Math.round(limit)).toLocaleString() : null;
+              const headroomMW = limit != null ? Math.abs(Math.abs(limit) - Math.abs(mw)) : null;
+              let valStr = `<span style="color:${col};font-weight:700">${dir} ${absMW} MW</span>`;
+              if (limitMW) valStr += ` <span style="color:#8b949e;font-size:11px">/ ${limitMW} MW limit</span>`;
+              html += `<span class="popup-label">${f.name}</span><span class="popup-value">${valStr}</span>`;
+            });
+          }
+        } catch(e) {}
+      }
     } else {
       html += `<span class="popup-label">Region</span><span class="popup-value">${p.short || rid}</span>`;
       html += `<span class="popup-label">Data</span><span class="popup-value" style="color:#8b949e">Enable NEM layer to fetch live data</span>`;
@@ -1015,7 +1162,7 @@ function bindSidebar() {
   });
 
   // NEM price view toggle
-  const NEM_PRICE_LAYERS = ['nem-regions-fill', 'nem-regions-outline', 'nem-price-labels', 'nem-interconnectors-line', 'nem-flow-labels'];
+  const NEM_PRICE_LAYERS = ['nem-regions-fill', 'nem-regions-outline', 'nem-price-labels', 'nem-interconnectors-line', 'nem-flow-labels', 'nem-inter-arrows'];
   // Note: nem-region-points is a SOURCE not a layer — price label visibility is controlled via nem-price-labels
   // Checkboxes that control grid layers — unchecked when NEM view is on, restored on exit
   const NEM_GRID_CBS = ['layer-satellite', 'layer-lines', 'layer-cps', 'layer-sub-labels', 'layer-comp'];
@@ -1083,10 +1230,55 @@ function bindSidebar() {
   document.getElementById('loading-mode-btn').addEventListener('click', () => {
     loadingMode = !loadingMode;
     const btn = document.getElementById('loading-mode-btn');
-    btn.textContent = loadingMode ? '% Loading Layer ON' : '% Loading Layer OFF';
+    btn.textContent = loadingMode ? '% Loading ON' : '% Loading OFF';
     btn.classList.toggle('active', loadingMode);
     map.setLayoutProperty('lines-loading', 'visibility', loadingMode ? 'visible' : 'none');
-    map.setPaintProperty('lines-layer', 'line-opacity', loadingMode ? 0.25 : 0.85);
+    map.setPaintProperty('lines-layer', 'line-opacity', loadingMode ? 0.25 : (congestionMode ? 0.25 : 0.85));
+  });
+
+  // Congestion binding % layer toggle
+  let congestionMode = false;
+  document.getElementById('congestion-mode-btn').addEventListener('click', () => {
+    congestionMode = !congestionMode;
+    const btn = document.getElementById('congestion-mode-btn');
+    btn.textContent = congestionMode ? 'Congestion ON' : 'Congestion OFF';
+    btn.classList.toggle('active', congestionMode);
+    map.setLayoutProperty('lines-congestion', 'visibility', congestionMode ? 'visible' : 'none');
+    map.setPaintProperty('lines-layer', 'line-opacity', congestionMode ? 0.25 : (loadingMode ? 0.25 : 0.85));
+    document.getElementById('congestion-legend').style.display = congestionMode ? '' : 'none';
+  });
+
+  // LRF substation colour toggle
+  const VOLTAGE_COLOR_EXPR = [
+    'case',
+    ['>=', ['to-number', ['get', 'voltage'], 0], 500], '#ffe033',
+    ['>=', ['to-number', ['get', 'voltage'], 0], 330], '#f08020',
+    ['>=', ['to-number', ['get', 'voltage'], 0], 275], '#d040c0',
+    ['>=', ['to-number', ['get', 'voltage'], 0], 220], '#4496e0',
+    ['>=', ['to-number', ['get', 'voltage'], 0], 110], '#d84040',
+    ['>=', ['to-number', ['get', 'voltage'], 0], 66],  '#8b5e3c',
+    '#8b949e'
+  ];
+  const LRF_COLOR_EXPR = [
+    'case',
+    ['==', ['get', 'lrf_substation'], true],
+    ['case',
+      ['>', ['to-number', ['get', 'lrf_max_local'], 0], 0.6], '#3fb950',
+      ['>', ['to-number', ['get', 'lrf_max_local'], 0], 0.3], '#d29922',
+      ['>', ['to-number', ['get', 'lrf_max_local'], 0], 0.1], '#f0883e',
+      '#f85149'
+    ],
+    '#30363d'  // no LRF data
+  ];
+  let lrfMode = false;
+  document.getElementById('lrf-mode-btn').addEventListener('click', () => {
+    lrfMode = !lrfMode;
+    const btn = document.getElementById('lrf-mode-btn');
+    btn.textContent = lrfMode ? 'LRF Layer ON' : 'LRF Layer OFF';
+    btn.classList.toggle('active', lrfMode);
+    map.setPaintProperty('cps-layer', 'circle-color', lrfMode ? LRF_COLOR_EXPR : VOLTAGE_COLOR_EXPR);
+    document.getElementById('subs-voltage-legend').style.display = lrfMode ? 'none' : '';
+    document.getElementById('subs-lrf-legend').style.display     = lrfMode ? '' : 'none';
   });
 
   // MLF heatmap — Off / Gen / Load
@@ -1168,6 +1360,97 @@ function tryParse(val) {
   try { return JSON.parse(val.replace(/'/g, '"')); } catch { return null; }
 }
 
+function bindingColour(pct) {
+  return pct > 50 ? '#f85149' : pct > 20 ? '#f0883e' : pct > 5 ? '#d29922' : pct > 1 ? '#79c0ff' : '#30363d';
+}
+
+/**
+ * Build an inline SVG showing:
+ *   Bars  = monthly binding % (coloured by intensity)
+ *   Line  = monthly average headroom (RHS-LHS, MW)
+ * monthly: [{month, binding_pct, avg_headroom, min_headroom}, ...]
+ */
+function buildCongestionChart(monthly) {
+  const W = 268, H = 110;
+  const PL = 42, PR = 8, PT = 8, PB = 22;
+  const iW = W - PL - PR, iH = H - PT - PB;
+
+  const sorted = [...monthly].sort((a, b) => a.month.localeCompare(b.month));
+  const n      = sorted.length;
+  const barW   = iW / n;
+
+  // Scales
+  const maxBpct = Math.max(...sorted.map(d => d.binding_pct), 1);
+  const hrVals  = sorted.map(d => d.avg_headroom).filter(v => v != null);
+  const maxHr   = Math.max(...hrVals, 1);
+  const minHr   = Math.min(...hrVals, 0);
+  const hrRange = maxHr - minHr || 1;
+
+  const bScale = v => iH * Math.min(v / maxBpct, 1);
+  const hrY    = v => PT + iH - iH * ((v - minHr) / hrRange);
+  const barX   = i => PL + i * barW;
+
+  let svg = `<svg width="${W}" height="${H}" style="display:block;margin-top:8px;overflow:visible">`;
+
+  // Grid line at 50% binding
+  if (maxBpct > 0) {
+    const y50 = PT + iH - bScale(Math.min(50, maxBpct));
+    svg += `<line x1="${PL}" y1="${y50}" x2="${PL+iW}" y2="${y50}" stroke="#30363d" stroke-dasharray="2,2"/>`;
+  }
+
+  // Bars — binding %
+  sorted.forEach((d, i) => {
+    const bh = Math.max(1, bScale(d.binding_pct));
+    const x  = barX(i);
+    svg += `<rect x="${x+1}" y="${PT+iH-bh}" width="${barW-2}" height="${bh}"
+              fill="${bindingColour(d.binding_pct)}" opacity="0.85"/>`;
+  });
+
+  // Headroom line (avg)
+  if (hrVals.length >= 2) {
+    const pts = sorted
+      .map((d, i) => d.avg_headroom != null ? `${(barX(i) + barW/2).toFixed(1)},${hrY(d.avg_headroom).toFixed(1)}` : null)
+      .filter(Boolean);
+    svg += `<polyline points="${pts.join(' ')}" fill="none" stroke="#58a6ff" stroke-width="1.5" opacity="0.9"/>`;
+
+    // Min headroom dots (worst case each month)
+    sorted.forEach((d, i) => {
+      if (d.min_headroom == null) return;
+      const cx = barX(i) + barW / 2;
+      const cy = hrY(d.min_headroom);
+      svg += `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="2" fill="#79c0ff" opacity="0.8"/>`;
+    });
+  }
+
+  // Y axis — binding % (left)
+  svg += `<text x="${PL-4}" y="${PT+4}" text-anchor="end" fill="#8b949e" font-size="9">${maxBpct.toFixed(0)}%</text>`;
+  svg += `<text x="${PL-4}" y="${PT+iH+4}" text-anchor="end" fill="#8b949e" font-size="9">0%</text>`;
+  svg += `<text x="${PL-4}" y="${PT+iH/2+4}" text-anchor="end" fill="#8b949e" font-size="9" transform="rotate(-90,${PL-14},${PT+iH/2})" >binding</text>`;
+
+  // Y axis — headroom (right)
+  if (hrVals.length >= 2) {
+    svg += `<text x="${PL+iW+PR-1}" y="${PT+4}" text-anchor="end" fill="#58a6ff" font-size="9">${Math.round(maxHr)}MW</text>`;
+    svg += `<text x="${PL+iW+PR-1}" y="${PT+iH+4}" text-anchor="end" fill="#58a6ff" font-size="9">${Math.round(minHr)}</text>`;
+  }
+
+  // X axis — month labels (every 2nd)
+  sorted.forEach((d, i) => {
+    if (i % 2 !== 0) return;
+    const label = d.month.slice(5) + "'" + d.month.slice(2,4);  // e.g. "01'25"
+    svg += `<text x="${(barX(i)+barW/2).toFixed(1)}" y="${H-4}"
+              text-anchor="middle" fill="#8b949e" font-size="8">${label}</text>`;
+  });
+
+  // Legend
+  svg += `<rect x="${PL}" y="${H-13}" width="8" height="6" fill="#d29922" opacity="0.85"/>`;
+  svg += `<text x="${PL+10}" y="${H-8}" fill="#8b949e" font-size="8">binding %</text>`;
+  svg += `<line x1="${PL+65}" y1="${H-10}" x2="${PL+75}" y2="${H-10}" stroke="#58a6ff" stroke-width="1.5"/>`;
+  svg += `<text x="${PL+78}" y="${H-8}" fill="#8b949e" font-size="8">avg headroom (MW)</text>`;
+
+  svg += `</svg>`;
+  return svg;
+}
+
 // ─────────────────────────────────────────
 // LIVE NEM DATA
 // ─────────────────────────────────────────
@@ -1241,18 +1524,35 @@ function updateNEMLayers() {
   // ── Update interconnector GeoJSON with flow data ──
   const inters = JSON.parse(JSON.stringify(window.nemInterData));
   inters.features.forEach(ft => {
-    const id  = ft.properties.id;
-    const f   = window.nemFlowData[id];
+    const id       = ft.properties.id;
+    const f        = window.nemFlowData[id];
+    const fromShort = ft.properties.from_region.replace('1', '');
+    const toShort   = ft.properties.to_region.replace('1', '');
+
+    // Compute base bearing from line geometry (degrees, 0=north, clockwise)
+    const coords = ft.geometry.coordinates;
+    const [lng1, lat1] = coords[0];
+    const [lng2, lat2] = coords[coords.length - 1];
+    const dLng = lng2 - lng1, dLat = lat2 - lat1;
+    const baseBearing = (Math.atan2(dLng, dLat) * 180 / Math.PI + 360) % 360;
+
     if (f && f.value != null) {
-      const mw  = Math.round(Math.abs(f.value));
-      const fromShort = ft.properties.from_region.replace('1', '');
-      const toShort   = ft.properties.to_region.replace('1', '');
-      const dir = f.value >= 0
-        ? `→ ${toShort} ${mw} MW`
-        : `→ ${fromShort} ${mw} MW`;
-      ft.properties.flow_label = `${ft.properties.name}\n${dir}`;
+      const mw        = Math.round(Math.abs(f.value));
+      const exporting = f.value >= 0;   // positive = from_region → to_region
+      const srcRegion = exporting ? fromShort : toShort;
+      const dstRegion = exporting ? toShort   : fromShort;
+
+      // Arrow bearing: along line when exporting, reversed when importing
+      ft.properties.flow_bearing = exporting ? baseBearing : (baseBearing + 180) % 360;
+
+      // Label: name / from→to / MW (of limit MW)
+      const limitVal = exporting ? f.exportlimit : f.importlimit;
+      const limitMW  = limitVal != null ? Math.abs(Math.round(limitVal)) : null;
+      const mwLine   = limitMW ? `${mw} / ${limitMW} MW` : `${mw} MW`;
+      ft.properties.flow_label = `${ft.properties.name}\n${srcRegion} \u2192 ${dstRegion}\n${mwLine}`;
     } else {
-      ft.properties.flow_label = ft.properties.name;
+      ft.properties.flow_bearing = baseBearing;
+      ft.properties.flow_label   = `${ft.properties.name}\n${fromShort} \u2194 ${toShort}\nno data`;
     }
   });
   map.getSource('nem-interconnectors').setData(inters);
@@ -1397,6 +1697,31 @@ function buildRegionPoints(regionsGj) {
       properties: { ...ft.properties }
     }))
   };
+}
+
+function addFlowArrowIcon() {
+  // Upward-pointing filled arrow — MapLibre rotates it via icon-rotate
+  const S = 24;
+  const c = document.createElement('canvas');
+  c.width = S; c.height = S;
+  const ctx = c.getContext('2d');
+  // Shadow for contrast on any background
+  ctx.shadowColor = 'rgba(0,0,0,0.9)';
+  ctx.shadowBlur = 3;
+  ctx.fillStyle = '#58a6ff';
+  // Draw upward triangle (arrow head)
+  const cx = S / 2;
+  ctx.beginPath();
+  ctx.moveTo(cx,     3);          // tip
+  ctx.lineTo(cx + 7, S - 5);     // bottom-right
+  ctx.lineTo(cx,     S - 9);     // notch
+  ctx.lineTo(cx - 7, S - 5);     // bottom-left
+  ctx.closePath();
+  ctx.fill();
+  map.addImage('flow-arrow', {
+    width: S, height: S,
+    data: new Uint8ClampedArray(ctx.getImageData(0, 0, S, S).data)
+  });
 }
 
 function buildInterPoints(interGj) {
