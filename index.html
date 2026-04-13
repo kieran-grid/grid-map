@@ -148,6 +148,12 @@
   <!-- ── Sidebar ── -->
   <div id="sidebar">
 
+    <div class="section-title">View</div>
+    <div style="display:flex;gap:4px;margin-bottom:8px">
+      <button id="view-map-btn"       class="toggle-btn active" style="flex:1;font-size:12px">Map</button>
+      <button id="view-schematic-btn" class="toggle-btn"        style="flex:1;font-size:12px">Schematic</button>
+    </div>
+
     <div class="section-title">Layers</div>
     <label class="layer-row"><input type="checkbox" id="layer-satellite" /><div class="layer-dot" style="background:linear-gradient(135deg,#4a7c59,#2d4a8a);border-radius:2px"></div>Satellite</label>
     <label class="layer-row"><input type="checkbox" id="layer-lines" checked /><div class="layer-dot" style="background:#f08020"></div>Transmission Lines</label>
@@ -182,13 +188,13 @@
       <button class="toggle-btn mlf-hm-btn"        id="mlf-hm-load" data-mode="load" style="flex:1;padding:4px 6px">Load</button>
     </div>
 
-    <div class="section-title">Legend – Lines</div>
-    <div class="legend-item"><div class="legend-line" style="background:#ffe033;height:4px"></div>500 kV</div>
-    <div class="legend-item"><div class="legend-line" style="background:#f08020;height:3px"></div>330 kV</div>
-    <div class="legend-item"><div class="legend-line" style="background:#d040c0;height:3px"></div>275 kV</div>
-    <div class="legend-item"><div class="legend-line" style="background:#4496e0;height:2px"></div>220 kV</div>
-    <div class="legend-item"><div class="legend-line" style="background:#d84040;height:2px"></div>132 / 110 kV</div>
-    <div class="legend-item"><div class="legend-line" style="background:#8b5e3c;height:1px"></div>66 kV and below</div>
+    <div class="section-title">Voltage Levels</div>
+    <label class="layer-row"><input type="checkbox" class="volt-cb" data-kvs="400,500" checked /><div class="legend-line" style="background:#ffe033;height:4px;width:22px;flex-shrink:0"></div>500 kV</label>
+    <label class="layer-row"><input type="checkbox" class="volt-cb" data-kvs="330"     checked /><div class="legend-line" style="background:#f08020;height:3px;width:22px;flex-shrink:0"></div>330 kV</label>
+    <label class="layer-row"><input type="checkbox" class="volt-cb" data-kvs="275"     checked /><div class="legend-line" style="background:#d040c0;height:3px;width:22px;flex-shrink:0"></div>275 kV</label>
+    <label class="layer-row"><input type="checkbox" class="volt-cb" data-kvs="220"     checked /><div class="legend-line" style="background:#4496e0;height:2px;width:22px;flex-shrink:0"></div>220 kV</label>
+    <label class="layer-row"><input type="checkbox" class="volt-cb" data-kvs="110,132" checked /><div class="legend-line" style="background:#d84040;height:2px;width:22px;flex-shrink:0"></div>132 / 110 kV</label>
+    <label class="layer-row"><input type="checkbox" class="volt-cb" data-kvs="11,22,33,44,66,88"  /><div class="legend-line" style="background:#8b5e3c;height:1px;width:22px;flex-shrink:0"></div>66 kV and below</label>
 
     <div class="section-title">Legend – % Loading</div>
     <div class="legend-item"><div class="legend-line" style="background:#3fb950;height:4px"></div>&lt; 65%</div>
@@ -254,18 +260,6 @@
     </div>
 
     <div class="section-title">Filters</div>
-    <div class="filter-group">
-      <label>Voltage</label>
-      <select id="filter-voltage">
-        <option value="">All voltages</option>
-        <option value="500">500 kV</option>
-        <option value="330">330 kV</option>
-        <option value="275">275 kV</option>
-        <option value="220">220 kV</option>
-        <option value="132">132 / 110 kV</option>
-        <option value="66">66 kV and below</option>
-      </select>
-    </div>
     <div class="filter-group">
       <label>State</label>
       <select id="filter-state">
@@ -379,6 +373,7 @@ function mlfClass(mlf) {
 // ─────────────────────────────────────────
 let linesData = null, cpData = null, mlfData = [], compData = null;
 let mlfMode = false;
+let schematicMode = false;
 let activeFilters = { voltage: '', state: '', status: '' };
 
 const popup = new maplibregl.Popup({ closeButton: true, maxWidth: '360px' });
@@ -418,6 +413,7 @@ Promise.all([
   bindFilters();
   bindSearch();
   bindSidebar();
+  applyFilters(); // apply initial voltage filter (hides 66kV by default)
 });
 
 // ─────────────────────────────────────────
@@ -546,6 +542,34 @@ function addLayers() {
       'text-color': '#e6edf3',
       'text-halo-color': '#0d1117',
       'text-halo-width': 1.5
+    }
+  });
+
+  // ── Transformer indicators (schematic view only) ───────────────────────
+  // Ring drawn around substations with known transformers to indicate voltage transformation.
+  map.addLayer({
+    id: 'xfmr-layer',
+    type: 'circle',
+    source: 'cps',
+    filter: ['all',
+      ['>', ['coalesce', ['to-number', ['get', 'xfmr_count'], 0], 0], 0],
+      ['>=', ['to-number', ['get', 'voltage'], 0], 110]
+    ],
+    layout: { visibility: 'none' },
+    paint: {
+      'circle-radius': ['interpolate', ['linear'], ['zoom'], 4, 8, 8, 13, 12, 20],
+      'circle-color':  'rgba(0,0,0,0)',
+      'circle-stroke-width': 2,
+      'circle-stroke-color': [
+        'case',
+        ['>=', ['to-number', ['get', 'voltage'], 0], 500], '#ffe033',
+        ['>=', ['to-number', ['get', 'voltage'], 0], 330], '#f08020',
+        ['>=', ['to-number', ['get', 'voltage'], 0], 275], '#d040c0',
+        ['>=', ['to-number', ['get', 'voltage'], 0], 220], '#4496e0',
+        ['>=', ['to-number', ['get', 'voltage'], 0], 110], '#d84040',
+        '#8b5e3c'
+      ],
+      'circle-stroke-opacity': 0.7
     }
   });
 
@@ -1352,17 +1376,26 @@ function bindMapEvents() {
 // FILTERS
 // ─────────────────────────────────────────
 function bindFilters() {
-  ['filter-voltage', 'filter-state', 'filter-status'].forEach(id => {
-    document.getElementById(id).addEventListener('change', applyFilters);
-  });
+  document.querySelectorAll('.volt-cb').forEach(cb =>
+    cb.addEventListener('change', applyFilters));
+  ['filter-state', 'filter-status'].forEach(id =>
+    document.getElementById(id).addEventListener('change', applyFilters));
 }
 
 function applyFilters() {
-  const voltage = document.getElementById('filter-voltage').value;
-  const state   = document.getElementById('filter-state').value;
-  const status  = document.getElementById('filter-status').value;
+  const voltCbs    = [...document.querySelectorAll('.volt-cb')];
+  const allChecked = voltCbs.every(cb => cb.checked);
+  // Collect all kV values from checked groups
+  let selectedKvs = voltCbs
+    .filter(cb => cb.checked)
+    .flatMap(cb => cb.dataset.kvs.split(',').map(Number));
 
-  // State values in the data are full names; NSW also covers ACT lines + 4 abbreviated entries
+  // Schematic mode forces 132kV+ (hide sub-transmission even if checkbox checked)
+  if (schematicMode) selectedKvs = selectedKvs.filter(v => v >= 110);
+
+  const state  = document.getElementById('filter-state').value;
+  const status = document.getElementById('filter-status').value;
+
   const STATE_ALIASES = {
     'Queensland':        ['Queensland'],
     'New South Wales':   ['New South Wales', 'NSW', 'Australian Capital Territory'],
@@ -1373,13 +1406,35 @@ function applyFilters() {
     'Northern Territory':['Northern Territory'],
   };
 
+  // ── Lines filter ──
   const lineFilter = ['all'];
-  if (voltage) lineFilter.push(['==', ['to-string', ['get', 'voltage_kv']], voltage]);
-  if (state)   lineFilter.push(['in', ['get', 'state'], ['literal', STATE_ALIASES[state] || [state]]]);
-  if (status)  lineFilter.push(['==', ['get', 'status'], status]);
+  if (!allChecked || schematicMode) {
+    lineFilter.push(selectedKvs.length > 0
+      ? ['in', ['get', 'voltage_kv'], ['literal', selectedKvs]]
+      : ['==', ['get', 'voltage_kv'], -1]);
+  }
+  if (state)  lineFilter.push(['in', ['get', 'state'], ['literal', STATE_ALIASES[state] || [state]]]);
+  if (status) lineFilter.push(['==', ['get', 'status'], status]);
 
   map.setFilter('lines-layer', lineFilter.length > 1 ? lineFilter : null);
   map.setFilter('lines-hover', lineFilter.length > 1 ? lineFilter : null);
+
+  // ── Substations filter ──
+  const cpFilter = ['all'];
+  if (!allChecked || schematicMode) {
+    cpFilter.push(selectedKvs.length > 0
+      ? ['in', ['to-number', ['get', 'voltage']], ['literal', selectedKvs]]
+      : ['==', ['to-number', ['get', 'voltage']], -1]);
+  }
+  map.setFilter('cps-layer',  cpFilter.length > 1 ? cpFilter : null);
+  map.setFilter('cps-labels', cpFilter.length > 1 ? cpFilter : null);
+  if (map.getLayer('xfmr-layer')) {
+    const xfmrFilter = ['all',
+      ['>', ['coalesce', ['to-number', ['get', 'xfmr_count'], 0], 0], 0],
+      ...(cpFilter.length > 1 ? cpFilter.slice(1) : [])
+    ];
+    map.setFilter('xfmr-layer', xfmrFilter);
+  }
 }
 
 // ─────────────────────────────────────────
@@ -1402,6 +1457,80 @@ function bindSidebar() {
     map.setPaintProperty('cps-labels', 'text-halo-width', on ? 2 : 1);
     map.setPaintProperty('cps-labels', 'text-halo-color', on ? 'rgba(0,0,0,0.85)' : 'rgba(0,0,0,0.6)');
   });
+
+  // ── Schematic / Map view toggle ──────────────────────────────────────────
+  function setSchematicMode(on) {
+    schematicMode = on;
+    document.getElementById('view-map-btn').classList.toggle('active', !on);
+    document.getElementById('view-schematic-btn').classList.toggle('active', on);
+
+    if (on) {
+      // White background — hide dark basemap
+      document.getElementById('map').style.backgroundColor = '#f0f2f5';
+      map.setLayoutProperty('background', 'visibility', 'none');
+      map.setLayoutProperty('satellite',  'visibility', 'none');
+
+      // Thicker lines, full opacity
+      map.setPaintProperty('lines-layer', 'line-width', [
+        'interpolate', ['linear'], ['coalesce', ['get', 'voltage_kv'], 0],
+        0, 1, 110, 2.2, 132, 2.8, 220, 3.8, 275, 4.5, 330, 5.5, 500, 7
+      ]);
+      map.setPaintProperty('lines-layer', 'line-opacity', 1.0);
+
+      // Dark labels on light background
+      map.setPaintProperty('cps-labels', 'text-color',       '#1a1a2e');
+      map.setPaintProperty('cps-labels', 'text-halo-color',  'rgba(240,242,245,0.92)');
+      map.setPaintProperty('cps-labels', 'text-halo-width',  2.5);
+      map.setLayoutProperty('cps-labels', 'text-optional', false);
+
+      // Show transformer rings
+      map.setLayoutProperty('xfmr-layer', 'visibility', 'visible');
+
+      // Show operating + construction projects
+      map.setLayoutProperty('comp-layer', 'visibility', 'visible');
+      map.setFilter('comp-layer', ['in', ['get', 'dev_status'], ['literal', ['Operating', 'Construction']]]);
+      try { map.setLayoutProperty('comp-icons', 'visibility', 'visible'); } catch(_) {}
+
+    } else {
+      // Restore dark map
+      document.getElementById('map').style.backgroundColor = '';
+      map.setLayoutProperty('background', 'visibility', 'visible');
+      // satellite restored only if its checkbox is checked
+      if (document.getElementById('layer-satellite').checked)
+        map.setLayoutProperty('satellite', 'visibility', 'visible');
+
+      // Restore line style
+      map.setPaintProperty('lines-layer', 'line-width', [
+        'interpolate', ['linear'], ['coalesce', ['get', 'voltage_kv'], 0],
+        0, 0.8, 66, 0.8, 132, 1.4, 220, 1.8, 275, 2.2, 500, 3
+      ]);
+      map.setPaintProperty('lines-layer', 'line-opacity', 0.85);
+
+      // Restore label style for dark background
+      map.setPaintProperty('cps-labels', 'text-color',      '#e6edf3');
+      map.setPaintProperty('cps-labels', 'text-halo-color', 'rgba(0,0,0,0.6)');
+      map.setPaintProperty('cps-labels', 'text-halo-width',  1);
+      map.setLayoutProperty('cps-labels', 'text-optional', true);
+
+      // Hide schematic-only layers
+      map.setLayoutProperty('xfmr-layer', 'visibility', 'none');
+
+      // Restore comp layer to user's checkbox state
+      const compOn = document.getElementById('layer-comp').checked;
+      map.setLayoutProperty('comp-layer', 'visibility', compOn ? 'visible' : 'none');
+      try { map.setLayoutProperty('comp-icons', 'visibility', compOn ? 'visible' : 'none'); } catch(_) {}
+      // Reapply comp status filter
+      const checked = [...document.querySelectorAll('.comp-status-cb:checked')].map(cb => cb.value);
+      map.setFilter('comp-layer', checked.length === 0
+        ? ['==', 'dev_status', '__none__']
+        : ['in', ['get', 'dev_status'], ['literal', checked]]);
+    }
+
+    applyFilters();
+  }
+
+  document.getElementById('view-map-btn').addEventListener('click',       () => setSchematicMode(false));
+  document.getElementById('view-schematic-btn').addEventListener('click', () => setSchematicMode(true));
 
   // NEM price view toggle
   const NEM_PRICE_LAYERS = ['nem-regions-fill', 'nem-regions-outline', 'nem-price-labels', 'nem-interconnectors-line', 'nem-flow-labels'];
