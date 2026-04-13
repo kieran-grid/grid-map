@@ -152,7 +152,6 @@
     <label class="layer-row"><input type="checkbox" id="layer-satellite" /><div class="layer-dot" style="background:linear-gradient(135deg,#4a7c59,#2d4a8a);border-radius:2px"></div>Satellite</label>
     <label class="layer-row"><input type="checkbox" id="layer-lines" checked /><div class="layer-dot" style="background:#f08020"></div>Transmission Lines</label>
     <label class="layer-row"><input type="checkbox" id="layer-cps" checked /><div class="layer-dot" style="background:#d84040"></div>Substations</label>
-    <label class="layer-row"><input type="checkbox" id="layer-sub-labels" checked /><div class="layer-dot" style="background:#8b949e;border-radius:2px"></div>Substation Names</label>
     <label class="layer-row"><input type="checkbox" id="layer-nem" /><div class="layer-dot" style="background:linear-gradient(135deg,#3fb950,#d29922,#f85149);border-radius:2px"></div>Live NEM Prices</label>
     <div id="nem-status" style="font-size:11px;color:#8b949e;padding:1px 0 4px 20px;display:none">–</div>
 
@@ -216,12 +215,13 @@
     </div>
     <div id="subs-lrf-legend" style="display:none">
       <div class="section-title">Legend – LRF (near-term, local region)</div>
-      <div class="legend-item"><div class="legend-line" style="background:#3fb950;height:8px;border-radius:50%;width:8px"></div>&gt; 0.6 — high benefit</div>
-      <div class="legend-item"><div class="legend-line" style="background:#d29922;height:8px;border-radius:50%;width:8px"></div>0.3 – 0.6</div>
-      <div class="legend-item"><div class="legend-line" style="background:#f0883e;height:8px;border-radius:50%;width:8px"></div>0.1 – 0.3</div>
-      <div class="legend-item"><div class="legend-line" style="background:#f85149;height:8px;border-radius:50%;width:8px"></div>&lt; 0.1 — low benefit</div>
+      <div class="legend-item"><div class="legend-line" style="background:#3fb950;height:8px;border-radius:50%;width:8px"></div>&gt; 0.42 — high (top 10%)</div>
+      <div class="legend-item"><div class="legend-line" style="background:#8bc34a;height:8px;border-radius:50%;width:8px"></div>0.30 – 0.42</div>
+      <div class="legend-item"><div class="legend-line" style="background:#d29922;height:8px;border-radius:50%;width:8px"></div>0.20 – 0.30 (median)</div>
+      <div class="legend-item"><div class="legend-line" style="background:#f0883e;height:8px;border-radius:50%;width:8px"></div>0.10 – 0.20</div>
+      <div class="legend-item"><div class="legend-line" style="background:#f85149;height:8px;border-radius:50%;width:8px"></div>&lt; 0.10 — remote / low</div>
       <div class="legend-item"><div class="legend-line" style="background:#30363d;height:8px;border-radius:50%;width:8px"></div>No LRF data</div>
-      <div style="font-size:11px;color:#8b949e;margin-top:3px">AEMO ELI 2025 — best of Wind/Solar<br>for this node's NEM region</div>
+      <div style="font-size:11px;color:#8b949e;margin-top:3px">AEMO ELI 2025 — best of Wind/Solar<br>for this node's NEM region. Max NEM value = 0.55.</div>
     </div>
 
     <div id="mlf-heatmap-legend" style="display:none">
@@ -484,14 +484,14 @@ function addLayers() {
     type: 'line',
     source: 'lines',
     layout: { 'line-join': 'round', 'line-cap': 'round', 'visibility': 'none' },
+    filter: ['>', ['to-number', ['get', 'binding_pct'], 0], 1],
     paint: {
       'line-color': [
         'case',
         ['>', ['to-number', ['get', 'binding_pct'], 0], 50],  '#f85149',
         ['>', ['to-number', ['get', 'binding_pct'], 0], 20],  '#f0883e',
         ['>', ['to-number', ['get', 'binding_pct'], 0], 5],   '#d29922',
-        ['>', ['to-number', ['get', 'binding_pct'], 0], 1],   '#79c0ff',
-        '#30363d'
+        '#79c0ff'
       ],
       'line-width': ['interpolate', ['linear'], ['zoom'], 4, 2, 8, 4, 12, 6],
       'line-opacity': 0.9
@@ -612,7 +612,7 @@ function addLayers() {
         ['biomass', 'biogas', 'biodegradeble waste', 'bioenergy (unspecified)', 'methane'], 'tech-biomass',
         'tech-default'
       ],
-      'icon-size': ['interpolate', ['linear'], ['zoom'], 4, 0.45, 8, 0.65, 12, 0.9],
+      'icon-size': ['interpolate', ['linear'], ['zoom'], 4, 0.6, 8, 0.85, 12, 1.15],
       'icon-offset': [0, -18],
       'icon-allow-overlap': true,
       'icon-ignore-placement': true
@@ -820,10 +820,11 @@ function bindMapEvents() {
       html += `<span class="popup-label">Avg binding</span><span class="popup-value" style="color:${bColour};font-weight:700">${bpct.toFixed(1)}% of intervals</span>`;
       html += `</div>`;
 
-      // Monthly chart
+      // Monthly headroom chart
       const monthly = tryParse(p.monthly_stats) || [];
       if (monthly.length >= 2) {
         html += buildCongestionChart(monthly);
+        html += `<div style="font-size:10px;color:#8b949e;margin-top:2px">0 MW = constraint limit (binding). % labels = share of intervals binding that month.</div>`;
       }
 
       // Top constraints
@@ -938,13 +939,22 @@ function bindMapEvents() {
         ? `<span style="color:#d29922;font-size:10px"> &#9432; spatially inferred from nearby substations</span>`
         : '';
       html += `<div class="popup-section"><div class="popup-section-title">Locational Reliability Factor (2026-28)${lrfNote}</div>`;
-      html += `<div style="font-size:11px;color:#8b949e;margin-bottom:5px">Reliability benefit of connecting Wind or Solar at this node (by NEM region)</div>`;
+      // Show lrf_max_local summary row
+      const maxLocal = parseFloat(p.lrf_max_local) || 0;
+      const maxLocalCol = maxLocal > 0.42 ? '#3fb950' : maxLocal > 0.30 ? '#8bc34a' : maxLocal > 0.20 ? '#d29922' : maxLocal > 0.10 ? '#f0883e' : '#f85149';
+      const tierLabel = maxLocal > 0.42 ? 'High (top 10%)' : maxLocal > 0.30 ? 'Good (top 27%)' : maxLocal > 0.20 ? 'Moderate (above median)' : maxLocal > 0.10 ? 'Below median' : 'Low / remote';
+      html += `<div style="font-size:12px;margin-bottom:6px">`;
+      html += `<span style="color:#8b949e">Best local LRF (Wind/Solar): </span>`;
+      html += `<span style="color:${maxLocalCol};font-weight:700">${maxLocal.toFixed(3)}</span>`;
+      html += `<span style="color:${maxLocalCol};font-size:11px"> — ${tierLabel}</span>`;
+      html += `</div>`;
+      html += `<div style="font-size:11px;color:#8b949e;margin-bottom:5px">All regions — reliability benefit of Wind/Solar/BESS at this node</div>`;
       html += `<table style="width:100%;font-size:12px;border-collapse:collapse">`;
       html += `<tr style="color:#8b949e"><th style="text-align:left;padding:2px 4px">Tech</th><th>NSW</th><th>QLD</th><th>SA</th><th>VIC</th></tr>`;
       techs.forEach(t => {
         const vals = [t.nsw, t.qld, t.sa, t.vic].map(v => {
           const n = parseFloat(v) || 0;
-          const col = n > 0.1 ? '#3fb950' : n > 0.05 ? '#d29922' : '#8b949e';
+          const col = n > 0.30 ? '#3fb950' : n > 0.20 ? '#8bc34a' : n > 0.10 ? '#d29922' : n > 0.01 ? '#8b949e' : '#484f58';
           return `<td style="text-align:center;color:${col};padding:2px 4px">${n > 0 ? n.toFixed(3) : '–'}</td>`;
         });
         html += `<tr><td style="padding:2px 4px">${t.label}</td>${vals.join('')}</tr>`;
@@ -1166,9 +1176,6 @@ function bindSidebar() {
     const v = e.target.checked ? 'visible' : 'none';
     ['cps-layer', 'cps-labels'].forEach(id => map.setLayoutProperty(id, 'visibility', v));
   });
-  document.getElementById('layer-sub-labels').addEventListener('change', e => {
-    map.setLayoutProperty('cps-labels', 'visibility', e.target.checked ? 'visible' : 'none');
-  });
   document.getElementById('layer-satellite').addEventListener('change', e => {
     const on = e.target.checked;
     map.setLayoutProperty('satellite', 'visibility', on ? 'visible' : 'none');
@@ -1182,7 +1189,7 @@ function bindSidebar() {
   const NEM_PRICE_LAYERS = ['nem-regions-fill', 'nem-regions-outline', 'nem-price-labels', 'nem-interconnectors-line', 'nem-flow-labels', 'nem-inter-arrows'];
   // Note: nem-region-points is a SOURCE not a layer — price label visibility is controlled via nem-price-labels
   // Checkboxes that control grid layers — unchecked when NEM view is on, restored on exit
-  const NEM_GRID_CBS = ['layer-satellite', 'layer-lines', 'layer-cps', 'layer-sub-labels', 'layer-comp'];
+  const NEM_GRID_CBS = ['layer-satellite', 'layer-lines', 'layer-cps', 'layer-comp'];
   let nemSavedCbStates = {};
 
   document.getElementById('layer-nem').addEventListener('change', e => {
@@ -1276,14 +1283,18 @@ function bindSidebar() {
     ['>=', ['to-number', ['get', 'voltage'], 0], 66],  '#8b5e3c',
     '#8b949e'
   ];
+  // LRF colour scale calibrated to actual AEMO ELI 2025 data range (0.01 – 0.55).
+  // Wind/Solar lrf_max_local for the node's own NEM region.
+  // Thresholds: ~top 10% green, top 27% lime, median amber, below-median orange, low red.
   const LRF_COLOR_EXPR = [
     'case',
     ['==', ['get', 'lrf_substation'], true],
     ['case',
-      ['>', ['to-number', ['get', 'lrf_max_local'], 0], 0.6], '#3fb950',
-      ['>', ['to-number', ['get', 'lrf_max_local'], 0], 0.3], '#d29922',
-      ['>', ['to-number', ['get', 'lrf_max_local'], 0], 0.1], '#f0883e',
-      '#f85149'
+      ['>', ['to-number', ['get', 'lrf_max_local'], 0], 0.42], '#3fb950',   // ≥ top 10%
+      ['>', ['to-number', ['get', 'lrf_max_local'], 0], 0.30], '#8bc34a',   // above P75
+      ['>', ['to-number', ['get', 'lrf_max_local'], 0], 0.20], '#d29922',   // above median
+      ['>', ['to-number', ['get', 'lrf_max_local'], 0], 0.10], '#f0883e',   // below median
+      '#f85149'                                                               // < 0.10, remote/low
     ],
     '#30363d'  // no LRF data
   ];
@@ -1388,81 +1399,112 @@ function bindingColour(pct) {
  * monthly: [{month, binding_pct, avg_headroom, min_headroom}, ...]
  */
 function buildCongestionChart(monthly) {
-  const W = 268, H = 110;
-  const PL = 42, PR = 8, PT = 8, PB = 22;
+  // Chart: avg headroom (MW) as bars, min headroom as dots, 0-line = constraint limit
+  // Binding % shown as small text. Headroom < 0 = constraint violated.
+  const W = 268, H = 130;
+  const PL = 38, PR = 6, PT = 10, PB = 28;
   const iW = W - PL - PR, iH = H - PT - PB;
 
   const sorted = [...monthly].sort((a, b) => a.month.localeCompare(b.month));
-  const n      = sorted.length;
-  const barW   = iW / n;
+  const n    = sorted.length;
+  const barW = iW / n;
 
-  // Scales
-  const maxBpct = Math.max(...sorted.map(d => d.binding_pct), 1);
-  const hrVals  = sorted.map(d => d.avg_headroom).filter(v => v != null);
-  const maxHr   = Math.max(...hrVals, 1);
-  const minHr   = Math.min(...hrVals, 0);
-  const hrRange = maxHr - minHr || 1;
+  // Y scale: headroom in MW (positive = slack, negative = violation)
+  const hrVals   = sorted.map(d => d.avg_headroom).filter(v => v != null);
+  const minVals  = sorted.map(d => d.min_headroom).filter(v => v != null);
+  const allVals  = [...hrVals, ...minVals];
+  const rawMax   = Math.max(...allVals, 0);
+  const rawMin   = Math.min(...allVals, 0);
+  // Add 10% headroom to each end so bars don't touch chart boundary
+  const pad      = Math.max((rawMax - rawMin) * 0.1, 5);
+  const yMax     = rawMax + pad;
+  const yMin     = rawMin - pad;
+  const yRange   = yMax - yMin || 1;
 
-  const bScale = v => iH * Math.min(v / maxBpct, 1);
-  const hrY    = v => PT + iH - iH * ((v - minHr) / hrRange);
-  const barX   = i => PL + i * barW;
+  const hrY  = v => PT + iH * (1 - (v - yMin) / yRange);
+  const barX = i => PL + i * barW;
+
+  // Zero line y position (= constraint limit)
+  const zeroY = hrY(0);
+
+  // Colour for headroom bar: red if < 0, amber if very tight (< 30 MW), grey-blue otherwise
+  function hrColour(avgHr, minHr) {
+    if (minHr != null && minHr < 0) return '#f85149';   // violation occurred
+    if (avgHr  < 10)                return '#f0883e';   // critically tight
+    if (avgHr  < 50)                return '#d29922';   // tight
+    return '#58a6ff';                                    // adequate headroom
+  }
 
   let svg = `<svg width="${W}" height="${H}" style="display:block;margin-top:8px;overflow:visible">`;
 
-  // Grid line at 50% binding
-  if (maxBpct > 0) {
-    const y50 = PT + iH - bScale(Math.min(50, maxBpct));
-    svg += `<line x1="${PL}" y1="${y50}" x2="${PL+iW}" y2="${y50}" stroke="#30363d" stroke-dasharray="2,2"/>`;
+  // Background zero-line area tint (below zero = violation zone)
+  if (zeroY < PT + iH) {
+    const violH = (PT + iH) - zeroY;
+    svg += `<rect x="${PL}" y="${zeroY}" width="${iW}" height="${violH}" fill="#f85149" opacity="0.07"/>`;
   }
 
-  // Bars — binding %
+  // Bars — avg headroom
   sorted.forEach((d, i) => {
-    const bh = Math.max(1, bScale(d.binding_pct));
-    const x  = barX(i);
-    svg += `<rect x="${x+1}" y="${PT+iH-bh}" width="${barW-2}" height="${bh}"
-              fill="${bindingColour(d.binding_pct)}" opacity="0.85"/>`;
+    if (d.avg_headroom == null) return;
+    const x    = barX(i);
+    const y0   = zeroY;
+    const y1   = hrY(d.avg_headroom);
+    const top  = Math.min(y0, y1);
+    const bh   = Math.abs(y0 - y1);
+    const col  = hrColour(d.avg_headroom, d.min_headroom);
+    svg += `<rect x="${(x+1).toFixed(1)}" y="${top.toFixed(1)}" width="${(barW-2).toFixed(1)}" height="${Math.max(1, bh).toFixed(1)}" fill="${col}" opacity="0.8"/>`;
   });
 
-  // Headroom line (avg)
-  if (hrVals.length >= 2) {
-    const pts = sorted
-      .map((d, i) => d.avg_headroom != null ? `${(barX(i) + barW/2).toFixed(1)},${hrY(d.avg_headroom).toFixed(1)}` : null)
-      .filter(Boolean);
-    svg += `<polyline points="${pts.join(' ')}" fill="none" stroke="#58a6ff" stroke-width="1.5" opacity="0.9"/>`;
+  // Zero line (constraint rating = binding limit)
+  svg += `<line x1="${PL}" y1="${zeroY.toFixed(1)}" x2="${PL+iW}" y2="${zeroY.toFixed(1)}" stroke="#e6edf3" stroke-width="1" opacity="0.5" stroke-dasharray="3,2"/>`;
 
-    // Min headroom dots (worst case each month)
-    sorted.forEach((d, i) => {
-      if (d.min_headroom == null) return;
-      const cx = barX(i) + barW / 2;
-      const cy = hrY(d.min_headroom);
-      svg += `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="2" fill="#79c0ff" opacity="0.8"/>`;
-    });
+  // Min headroom dots (worst 5-min interval each month)
+  sorted.forEach((d, i) => {
+    if (d.min_headroom == null) return;
+    const cx = barX(i) + barW / 2;
+    const cy = hrY(d.min_headroom);
+    const col = d.min_headroom < 0 ? '#f85149' : '#79c0ff';
+    svg += `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="2.2" fill="${col}" opacity="0.9"/>`;
+  });
+
+  // Binding % label at top of each bar (if > 0, every 2nd bar to avoid clutter)
+  sorted.forEach((d, i) => {
+    if (i % 2 !== 0 || d.binding_pct == null || d.binding_pct < 0.5) return;
+    const cx    = barX(i) + barW / 2;
+    const label = d.binding_pct < 10 ? d.binding_pct.toFixed(1) + '%' : Math.round(d.binding_pct) + '%';
+    const ty    = Math.min(hrY(d.avg_headroom), zeroY) - 3;
+    svg += `<text x="${cx.toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="middle" fill="#8b949e" font-size="7">${label}</text>`;
+  });
+
+  // Y axis labels
+  const yTop    = Math.round(yMax / 10) * 10;
+  const yBot    = Math.round(yMin / 10) * 10;
+  const yMid    = Math.round((yMax + yMin) / 2 / 10) * 10;
+  svg += `<text x="${PL-3}" y="${(hrY(yTop)+4).toFixed(1)}" text-anchor="end" fill="#8b949e" font-size="9">${yTop}</text>`;
+  svg += `<text x="${PL-3}" y="${(hrY(0)+4).toFixed(1)}"    text-anchor="end" fill="#e6edf3"  font-size="9">0</text>`;
+  if (yBot < -5) {
+    svg += `<text x="${PL-3}" y="${(hrY(yBot)+4).toFixed(1)}" text-anchor="end" fill="#f85149" font-size="9">${yBot}</text>`;
   }
-
-  // Y axis — binding % (left)
-  svg += `<text x="${PL-4}" y="${PT+4}" text-anchor="end" fill="#8b949e" font-size="9">${maxBpct.toFixed(0)}%</text>`;
-  svg += `<text x="${PL-4}" y="${PT+iH+4}" text-anchor="end" fill="#8b949e" font-size="9">0%</text>`;
-  svg += `<text x="${PL-4}" y="${PT+iH/2+4}" text-anchor="end" fill="#8b949e" font-size="9" transform="rotate(-90,${PL-14},${PT+iH/2})" >binding</text>`;
-
-  // Y axis — headroom (right)
-  if (hrVals.length >= 2) {
-    svg += `<text x="${PL+iW+PR-1}" y="${PT+4}" text-anchor="end" fill="#58a6ff" font-size="9">${Math.round(maxHr)}MW</text>`;
-    svg += `<text x="${PL+iW+PR-1}" y="${PT+iH+4}" text-anchor="end" fill="#58a6ff" font-size="9">${Math.round(minHr)}</text>`;
-  }
+  // Axis label
+  svg += `<text x="8" y="${(PT + iH/2).toFixed(1)}" text-anchor="middle" fill="#8b949e" font-size="9"
+    transform="rotate(-90,8,${(PT + iH/2).toFixed(1)})">MW headroom</text>`;
 
   // X axis — month labels (every 2nd)
   sorted.forEach((d, i) => {
     if (i % 2 !== 0) return;
-    const label = d.month.slice(5) + "'" + d.month.slice(2,4);  // e.g. "01'25"
-    svg += `<text x="${(barX(i)+barW/2).toFixed(1)}" y="${H-4}"
-              text-anchor="middle" fill="#8b949e" font-size="8">${label}</text>`;
+    const mo  = parseInt(d.month.slice(5), 10);
+    const yr  = d.month.slice(2, 4);
+    const lbl = ['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][mo] + ' \'' + yr;
+    svg += `<text x="${(barX(i)+barW/2).toFixed(1)}" y="${H-10}" text-anchor="middle" fill="#8b949e" font-size="8">${lbl}</text>`;
   });
 
-  // Legend
-  svg += `<rect x="${PL}" y="${H-13}" width="8" height="6" fill="#d29922" opacity="0.85"/>`;
-  svg += `<text x="${PL+10}" y="${H-8}" fill="#8b949e" font-size="8">binding %</text>`;
-  svg += `<line x1="${PL+65}" y1="${H-10}" x2="${PL+75}" y2="${H-10}" stroke="#58a6ff" stroke-width="1.5"/>`;
-  svg += `<text x="${PL+78}" y="${H-8}" fill="#8b949e" font-size="8">avg headroom (MW)</text>`;
+  // Legend row
+  const lx = PL;
+  const ly = H - 2;
+  svg += `<rect x="${lx}" y="${ly-7}" width="8" height="6" fill="#58a6ff" opacity="0.8"/>`;
+  svg += `<text x="${lx+10}" y="${ly-2}" fill="#8b949e" font-size="8">avg headroom</text>`;
+  svg += `<circle cx="${lx+88}" cy="${ly-4}" r="2.2" fill="#79c0ff" opacity="0.9"/>`;
+  svg += `<text x="${lx+93}" y="${ly-2}" fill="#8b949e" font-size="8">min (worst interval)</text>`;
 
   svg += `</svg>`;
   return svg;
