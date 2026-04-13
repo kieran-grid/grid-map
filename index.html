@@ -896,11 +896,11 @@ function bindMapEvents() {
       html += `<span class="popup-label">Avg binding</span><span class="popup-value" style="color:${bColour};font-weight:700">${bpct.toFixed(1)}% of intervals</span>`;
       html += `</div>`;
 
-      // Weekly flow chart
+      // Weekly headroom chart
       const weekly = tryParse(p.weekly_stats) || tryParse(p.monthly_stats) || [];
       if (weekly.length >= 2) {
         html += buildCongestionChart(weekly);
-        html += `<div style="font-size:10px;color:#8b949e;margin-top:2px">Blue = max flow (MW). Red = constraint limit (MW, when binding). Gap = headroom. % = share of intervals binding that week.</div>`;
+        html += `<div style="font-size:10px;color:#8b949e;margin-top:2px">Headroom = constraint limit − actual flow (MW). Below zero = constraint binding. Dots = weeks where binding occurred.</div>`;
       }
 
       // Top constraints
@@ -1598,21 +1598,19 @@ function bindingColour(pct) {
 }
 
 /**
- * Build an inline SVG showing:
- *   Bars  = monthly binding % (coloured by intensity)
- *   Line  = monthly average headroom (RHS-LHS, MW)
- * monthly: [{month, binding_pct, avg_headroom, min_headroom}, ...]
+ * Headroom chart: single line of avg_headroom per week (RHS − LHS, MW).
+ * Area above 0 filled green/amber/red by tightness.
+ * Area below 0 filled red (constraint binding).
+ * 0-line marked with dashed white rule.
+ * Dots = weeks where constraint actually bound.
+ *
+ * Works with weekly_stats {week, binding_pct, avg_headroom, min_headroom, ...}
  */
 function buildCongestionChart(data) {
-  // Two-line chart: max LHS flow (blue) vs constraint limit when binding (red)
-  // Works with weekly_stats {week, binding_pct, max_lhs, min_rhs, min_rhs_binding}
-  // Falls back gracefully if only monthly_stats fields present (headroom chart).
   const W = 268, H = 130;
-  const PL = 38, PR = 6, PT = 10, PB = 28;
+  const PL = 42, PR = 6, PT = 12, PB = 22;
   const iW = W - PL - PR, iH = H - PT - PB;
 
-  // Detect format
-  const isWeekly = data.length && data[0].week != null;
   const sorted = [...data].sort((a, b) => {
     const ka = a.week || a.month || '';
     const kb = b.week || b.month || '';
@@ -1621,139 +1619,121 @@ function buildCongestionChart(data) {
   const n = sorted.length;
   if (n < 2) return '';
 
-  // Build x-label function
-  function xLabel(d) {
+  // Prefer avg_headroom; fall back to min_rhs - max_lhs for old format
+  const hrVals = sorted.map(d => {
+    if (d.avg_headroom != null) return parseFloat(d.avg_headroom);
+    if (d.min_rhs != null && d.max_lhs != null) return parseFloat(d.min_rhs) - parseFloat(d.max_lhs);
+    return null;
+  });
+  const minHrVals = sorted.map(d => d.min_headroom != null ? parseFloat(d.min_headroom) : null);
+
+  const allVals = [...hrVals, ...minHrVals].filter(v => v != null);
+  if (!allVals.length) return '';
+
+  const rawMax = Math.max(...allVals, 0);
+  const rawMin = Math.min(...allVals, 0);
+  const pad    = Math.max((rawMax - rawMin) * 0.12, 20);
+  const yMax   = rawMax + pad;
+  const yMin   = rawMin - pad;
+  const yRange = yMax - yMin || 1;
+
+  const yPx = v => PT + iH * (1 - (v - yMin) / yRange);
+  const xPx = i => PL + (i + 0.5) * (iW / n);
+  const zeroY = yPx(0);
+
+  let svg = `<svg width="${W}" height="${H}" style="display:block;margin-top:8px;overflow:visible">`;
+
+  // Shaded fill: area between line and zero, coloured by headroom tightness
+  // Build polygon segments split by positive/negative
+  const fillSegs = [];
+  let curSeg = null;
+  hrVals.forEach((v, i) => {
+    if (v == null) { if (curSeg) { fillSegs.push(curSeg); curSeg = null; } return; }
+    if (!curSeg) curSeg = [];
+    curSeg.push([xPx(i), yPx(v)]);
+  });
+  if (curSeg) fillSegs.push(curSeg);
+
+  fillSegs.forEach(seg => {
+    if (seg.length < 2) return;
+    // Above-zero fill (green/amber/red based on how little headroom)
+    const allHr = seg.map(p => p);  // already have y
+    const avgHr = hrVals.filter(v => v != null).reduce((a, b) => a + b, 0) / hrVals.filter(v => v != null).length;
+    const fillCol = avgHr < 0 ? '#f85149' : avgHr < 100 ? '#d29922' : '#3fb950';
+
+    const top = seg.map(p => `${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' ');
+    const bot = [...seg].reverse().map(p => `${p[0].toFixed(1)},${Math.min(zeroY, H - PB).toFixed(1)}`).join(' ');
+    svg += `<polygon points="${top} ${bot}" fill="${fillCol}" opacity="0.18"/>`;
+  });
+
+  // 0-line (constraint limit boundary)
+  if (zeroY >= PT && zeroY <= PT + iH) {
+    svg += `<line x1="${PL}" y1="${zeroY.toFixed(1)}" x2="${PL+iW}" y2="${zeroY.toFixed(1)}" stroke="#e6edf3" stroke-width="1" opacity="0.7" stroke-dasharray="4,3"/>`;
+    svg += `<text x="${PL-3}" y="${(zeroY+3).toFixed(1)}" text-anchor="end" fill="#e6edf3" font-size="8" opacity="0.8">0</text>`;
+  }
+
+  // Headroom line — colour segments by tightness
+  const pts = hrVals.map((v, i) => v != null ? `${xPx(i).toFixed(1)},${yPx(v).toFixed(1)}` : null);
+  let segments = [], cur = [];
+  pts.forEach(p => {
+    if (p) { cur.push(p); }
+    else if (cur.length) { segments.push(cur); cur = []; }
+  });
+  if (cur.length) segments.push(cur);
+  segments.forEach(seg => {
+    if (seg.length < 2) return;
+    svg += `<polyline points="${seg.join(' ')}" fill="none" stroke="#58a6ff" stroke-width="1.8" opacity="0.95"/>`;
+  });
+
+  // Dots where constraint bound that week
+  sorted.forEach((d, i) => {
+    const pct = parseFloat(d.binding_pct) || 0;
+    if (pct <= 0 || hrVals[i] == null) return;
+    const col = pct > 20 ? '#f85149' : pct > 5 ? '#f0883e' : '#d29922';
+    svg += `<circle cx="${xPx(i).toFixed(1)}" cy="${yPx(hrVals[i]).toFixed(1)}" r="2.5" fill="${col}" opacity="0.9"/>`;
+  });
+
+  // Y axis labels (MW)
+  const nice = v => {
+    const abs = Math.abs(v);
+    if (abs >= 1000) return `${(v/1000).toFixed(1)}k`;
+    return Math.round(v).toString();
+  };
+  [yMax, 0, yMin].forEach(v => {
+    if (v === 0 && (zeroY < PT || zeroY > PT + iH)) return;
+    svg += `<text x="${PL-3}" y="${(yPx(v)+3).toFixed(1)}" text-anchor="end" fill="#8b949e" font-size="8">${nice(v)}</text>`;
+  });
+  svg += `<text x="9" y="${(PT+iH/2).toFixed(1)}" text-anchor="middle" fill="#8b949e" font-size="8" transform="rotate(-90,9,${(PT+iH/2).toFixed(1)})">MW</text>`;
+
+  // X axis labels (month ticks)
+  // Group by month and label at first week of each month
+  const monthSeen = new Set();
+  sorted.forEach((d, i) => {
     const key = d.week || d.month || '';
-    if (isWeekly) {
-      // "2025-W03" → short label every ~4th week
-      const [yr, wk] = key.split('-W');
-      return `W${wk}`;
+    let label = '';
+    if (d.week) {
+      // "2025-W03" — derive approx month from week number
+      const [yr, wkStr] = key.split('-W');
+      const wkNum = parseInt(wkStr, 10);
+      // Approximate: week 1=Jan, 5=Feb, 9=Mar, 13=Apr, 18=May, 22=Jun, 27=Jul, 31=Aug, 36=Sep, 40=Oct, 44=Nov, 49=Dec
+      const WK_TO_MO = [0,1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,4,5,5,5,5,6,6,6,6,6,7,7,7,7,8,8,8,8,8,9,9,9,9,10,10,10,10,11,11,11,11,11,12,12,12,12];
+      const mo = WK_TO_MO[Math.min(wkNum, WK_TO_MO.length-1)];
+      const mk = `${yr}-${mo}`;
+      if (!monthSeen.has(mk)) {
+        monthSeen.add(mk);
+        const moNames = ['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        label = moNames[mo] + (mo === 1 ? `'${yr.slice(2)}` : '');
+      }
     } else {
       const mo = parseInt(key.slice(5), 10);
       const yr = key.slice(2, 4);
-      return ['','J','F','M','A','M','J','J','A','S','O','N','D'][mo] + '\'' + yr;
+      label = ['','J','F','M','A','M','J','J','A','S','O','N','D'][mo] + '\'' + yr;
     }
-  }
-
-  // Extract values
-  const flowVals  = sorted.map(d => d.max_lhs    != null ? parseFloat(d.max_lhs)    : null);
-  const limitVals = sorted.map(d => d.min_rhs_binding != null ? parseFloat(d.min_rhs_binding) : null);
-
-  // For old monthly format, synthesize from headroom
-  const hasFlow = flowVals.some(v => v != null);
-  const hasLimit = limitVals.some(v => v != null);
-
-  if (!hasFlow && !hasLimit) {
-    // Legacy monthly format — fall back to headroom bars
-    return buildHeadroomChart(sorted, W, H, PL, PR, PT, PB, iW, iH);
-  }
-
-  // Y scale: all MW values combined
-  const allMW = [...flowVals, ...limitVals].filter(v => v != null);
-  const rawMax = Math.max(...allMW);
-  const rawMin = Math.min(...allMW, 0);
-  const pad    = Math.max((rawMax - rawMin) * 0.08, 10);
-  const yMax   = rawMax + pad;
-  const yMin   = Math.max(rawMin - pad, 0);
-  const yRange = yMax - yMin || 1;
-
-  const yPx  = v => PT + iH * (1 - (v - yMin) / yRange);
-  const xPx  = i => PL + (i + 0.5) * (iW / n);
-
-  let svg = `<svg width="${W}" height="${H}" style="display:block;margin-top:8px;overflow:visible">`;
-
-  // Shaded region between lines (congestion gap)
-  const fillPts = sorted.map((d, i) => {
-    const f = flowVals[i], l = limitVals[i];
-    if (f == null || l == null) return null;
-    return [xPx(i), yPx(f), yPx(l)];
-  }).filter(Boolean);
-  if (fillPts.length >= 2) {
-    const top = fillPts.map(p => `${p[0].toFixed(1)},${p[2].toFixed(1)}`).join(' ');
-    const bot = [...fillPts].reverse().map(p => `${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' ');
-    svg += `<polygon points="${top} ${bot}" fill="#f85149" opacity="0.12"/>`;
-  }
-
-  // Helper to build polyline path
-  function polyline(vals, col, dasharray) {
-    const pts = vals.map((v, i) => v != null ? `${xPx(i).toFixed(1)},${yPx(v).toFixed(1)}` : null);
-    // Split on nulls
-    let segments = [], cur = [];
-    pts.forEach(p => {
-      if (p) { cur.push(p); }
-      else if (cur.length) { segments.push(cur); cur = []; }
-    });
-    if (cur.length) segments.push(cur);
-    let out = '';
-    segments.forEach(seg => {
-      if (seg.length < 2) return;
-      out += `<polyline points="${seg.join(' ')}" fill="none" stroke="${col}" stroke-width="1.5" opacity="0.9"${dasharray ? ` stroke-dasharray="${dasharray}"` : ''}/>`;
-    });
-    return out;
-  }
-
-  svg += polyline(flowVals,  '#58a6ff', null);          // actual max flow (blue)
-  svg += polyline(limitVals, '#f85149', '3,2');          // constraint limit (red dashed)
-
-  // Dots where binding %  > 5%
-  sorted.forEach((d, i) => {
-    const pct = parseFloat(d.binding_pct) || 0;
-    if (pct < 5 || flowVals[i] == null) return;
-    svg += `<circle cx="${xPx(i).toFixed(1)}" cy="${yPx(flowVals[i]).toFixed(1)}" r="2.5" fill="#f0883e" opacity="0.85"/>`;
+    if (label) {
+      svg += `<text x="${xPx(i).toFixed(1)}" y="${H-6}" text-anchor="middle" fill="#8b949e" font-size="7">${label}</text>`;
+    }
   });
 
-  // Y axis
-  const nice = v => v >= 1000 ? `${(v/1000).toFixed(1)}k` : Math.round(v).toString();
-  [yMax, (yMax+yMin)/2, yMin].forEach(v => {
-    svg += `<text x="${PL-3}" y="${(yPx(v)+3).toFixed(1)}" text-anchor="end" fill="#8b949e" font-size="9">${nice(v)}</text>`;
-  });
-  svg += `<text x="8" y="${(PT+iH/2).toFixed(1)}" text-anchor="middle" fill="#8b949e" font-size="9" transform="rotate(-90,8,${(PT+iH/2).toFixed(1)})">MW</text>`;
-
-  // X axis — label every 4th point
-  const step = Math.max(1, Math.round(n / 8));
-  sorted.forEach((d, i) => {
-    if (i % step !== 0) return;
-    svg += `<text x="${xPx(i).toFixed(1)}" y="${H-10}" text-anchor="middle" fill="#8b949e" font-size="7">${xLabel(d)}</text>`;
-  });
-
-  // Legend
-  const lx = PL, ly = H - 2;
-  svg += `<line x1="${lx}" y1="${ly-4}" x2="${lx+12}" y2="${ly-4}" stroke="#58a6ff" stroke-width="1.5"/>`;
-  svg += `<text x="${lx+14}" y="${ly-1}" fill="#8b949e" font-size="8">Max flow</text>`;
-  svg += `<line x1="${lx+66}" y1="${ly-4}" x2="${lx+78}" y2="${ly-4}" stroke="#f85149" stroke-width="1.5" stroke-dasharray="3,2"/>`;
-  svg += `<text x="${lx+80}" y="${ly-1}" fill="#8b949e" font-size="8">Limit (binding)</text>`;
-  svg += `<circle cx="${lx+172}" cy="${ly-4}" r="2.5" fill="#f0883e"/>`;
-  svg += `<text x="${lx+176}" y="${ly-1}" fill="#8b949e" font-size="8">&gt;5% binding</text>`;
-
-  svg += `</svg>`;
-  return svg;
-}
-
-function buildHeadroomChart(sorted, W, H, PL, PR, PT, PB, iW, iH) {
-  // Legacy headroom bar chart (for monthly_stats format)
-  const n    = sorted.length;
-  const barW = iW / n;
-  const hrVals  = sorted.map(d => d.avg_headroom).filter(v => v != null);
-  const minVals = sorted.map(d => d.min_headroom).filter(v => v != null);
-  const allVals = [...hrVals, ...minVals];
-  const rawMax  = Math.max(...allVals, 0);
-  const rawMin  = Math.min(...allVals, 0);
-  const pad     = Math.max((rawMax - rawMin) * 0.1, 5);
-  const yMax = rawMax + pad, yMin = rawMin - pad;
-  const yRange = yMax - yMin || 1;
-  const hrY  = v => PT + iH * (1 - (v - yMin) / yRange);
-  const barX = i => PL + i * barW;
-  const zeroY = hrY(0);
-
-  let svg = `<svg width="${W}" height="${H}" style="display:block;margin-top:8px;overflow:visible">`;
-  sorted.forEach((d, i) => {
-    if (d.avg_headroom == null) return;
-    const y0 = zeroY, y1 = hrY(d.avg_headroom);
-    const top = Math.min(y0, y1), bh = Math.abs(y0 - y1);
-    const col = d.min_headroom < 0 ? '#f85149' : d.avg_headroom < 50 ? '#d29922' : '#58a6ff';
-    svg += `<rect x="${(barX(i)+1).toFixed(1)}" y="${top.toFixed(1)}" width="${(barW-2).toFixed(1)}" height="${Math.max(1,bh).toFixed(1)}" fill="${col}" opacity="0.8"/>`;
-  });
-  svg += `<line x1="${PL}" y1="${zeroY.toFixed(1)}" x2="${PL+iW}" y2="${zeroY.toFixed(1)}" stroke="#e6edf3" stroke-width="1" opacity="0.5" stroke-dasharray="3,2"/>`;
   svg += `</svg>`;
   return svg;
 }
