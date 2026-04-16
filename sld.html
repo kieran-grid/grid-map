@@ -36,6 +36,8 @@
 
     #header a { font-size: 11px; color: #8b949e; text-decoration: none; margin-left: auto; }
     #header a:hover { color: #e6edf3; }
+    #breadcrumb { align-items: center; gap: 2px; }
+    #bc-state:hover { color: #79c0ff; }
 
     /* ── Canvas ── */
     #sld-wrap { flex: 1; position: relative; overflow: hidden; }
@@ -99,9 +101,15 @@
     <div class="vl"><div class="vl-line" style="width:22px;height:3.5px;background:#d040c0"></div>275kV</div>
     <div class="vl"><div class="vl-line" style="width:22px;height:3px;background:#4496e0"></div>220kV</div>
     <div class="vl"><div class="vl-line" style="width:22px;height:2.5px;background:#d84040"></div>132kV</div>
+    <div class="vl"><div class="vl-line" style="width:22px;height:2px;background:#a05020"></div>66kV</div>
     <div class="vl" style="font-size:9px;color:#555">── single &nbsp; ══ double circuit</div>
     <div class="vl"><div style="width:10px;height:10px;border-radius:50%;background:#3fb950;border:1.5px solid #888"></div>Operating</div>
     <div class="vl"><div style="width:10px;height:10px;border-radius:50%;background:#d29922;border:1.5px solid #888"></div>Construction</div>
+  </div>
+  <div id="breadcrumb" style="display:none;font-size:12px;color:#8b949e;margin-left:4px">
+    <span id="bc-state" style="cursor:pointer;color:#58a6ff;text-decoration:underline"></span>
+    <span style="margin:0 4px">›</span>
+    <span id="bc-region" style="color:#e6edf3"></span>
   </div>
   <a href="index.html">← Map View</a>
 </div>
@@ -119,24 +127,53 @@
 // ══════════════════════════════════════════════════════════════════════════════
 //  CONSTANTS
 // ══════════════════════════════════════════════════════════════════════════════
-const VC = { 500:'#ffe033', 330:'#f08020', 275:'#d040c0', 220:'#4496e0', 132:'#d84040', 110:'#d84040' };
-const VW = { 500:5.5, 330:5, 275:4.5, 220:4, 132:3, 110:3 };
+const VC = { 500:'#ffe033', 330:'#f08020', 275:'#d040c0', 220:'#4496e0', 132:'#d84040', 110:'#d84040', 66:'#a05020' };
+const VW = { 500:5.5, 330:5, 275:4.5, 220:4, 132:3, 110:3, 66:2.5 };
 
-const BUS_SPACING = 60;   // vertical gap between bus bars
-const BUS_PAD     = 14;   // padding at each end of bus bar beyond last connection
-const SLOT_W      = 22;   // horizontal space per connection slot
+const BUS_SPACING = 72;   // vertical gap between bus bars (needs room for 2×XFMR_R overlap symbol)
+const BUS_PAD     = 18;   // padding at each end of bus bar beyond last connection
+const SLOT_W      = 30;   // horizontal space per connection slot
 const BUS_MIN_HW  = 55;   // minimum bus bar half-width
 const XFMR_R      = 9;    // transformer circle radius
 const GEN_R       = 10;   // generator symbol radius
 const GEN_STEP    = 26;   // horizontal spacing between gen symbols
-const SIM_TICKS   = 400;
+const SIM_TICKS   = 1200;
 const GAP_PX      = 8;    // pixels either side of a crossing gap
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  METRO REGIONS — geographic bounding boxes collapsed to single box nodes
+//  latMin/Max, lngMin/Max in decimal degrees
+// ══════════════════════════════════════════════════════════════════════════════
+const METRO_REGIONS = {
+  'New South Wales': [
+    { id: 'metro_snw', label: 'Sydney–Newcastle–Wollongong',
+      shortLabel: 'Sydney / Newcastle / Wollongong metro',
+      latMin: -34.7, latMax: -32.6, lngMin: 150.0, lngMax: 151.9 }
+  ],
+  'Queensland': [
+    { id: 'metro_seq', label: 'South-East Queensland',
+      shortLabel: 'Brisbane / Gold Coast / Sunshine Coast metro',
+      latMin: -28.3, latMax: -26.8, lngMin: 152.5, lngMax: 153.7 }
+  ],
+  'Victoria': [],   // VIC is dense but manageable as one view
+  'South Australia': [],
+  'Tasmania': []
+};
+
+function getMetroRegions(stateName) { return METRO_REGIONS[stateName] || []; }
+
+function inMetroRegion(geo, region) {
+  if (!geo) return false;
+  return geo.lat >= region.latMin && geo.lat <= region.latMax &&
+         geo.lng >= region.lngMin && geo.lng <= region.lngMax;
+}
 
 // ══════════════════════════════════════════════════════════════════════════════
 //  STATE
 // ══════════════════════════════════════════════════════════════════════════════
 let allLines, allSubs, allProjects, allMlf;
-let currentState = 'Victoria';
+let currentState  = 'Victoria';
+let currentRegion = null;   // null = full state; string = metro region id
 
 // ══════════════════════════════════════════════════════════════════════════════
 //  SVG + ZOOM
@@ -196,9 +233,7 @@ document.querySelectorAll('.state-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.state-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-    currentState = btn.dataset.state;
-    hidePopup();
-    renderState(currentState);
+    renderState(btn.dataset.state, null);
   });
 });
 
@@ -265,7 +300,7 @@ function buildMlfGenLookup() {
 // ══════════════════════════════════════════════════════════════════════════════
 //  BUILD NETWORK
 // ══════════════════════════════════════════════════════════════════════════════
-function buildNetwork(stateName, minKv = 132) {
+function buildNetwork(stateName, minKv = 132, regionId = null) {
   const stateLines = allLines.features.filter(f =>
     f.properties.state === stateName &&
     (f.properties.voltage_kv || 0) >= minKv
@@ -330,6 +365,19 @@ function buildNetwork(stateName, minKv = 132) {
     if (p.psse_emerg_min_mva) edge.emergRating = Math.max(edge.emergRating || 0, p.psse_emerg_min_mva);
   }
 
+  // Add 66kV buses to terminal stations already in the 132kV+ network (bus only, no edges)
+  const lines66 = allLines.features.filter(f =>
+    f.properties.state === stateName && (f.properties.voltage_kv || 0) === 66
+  );
+  for (const f of lines66) {
+    const eps = parseEps(f.properties.name);
+    if (!eps) continue;
+    for (const ep of eps) {
+      const id = normSub(ep);
+      if (id && subMap.has(id)) subMap.get(id).voltages.add(66);
+    }
+  }
+
   // Set average geo, sort voltages, build conCount
   const edges = [...edgeMap.values()];
   for (const [id, g] of geoAcc) {
@@ -392,31 +440,113 @@ function buildNetwork(stateName, minKv = 132) {
     }
   }
 
+  // ── Metro region handling ─────────────────────────────────────────────────
+  const metros = getMetroRegions(stateName);
+
+  if (regionId !== null) {
+    // METRO SUB-VIEW: only keep substations inside the specified metro region
+    const region = metros.find(m => m.id === regionId);
+    if (region) {
+      for (const id of [...subMap.keys()])
+        if (!inMetroRegion(subMap.get(id).geo, region)) subMap.delete(id);
+      for (let i = edges.length - 1; i >= 0; i--) {
+        const e = edges[i];
+        if (!subMap.has(e.from) || !subMap.has(e.to)) edges.splice(i, 1);
+      }
+    }
+  } else {
+    // FULL STATE VIEW: collapse each metro region to a single box node
+    for (const region of metros) {
+      const metroSubIds = new Set();
+      for (const [id, sub] of subMap)
+        if (inMetroRegion(sub.geo, region)) metroSubIds.add(id);
+      if (metroSubIds.size === 0) continue;
+
+      // Centroid of metro substations with known geo
+      let gLng = 0, gLat = 0, gN = 0;
+      for (const id of metroSubIds) {
+        const g = subMap.get(id).geo;
+        if (g) { gLng += g.lng; gLat += g.lat; gN++; }
+      }
+
+      const metroSub = {
+        id: region.id,
+        label: region.label,
+        voltages: [],          // filled below
+        generators: [],
+        conCount: new Map(),
+        conEdges: new Map(),
+        xfmrCount: 0,
+        geo: gN ? { lng: gLng/gN, lat: gLat/gN } : { lng:(region.lngMin+region.lngMax)/2, lat:(region.latMin+region.latMax)/2 },
+        isMetroBox: true,
+        metroRegion: region,
+        metroSubCount: metroSubIds.size,
+      };
+
+      const metroVoltages = new Set();
+      for (let i = edges.length - 1; i >= 0; i--) {
+        const e = edges[i];
+        const fIn = metroSubIds.has(e.from), tIn = metroSubIds.has(e.to);
+        if (fIn && tIn) { edges.splice(i, 1); continue; }
+        if (fIn) { e.from = region.id; metroVoltages.add(e.voltage); }
+        if (tIn) { e.to   = region.id; metroVoltages.add(e.voltage); }
+      }
+      metroSub.voltages = [...metroVoltages].sort((a,b) => b-a);
+      // Give it enough width for the connecting edges
+      metroSub.voltages.forEach(kv => metroSub.conCount.set(kv, 1));
+
+      for (const id of metroSubIds) subMap.delete(id);
+      subMap.set(region.id, metroSub);
+    }
+  }
+
   return { substations: subMap, edges };
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
 //  LAYOUT — geographic init on large canvas + D3 force (forceX/Y anchor)
 // ══════════════════════════════════════════════════════════════════════════════
+// Half-width of horizontal bus bar — also spans generator symbols if this is the lowest-kV bar
 function busHalfW(sub, kv) {
-  return Math.max(BUS_MIN_HW, (sub.conCount.get(kv) || 1) * SLOT_W + BUS_PAD);
+  const lineHW = Math.max(BUS_MIN_HW, (sub.conCount.get(kv) || 1) * SLOT_W + BUS_PAD);
+  if (kv === sub.voltages[sub.voltages.length - 1] && sub.generators.length > 0) {
+    const genHW = Math.ceil((sub.generators.length - 1) * GEN_STEP / 2) + GEN_R + BUS_PAD;
+    return Math.max(lineHW, genHW);
+  }
+  return lineHW;
 }
+// Half-height of vertical bus bar (V-oriented substations)
+function busHalfH(sub, kv) {
+  const lineHH = Math.max(BUS_MIN_HW, (sub.conCount.get(kv) || 1) * SLOT_W + BUS_PAD);
+  if (kv === sub.voltages[sub.voltages.length - 1] && sub.generators.length > 0) {
+    const genHH = Math.ceil((sub.generators.length - 1) * GEN_STEP / 2) + GEN_R + BUS_PAD;
+    return Math.max(lineHH, genHH);
+  }
+  return lineHH;
+}
+// Y offset of voltage level in H-oriented substation (highest kV at top)
 function busRelY(sub, kv) {
   const i = sub.voltages.indexOf(kv);
   return (i >= 0 ? i : 0) * BUS_SPACING;
 }
+// X offset of voltage level in V-oriented substation (highest kV at left)
+function busRelX(sub, kv) {
+  const i = sub.voltages.indexOf(kv);
+  return (i >= 0 ? i : 0) * BUS_SPACING;
+}
 function colRadius(sub) {
-  if (!sub) return 90;
+  if (!sub) return 110;
+  if (sub.isMetroBox) return 140;   // metro box is a fixed-size rectangle
   const maxHW = Math.max(BUS_MIN_HW, ...sub.voltages.map(kv => busHalfW(sub, kv)));
-  const h = (sub.voltages.length - 1) * BUS_SPACING + (sub.generators.length > 0 ? 55 : 20);
-  return Math.hypot(maxHW + 35, h / 2 + 20);
+  const h = (sub.voltages.length - 1) * BUS_SPACING + (sub.generators.length > 0 ? GEN_R*2+40 : 20);
+  return Math.hypot(maxHW + 60, h / 2 + 40);
 }
 
 function layoutNetwork({ substations, edges }) {
-  const n    = substations.size;
-  const VW2  = Math.max(2800, Math.ceil(Math.sqrt(n) * 290));
-  const VH2  = Math.ceil(VW2 * 0.68);
-  const PAD  = 150;
+  const n   = substations.size;
+  const VW2 = Math.max(12000, Math.ceil(Math.sqrt(n) * 1100));
+  const VH2 = Math.ceil(VW2 * 0.72);
+  const PAD = 500;
 
   const subsArr = [...substations.values()].filter(s => s.geo);
   if (!subsArr.length) return { vw: VW2, vh: VH2 };
@@ -432,18 +562,20 @@ function layoutNetwork({ substations, edges }) {
     sub.y = PAD + (1 - (sub.geo.lat - minLat) / latR) * (VH2 - 2*PAD);
   }
 
-  // Force simulation: anchor to geo + strong repulsion + collision
+  // Force: geographic anchor + strong repulsion + large collision avoidance
   const nodes = subsArr.map(s => ({ id: s.id, x: s.x, y: s.y, gx: s.x, gy: s.y }));
   const links = edges
     .filter(e => substations.has(e.from) && substations.has(e.to))
     .map(e => ({ source: e.from, target: e.to }));
 
   const sim = d3.forceSimulation(nodes)
-    .force('link',    d3.forceLink(links).id(d => d.id).distance(230).strength(0.10))
-    .force('charge',  d3.forceManyBody().strength(-900))
-    .force('cx',      d3.forceX(d => d.gx).strength(0.35))
-    .force('cy',      d3.forceY(d => d.gy).strength(0.35))
-    .force('collide', d3.forceCollide().radius(d => colRadius(substations.get(d.id))).iterations(4))
+    .force('link',    d3.forceLink(links).id(d => d.id).distance(750).strength(0.02))
+    .force('charge',  d3.forceManyBody().strength(-25000))
+    .force('cx',      d3.forceX(d => d.gx).strength(0.09))
+    .force('cy',      d3.forceY(d => d.gy).strength(0.09))
+    // clearZone: the actual sub radius + the EXIT_PAD clearance + extra breathing room
+    // so lines routed through that area belong to this sub only
+    .force('collide', d3.forceCollide().radius(d => colRadius(substations.get(d.id)) + EXIT_PAD + 130).iterations(14))
     .stop();
 
   for (let i = 0; i < SIM_TICKS; i++) sim.tick();
@@ -453,13 +585,30 @@ function layoutNetwork({ substations, edges }) {
     if (sub) { sub.x = node.x; sub.y = node.y; }
   }
 
+  // Assign bus bar orientation: metro boxes always H; others V if connections predominantly horizontal
+  for (const sub of substations.values()) {
+    if (sub.isMetroBox) { sub.orient = 'H'; continue; }
+    let sumDx = 0, sumDy = 0, cnt = 0;
+    for (const e of edges) {
+      const nbId = e.from === sub.id ? e.to : e.to === sub.id ? e.from : null;
+      if (!nbId) continue;
+      const nb = substations.get(nbId);
+      if (!nb) continue;
+      sumDx += Math.abs(nb.x - sub.x);
+      sumDy += Math.abs(nb.y - sub.y);
+      cnt++;
+    }
+    sub.orient = (cnt > 0 && sumDx > sumDy * 1.4) ? 'V' : 'H';
+  }
+
   return { vw: VW2, vh: VH2 };
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-//  CONNECTION X-OFFSETS — spread stubs along bus bar in angular order
+//  CONNECTION OFFSETS — spread stubs along bus bar in angular order
+//  H-sub: offset spreads along X (xOff); V-sub: offset spreads along Y (yOff)
 // ══════════════════════════════════════════════════════════════════════════════
-function computeConX({ substations, edges }) {
+function computeConOffsets({ substations, edges }) {
   const busCons = new Map();
   for (const e of edges) {
     for (const [myId, othId] of [[e.from, e.to], [e.to, e.from]]) {
@@ -469,12 +618,12 @@ function computeConX({ substations, edges }) {
     }
   }
 
-  const conX = new Map();
+  const conOff = new Map(); // `${e.id}|${subId}` → { xOff, yOff }
   for (const [k, cons] of busCons) {
     const [subId, kvStr] = k.split('|');
     const kv  = parseInt(kvStr);
     const sub = substations.get(subId);
-    if (!sub || !cons.length) continue;
+    if (!sub || !cons.length || sub.isMetroBox) continue;
 
     cons.sort((a, b) => {
       const as = substations.get(a.othId), bs = substations.get(b.othId);
@@ -483,97 +632,256 @@ function computeConX({ substations, edges }) {
              Math.atan2(bs.y - sub.y, bs.x - sub.x);
     });
 
-    const hw = busHalfW(sub, kv);
-    const n  = cons.length;
-    cons.forEach(({ e }, i) => {
-      const xo = n === 1 ? 0 : -hw + BUS_PAD + (2*(hw - BUS_PAD) / (n > 1 ? n-1 : 1)) * i;
-      conX.set(`${e.id}|${subId}`, xo);
-    });
+    if (sub.orient === 'V') {
+      const hh = busHalfH(sub, kv);
+      const n  = cons.length;
+      cons.forEach(({ e }, i) => {
+        const yo = n === 1 ? 0 : -hh + BUS_PAD + (2*(hh - BUS_PAD) / (n > 1 ? n-1 : 1)) * i;
+        // bridgeOff spreads the exit level so parallel lines from the same bus don't overlap
+        const bridgeOff = (n > 1 ? (i - (n-1)/2) * BRIDGE_SPREAD : 0);
+        conOff.set(`${e.id}|${subId}`, { xOff: 0, yOff: yo, bridgeOff });
+      });
+    } else {
+      const hw = busHalfW(sub, kv);
+      const n  = cons.length;
+      cons.forEach(({ e }, i) => {
+        const xo = n === 1 ? 0 : -hw + BUS_PAD + (2*(hw - BUS_PAD) / (n > 1 ? n-1 : 1)) * i;
+        const bridgeOff = (n > 1 ? (i - (n-1)/2) * BRIDGE_SPREAD : 0);
+        conOff.set(`${e.id}|${subId}`, { xOff: xo, yOff: 0, bridgeOff });
+      });
+    }
   }
-  return conX;
+  return conOff;
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-//  CROSSING GAPS — detect intersections, break lower-priority line
+//  EDGE GEOMETRY — 5-segment perpendicular routing
+//
+//  Every line exits its bus bar PERPENDICULAR to it, clears the sub bounds,
+//  then uses an elbow at the horizontal/vertical midpoint to reach the target,
+//  where it again approaches PERPENDICULAR to the target bus bar.
+//
+//  H-oriented sub (horizontal bus bars):
+//    top bus    → exits UPWARD   (VHV stub)
+//    bottom bus → exits DOWNWARD (VHV stub)
+//    middle bus → exits SIDEWAYS (HVH stub, avoids crossing siblings)
+//
+//  V-oriented sub (vertical bus bars):
+//    left bus   → exits LEFT     (HVH stub)
+//    right bus  → exits RIGHT    (HVH stub)
+//    middle bus → exits UP/DOWN  (VHV stub)
+//
+//  Path shapes for the 4 source×target mode combinations:
+//    VHV + VHV:  sx,sy → sx,eSrc → midX,eSrc → midX,eTgt → tx,eTgt → tx,ty
+//    HVH + HVH:  sx,sy → eSrc,sy → eSrc,midY → eTgt,midY → eTgt,ty → tx,ty
+//    VHV + HVH:  sx,sy → sx,eSrc → eTgt,eSrc → eTgt,ty   → tx,ty
+//    HVH + VHV:  sx,sy → eSrc,sy → eSrc,eTgt → tx,eTgt   → tx,ty
+//
+//  bridgeOff in conOff spreads each connection to a unique bridge level so
+//  parallel edges from the same bus bar never lie on top of each other.
 // ══════════════════════════════════════════════════════════════════════════════
-function segIntersect(a, b) {
-  const d1x=a.x2-a.x1, d1y=a.y2-a.y1;
-  const d2x=b.x2-b.x1, d2y=b.y2-b.y1;
-  const cross = d1x*d2y - d1y*d2x;
-  if (Math.abs(cross) < 0.1) return null;
-  const dx=b.x1-a.x1, dy=b.y1-a.y1;
-  const t1=(dx*d2y - dy*d2x)/cross;
-  const t2=(dx*d1y - dy*d1x)/cross;
-  if (t1>0.03 && t1<0.97 && t2>0.03 && t2<0.97) return {t1, t2};
-  return null;
+const EXIT_PAD    = 130;  // clearance zone outside sub — no other lines enter this zone
+const BRIDGE_SPREAD = 28; // spread between parallel bridge levels from same bus bar
+
+// exitGeom: connection point on bus bar + perpendicular exit level.
+// Returns { x, y, mode:'VHV'|'HVH', exitVal }
+function exitGeom(sub, kv, off, neighborX, neighborY) {
+  const bo = (off.bridgeOff || 0);
+
+  if (sub.isMetroBox) {
+    const side = neighborX >= sub.x ? 1 : -1;
+    return { x: sub.x, y: sub.y, mode: 'HVH', exitVal: sub.x + side * (90 + EXIT_PAD) };
+  }
+
+  const i = sub.voltages.indexOf(kv);
+  const n = sub.voltages.length;
+
+  if (sub.orient !== 'V') {
+    // H-oriented: horizontal bus bars stacked top→bottom
+    const cx   = sub.x + off.xOff;
+    const cy   = sub.y + i * BUS_SPACING;
+    const span = (n - 1) * BUS_SPACING;
+
+    if (i === 0) {
+      // Top bus: exit perpendicular upward.  bridgeOff < 0 → further above.
+      return { x: cx, y: cy, mode: 'VHV', exitVal: sub.y - EXIT_PAD + bo };
+    } else if (i === n - 1) {
+      // Bottom bus: exit perpendicular downward.
+      return { x: cx, y: cy, mode: 'VHV', exitVal: sub.y + span + EXIT_PAD + bo };
+    } else {
+      // Middle bus: exit sideways to avoid crossing sibling bus bars.
+      const maxHW = Math.max(BUS_MIN_HW, ...sub.voltages.map(k => busHalfW(sub, k)));
+      const side  = neighborX >= sub.x ? 1 : -1;
+      return { x: cx, y: cy, mode: 'HVH', exitVal: sub.x + side * (maxHW + EXIT_PAD) + off.xOff };
+    }
+  } else {
+    // V-oriented: vertical bus bars arranged left→right
+    const cx   = sub.x + i * BUS_SPACING;
+    const cy   = sub.y + off.yOff;
+    const span = (n - 1) * BUS_SPACING;
+
+    if (i === 0) {
+      // Leftmost bus: exit perpendicular leftward.
+      return { x: cx, y: cy, mode: 'HVH', exitVal: sub.x - EXIT_PAD + bo };
+    } else if (i === n - 1) {
+      // Rightmost bus: exit perpendicular rightward.
+      return { x: cx, y: cy, mode: 'HVH', exitVal: sub.x + span + EXIT_PAD + bo };
+    } else {
+      // Middle bus: exit vertically.
+      const maxHH = Math.max(BUS_MIN_HW, ...sub.voltages.map(k => busHalfH(sub, k)));
+      const side  = neighborY >= sub.y ? 1 : -1;
+      return { x: cx, y: cy, mode: 'VHV', exitVal: sub.y + side * (maxHH + EXIT_PAD) + bo };
+    }
+  }
 }
 
-function computeGapTs({ edges, substations }, conX) {
-  // Build edge geometry (centre line used for intersection; double-circuits share same path)
+function edgePts(e, conOff, substations) {
+  const fs = substations.get(e.from), ts = substations.get(e.to);
+  if (!fs || !ts) return null;
+  const fo  = conOff.get(`${e.id}|${e.from}`) || { xOff: 0, yOff: 0, bridgeOff: 0 };
+  const to_ = conOff.get(`${e.id}|${e.to}`)   || { xOff: 0, yOff: 0, bridgeOff: 0 };
+
+  const srcG = exitGeom(fs, e.voltage, fo,  ts.x, ts.y);
+  const tgtG = exitGeom(ts, e.voltage, to_, fs.x, fs.y);
+
+  const sx = srcG.x, sy = srcG.y;
+  const tx = tgtG.x, ty = tgtG.y;
+  const eSrc = srcG.exitVal, eTgt = tgtG.exitVal;
+  const srcMode = srcG.mode, tgtMode = tgtG.mode;
+  const midX = (sx + tx) / 2;
+  const midY = (sy + ty) / 2;
+
+  return { sx, sy, tx, ty, eSrc, eTgt, srcMode, tgtMode, midX, midY };
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  CROSSING GAPS  — gap in an H-segment where a V-segment of another edge crosses
+//  Gap key: e.id + '|0'  → source H-bridge
+//           e.id + '|1'  → target H-bridge (VHV+VHV and HVH+HVH only)
+//           e.id + '|s'  → source H-stub  (HVH only)
+//           e.id + '|t'  → target H-stub  (HVH only)
+// ══════════════════════════════════════════════════════════════════════════════
+function computeGapTs({ edges, substations }, conOff) {
   const geom = new Map();
   for (const e of edges) {
-    const fs = substations.get(e.from), ts = substations.get(e.to);
-    if (!fs || !ts) continue;
-    const fxo = conX.get(`${e.id}|${e.from}`) ?? 0;
-    const txo = conX.get(`${e.id}|${e.to}`)   ?? 0;
-    geom.set(e.id, {
-      x1: fs.x + fxo, y1: fs.y + busRelY(fs, e.voltage),
-      x2: ts.x + txo, y2: ts.y + busRelY(ts, e.voltage),
-    });
+    const g = edgePts(e, conOff, substations);
+    if (g) geom.set(e.id, g);
   }
 
   const gapTs = new Map();
+  const EPS = 4;
+
+  // Record a gap in edge eId's H-segment (key) at y=hy, x: x1→x2, where V-seg at xa spans ya→yb
+  function addGap(eId, key, hy, x1, x2, xa, ya, yb) {
+    const hLen = Math.abs(x2 - x1);
+    if (hLen < 2*EPS) return;
+    const hxa = Math.min(x1, x2), hxb = Math.max(x1, x2);
+    const yLo = Math.min(ya, yb), yHi = Math.max(ya, yb);
+    if (xa > hxa+EPS && xa < hxb-EPS && hy > yLo+EPS && hy < yHi-EPS) {
+      const t = (xa - x1) / (x2 - x1);
+      const k = eId + key;
+      if (!gapTs.has(k)) gapTs.set(k, []);
+      gapTs.get(k).push(t);
+    }
+  }
+
+  // Return the H-segments and V-segments of a geometry record for gap testing
+  function hSegs(g) {
+    if (g.srcMode === 'VHV' && g.tgtMode === 'VHV')
+      return [['|0', g.eSrc, g.sx, g.midX], ['|1', g.eTgt, g.midX, g.tx]];
+    if (g.srcMode === 'HVH' && g.tgtMode === 'HVH')
+      return [['|s', g.sy, g.sx, g.eSrc], ['|t', g.ty, g.eTgt, g.tx]];
+    if (g.srcMode === 'VHV')  // VHV+HVH: one H-segment at eSrc
+      return [['|0', g.eSrc, g.sx, g.eTgt]];
+    return [['|t', g.ty, g.eTgt, g.tx]];   // HVH+VHV: one H-segment at ty
+  }
+  function vSegs(g) {
+    if (g.srcMode === 'VHV' && g.tgtMode === 'VHV')
+      return [[g.sx, g.sy, g.eSrc], [g.midX, g.eSrc, g.eTgt], [g.tx, g.eTgt, g.ty]];
+    if (g.srcMode === 'HVH' && g.tgtMode === 'HVH')
+      return [[g.eSrc, g.sy, g.midY], [g.eTgt, g.midY, g.ty]];
+    if (g.srcMode === 'VHV')  // VHV+HVH
+      return [[g.sx, g.sy, g.eSrc], [g.eTgt, g.eSrc, g.ty]];
+    return [[g.eSrc, g.sy, g.eTgt], [g.tx, g.eTgt, g.ty]];  // HVH+VHV
+  }
 
   for (let i = 0; i < edges.length; i++) {
     for (let j = i+1; j < edges.length; j++) {
-      const e1=edges[i], e2=edges[j];
-      // Adjacent edges (share a substation) don't cross in any meaningful way
-      if (e1.from===e2.from || e1.from===e2.to || e1.to===e2.from || e1.to===e2.to) continue;
-      const g1=geom.get(e1.id), g2=geom.get(e2.id);
-      if (!g1||!g2) continue;
-
-      const ix = segIntersect(g1, g2);
-      if (!ix) continue;
-
-      // Lower voltage (or lower circuits if same voltage) gets the gap
-      const pri1 = e1.voltage * 10000 + e1.circuits * 100;
-      const pri2 = e2.voltage * 10000 + e2.circuits * 100;
-      const [gapE, t] = pri1 < pri2 ? [e1, ix.t1] : [e2, ix.t2];
-      if (!gapTs.has(gapE.id)) gapTs.set(gapE.id, []);
-      gapTs.get(gapE.id).push(t);
+      const eA = edges[i], eB = edges[j];
+      if (eA.from===eB.from || eA.from===eB.to || eA.to===eB.from || eA.to===eB.to) continue;
+      const gA = geom.get(eA.id), gB = geom.get(eB.id);
+      if (!gA || !gB) continue;
+      // Test A's H-segs vs B's V-segs and vice versa
+      for (const [sfx, hy, x1, x2] of hSegs(gA))
+        for (const [vx, vya, vyb] of vSegs(gB))
+          addGap(eA.id, sfx, hy, x1, x2, vx, vya, vyb);
+      for (const [sfx, hy, x1, x2] of hSegs(gB))
+        for (const [vx, vya, vyb] of vSegs(gA))
+          addGap(eB.id, sfx, hy, x1, x2, vx, vya, vyb);
     }
   }
 
   return { gapTs, geom };
 }
 
-function pathWithGaps(g, ts) {
-  const dx=g.x2-g.x1, dy=g.y2-g.y1;
-  const len = Math.hypot(dx,dy) || 1;
-  const dT  = GAP_PX / len;
+// ══════════════════════════════════════════════════════════════════════════════
+//  ORTHOGONAL PATH BUILDER
+//  offset: double-circuit stub separation (shifts stubs ±offset in the
+//          perpendicular direction so both paths stay distinct end-to-end)
+//  gaps0/gaps1: crossing-gap t-values for the first/second H-segment
+// ══════════════════════════════════════════════════════════════════════════════
+function buildOrthPath(g, gaps0, offset, gaps1) {
+  const off = offset || 0;
 
-  const sorted = (ts||[]).slice().sort((a,b)=>a-b);
-  // Merge overlapping gaps
-  const merged = [];
-  for (const t of sorted) {
-    const lo=t-dT, hi=t+dT;
-    if (merged.length && lo < merged[merged.length-1].hi + dT) {
-      merged[merged.length-1].hi = Math.max(merged[merged.length-1].hi, hi);
-    } else {
-      merged.push({lo, hi});
+  function gappedH(x1, x2, y, gaps) {
+    const hw = Math.abs(x2 - x1);
+    const dT = hw > 0 ? GAP_PX / hw : 0;
+    const sorted = (gaps || []).slice().sort((a,b) => a-b);
+    const merged = [];
+    for (const t of sorted) {
+      const lo = Math.max(0.001, t-dT), hi = Math.min(0.999, t+dT);
+      if (merged.length && lo < merged[merged.length-1][1] + dT)
+        merged[merged.length-1][1] = Math.max(merged[merged.length-1][1], hi);
+      else merged.push([lo, hi]);
     }
+    let d = '';
+    for (const [lo, hi] of merged)
+      d += ` L${(x1+lo*(x2-x1)).toFixed(1)},${y.toFixed(1)} M${(x1+hi*(x2-x1)).toFixed(1)},${y.toFixed(1)}`;
+    d += ` L${x2.toFixed(1)},${y.toFixed(1)}`;
+    return d;
   }
 
-  if (!merged.length) return `M${g.x1},${g.y1}L${g.x2},${g.y2}`;
+  const { sx, sy, tx, ty, eSrc, eTgt, srcMode, tgtMode, midX, midY } = g;
 
-  let d = `M${g.x1},${g.y1}`;
-  for (const {lo, hi} of merged) {
-    const lx=(g.x1+Math.max(0,lo)*dx).toFixed(1), ly=(g.y1+Math.max(0,lo)*dy).toFixed(1);
-    const hx=(g.x1+Math.min(1,hi)*dx).toFixed(1), hy=(g.y1+Math.min(1,hi)*dy).toFixed(1);
-    d += ` L${lx},${ly} M${hx},${hy}`;
+  if (srcMode === 'VHV' && tgtMode === 'VHV') {
+    // Both stubs vertical.  offset shifts stub X so double circuits stay separate.
+    const sxo = sx + off, txo = tx + off;
+    let d = `M${sxo.toFixed(1)},${sy.toFixed(1)} L${sxo.toFixed(1)},${eSrc.toFixed(1)}`;
+    d += gappedH(sxo, midX + off, eSrc, gaps0);
+    d += ` L${(midX+off).toFixed(1)},${eTgt.toFixed(1)}`;
+    d += gappedH(midX + off, txo, eTgt, gaps1);
+    d += ` L${txo.toFixed(1)},${ty.toFixed(1)}`;
+    return d;
+
+  } else if (srcMode === 'HVH' && tgtMode === 'HVH') {
+    // Both stubs horizontal.  offset shifts stub Y.
+    const syo = sy + off, tyo = ty + off;
+    let d = `M${sx.toFixed(1)},${syo.toFixed(1)}`;
+    d += gappedH(sx, eSrc, syo, gaps0);         // source H-stub (treated as gapped H for consistency)
+    d += ` L${eSrc.toFixed(1)},${(midY+off).toFixed(1)} L${eTgt.toFixed(1)},${(midY+off).toFixed(1)} L${eTgt.toFixed(1)},${tyo.toFixed(1)}`;
+    d += gappedH(eTgt, tx, tyo, gaps1);
+    return d;
+
+  } else if (srcMode === 'VHV') {
+    // VHV source, HVH target: single elbow
+    const sxo = sx + off;
+    return `M${sxo.toFixed(1)},${sy.toFixed(1)} L${sxo.toFixed(1)},${eSrc.toFixed(1)} L${eTgt.toFixed(1)},${eSrc.toFixed(1)} L${eTgt.toFixed(1)},${ty.toFixed(1)} L${tx.toFixed(1)},${ty.toFixed(1)}`;
+
+  } else {
+    // HVH source, VHV target: single elbow
+    const syo = sy + off;
+    return `M${sx.toFixed(1)},${syo.toFixed(1)} L${eSrc.toFixed(1)},${syo.toFixed(1)} L${eSrc.toFixed(1)},${eTgt.toFixed(1)} L${tx.toFixed(1)},${eTgt.toFixed(1)} L${tx.toFixed(1)},${ty.toFixed(1)}`;
   }
-  d += ` L${g.x2},${g.y2}`;
-  return d;
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -675,7 +983,7 @@ function popupTransformer(sub, fromKv, toKv) {
 // ══════════════════════════════════════════════════════════════════════════════
 //  DRAW
 // ══════════════════════════════════════════════════════════════════════════════
-function drawSLD({ substations, edges }, conX, gapTs, geom, stateName) {
+function drawSLD({ substations, edges }, conOff, gapTs, geom, stateName) {
   root.selectAll('*').remove();
 
   const edgeG = root.append('g').attr('class', 'edges');
@@ -687,48 +995,45 @@ function drawSLD({ substations, edges }, conX, gapTs, geom, stateName) {
     if (!fs || !ts) continue;
 
     const g    = geom.get(e.id);
-    const col  = VC[e.voltage] || '#8b5e3c';
-    const lw   = VW[e.voltage] || 2;
-    const myTs = gapTs.get(e.id) || [];
+    if (!g) continue;
+    const col   = VC[e.voltage] || '#8b5e3c';
+    const lw    = VW[e.voltage] || 2;
+    // Load crossing-gap t-values for the two H-segments of this edge
+    const gaps0 = gapTs.get(e.id+'|0') || gapTs.get(e.id+'|s') || [];
+    const gaps1 = gapTs.get(e.id+'|1') || gapTs.get(e.id+'|t') || [];
 
     const eg = edgeG.append('g');
 
     if (e.circuits >= 2) {
-      // Two parallel lines offset perpendicular
-      const dx=g.x2-g.x1, dy=g.y2-g.y1, len=Math.hypot(dx,dy)||1;
-      const off=4.5;
-      const ox=-dy/len*off, oy=dx/len*off;
-      // Shift geom for each line, reuse gap logic
-      const g1={x1:g.x1+ox,y1:g.y1+oy,x2:g.x2+ox,y2:g.y2+oy};
-      const g2={x1:g.x1-ox,y1:g.y1-oy,x2:g.x2-ox,y2:g.y2-oy};
-      eg.append('path').attr('d', pathWithGaps(g1, myTs))
+      const off = 4;
+      eg.append('path').attr('d', buildOrthPath(g, gaps0, -off, gaps1))
         .attr('stroke', col).attr('stroke-width', lw).attr('fill', 'none').attr('opacity', 0.88);
-      eg.append('path').attr('d', pathWithGaps(g2, myTs))
+      eg.append('path').attr('d', buildOrthPath(g, gaps0, +off, gaps1))
         .attr('stroke', col).attr('stroke-width', lw).attr('fill', 'none').attr('opacity', 0.88);
-      // Circuit count tick marks (short perpendicular dashes at midpoint)
       if (e.circuits > 2) {
-        const mx=(g.x1+g.x2)/2, my=(g.y1+g.y2)/2;
-        const tl=9;
-        for (let k=-1; k<=1; k++) {
-          const tx=mx+k*dx/len*6, ty=my+k*dy/len*6;
+        // Tick marks at the midpoint elbow
+        const bx = g.srcMode === 'HVH' ? g.eSrc : g.midX;
+        const by = g.srcMode === 'HVH' ? g.midY  : g.eSrc;
+        for (let k = -1; k <= 1; k++) {
           eg.append('line')
-            .attr('x1',tx-oy/off*tl).attr('y1',ty+ox/off*tl)
-            .attr('x2',tx+oy/off*tl).attr('y2',ty-ox/off*tl)
+            .attr('x1',bx+k*6).attr('y1',by-8)
+            .attr('x2',bx+k*6).attr('y2',by+8)
             .attr('stroke',col).attr('stroke-width',1.5).attr('opacity',0.7);
         }
       }
     } else {
-      eg.append('path').attr('d', pathWithGaps(g, myTs))
+      eg.append('path').attr('d', buildOrthPath(g, gaps0, 0, gaps1))
         .attr('stroke', col).attr('stroke-width', lw).attr('fill', 'none').attr('opacity', 0.88);
     }
 
     // Wide invisible hit area
-    eg.append('line').attr('class','edge-hit')
-      .attr('x1',g.x1).attr('y1',g.y1).attr('x2',g.x2).attr('y2',g.y2)
+    eg.append('path').attr('class','edge-hit')
+      .attr('d', buildOrthPath(g, null, 0, null))
       .attr('stroke','transparent').attr('stroke-width', Math.max(lw+10, 16))
+      .attr('fill','none')
       .on('click', function(ev) {
         ev.stopPropagation();
-        showPopup(popupLine(e, stateName), (g.x1+g.x2)/2, (g.y1+g.y2)/2);
+        showPopup(popupLine(e, stateName), g.midX, g.midY);
       });
   }
 
@@ -738,123 +1043,288 @@ function drawSLD({ substations, edges }, conX, gapTs, geom, stateName) {
       .attr('class','sub-group')
       .attr('transform', `translate(${sub.x},${sub.y})`);
 
-    const volts  = sub.voltages;
-    const maxHW  = Math.max(BUS_MIN_HW, ...volts.map(kv => busHalfW(sub, kv)));
-
-    // Background hit area (captures click on the substation box)
-    const totalH = (volts.length-1)*BUS_SPACING + (sub.generators.length > 0 ? GEN_R*2+35 : 5);
-    sg.append('rect')
-      .attr('x', -maxHW-8).attr('y', -24)
-      .attr('width', (maxHW+8)*2).attr('height', totalH+32)
-      .attr('fill','transparent').attr('stroke','none')
-      .on('click', function(ev) {
-        ev.stopPropagation();
-        showPopup(popupSubstation(sub, stateName), sub.x, sub.y);
-      });
-
-    // ── Bus bars ─────────────────────────────────────────────────────────
-    for (let i = 0; i < volts.length; i++) {
-      const kv  = volts[i];
-      const by  = i * BUS_SPACING;
-      const hw  = busHalfW(sub, kv);
-      const col = VC[kv] || '#8b5e3c';
-      const bw  = VW[kv] || 2;
-
-      sg.append('line')
-        .attr('x1',-hw).attr('x2',hw).attr('y1',by).attr('y2',by)
-        .attr('stroke',col).attr('stroke-width',bw+2).attr('stroke-linecap','square');
-
-      // kV label at right end
+    // ── METRO BOX ────────────────────────────────────────────────────────────
+    if (sub.isMetroBox) {
+      const bw = 180, bh = 80 + sub.voltages.length * 18;
+      sg.append('rect')
+        .attr('x', -bw/2).attr('y', -bh/2)
+        .attr('width', bw).attr('height', bh)
+        .attr('rx', 8).attr('ry', 8)
+        .attr('fill', '#e8f4fd').attr('stroke', '#4496e0')
+        .attr('stroke-width', 2).attr('stroke-dasharray', '8,4');
       sg.append('text')
-        .attr('x',hw+7).attr('y',by+4.5)
-        .attr('font-size',8).attr('font-weight','600').attr('fill',col)
-        .text(`${kv}kV`);
-    }
-
-    // ── Name label above top bus bar ─────────────────────────────────────
-    sg.append('text')
-      .attr('x',0).attr('y',-16)
-      .attr('text-anchor','middle')
-      .attr('font-weight','bold').attr('font-size',10).attr('fill','#1a1a2e')
-      .text(sub.label);
-
-    // ── Transformer symbols between consecutive voltage levels ────────────
-    for (let i = 0; i < volts.length-1; i++) {
-      const y1   = i * BUS_SPACING;
-      const y2   = (i+1) * BUS_SPACING;
-      const nX   = Math.min(Math.max(sub.xfmrCount || 2, 1), 4);
-      const step = 24;
-      const totW = (nX-1) * step;
-
-      for (let t = 0; t < nX; t++) {
-        const cx    = -totW/2 + t * step;
-        const topCY = y1 + XFMR_R + 4;
-        const botCY = y2 - XFMR_R - 4;
-
-        // Stubs
-        sg.append('line')
-          .attr('x1',cx).attr('y1',y1).attr('x2',cx).attr('y2',topCY-XFMR_R)
-          .attr('stroke','#2a2a3a').attr('stroke-width',1.5);
-        sg.append('line')
-          .attr('x1',cx).attr('y1',y2).attr('x2',cx).attr('y2',botCY+XFMR_R)
-          .attr('stroke','#2a2a3a').attr('stroke-width',1.5);
-
-        // Circles
-        const xfGroup = sg.append('g').style('cursor','pointer')
-          .on('click', (ev) => {
-            ev.stopPropagation();
-            showPopup(popupTransformer(sub, volts[i], volts[i+1]), sub.x + cx, sub.y + (y1+y2)/2);
-          });
-
-        xfGroup.append('circle')
-          .attr('cx',cx).attr('cy',topCY).attr('r',XFMR_R)
-          .attr('stroke','#2a2a3a').attr('fill','rgba(250,250,248,0.95)').attr('stroke-width',1.5);
-        xfGroup.append('circle')
-          .attr('cx',cx).attr('cy',botCY).attr('r',XFMR_R)
-          .attr('stroke','#2a2a3a').attr('fill','rgba(250,250,248,0.95)').attr('stroke-width',1.5);
-      }
-    }
-
-    // ── Generators below lowest bus bar ──────────────────────────────────
-    if (sub.generators.length > 0) {
-      const lastY = (volts.length-1) * BUS_SPACING;
-      const genY  = lastY + GEN_R + 22;
-      const n     = sub.generators.length;
-      const totW  = (n-1) * GEN_STEP;
-
-      sub.generators.forEach((gen, gi) => {
-        const gx  = -totW/2 + gi*GEN_STEP;
-        const gcol = gen.status === 'Operating' ? '#3fb950' : '#d29922';
-
-        sg.append('line')
-          .attr('x1',gx).attr('y1',lastY).attr('x2',gx).attr('y2',genY-GEN_R)
-          .attr('stroke','#777').attr('stroke-width',1);
-
-        const gg = sg.append('g').attr('class','gen-sym')
-          .on('click', (ev) => {
-            ev.stopPropagation();
-            showPopup(popupGenerator(gen), sub.x + gx, sub.y + genY);
-          });
-
-        gg.append('circle')
-          .attr('cx',gx).attr('cy',genY).attr('r',GEN_R)
-          .attr('fill',gcol).attr('opacity',0.9)
-          .attr('stroke','rgba(250,250,248,0.8)').attr('stroke-width',1.2);
-
-        gg.append('text')
-          .attr('x',gx).attr('y',genY+3.5)
-          .attr('text-anchor','middle')
-          .attr('font-size',6).attr('font-weight','bold').attr('fill','#fff')
-          .text(gen.tech.slice(0,4));
-      });
-
-      // Total MW label
-      const totalMW = sub.generators.reduce((s,g) => s+g.mw, 0);
-      if (totalMW > 0) {
+        .attr('x', 0).attr('y', -bh/2 + 18)
+        .attr('text-anchor', 'middle')
+        .attr('font-size', 11).attr('font-weight', 'bold').attr('fill', '#1a3a5c')
+        .text(sub.label);
+      sg.append('text')
+        .attr('x', 0).attr('y', -bh/2 + 32)
+        .attr('text-anchor', 'middle')
+        .attr('font-size', 9).attr('fill', '#555')
+        .text(`${sub.metroSubCount} substations`);
+      // Voltage swatches
+      sub.voltages.forEach((kv, i) => {
+        const ky = -bh/2 + 50 + i * 18;
+        sg.append('rect')
+          .attr('x', -50).attr('y', ky - 6)
+          .attr('width', 100).attr('height', 12).attr('rx', 3)
+          .attr('fill', VC[kv] || '#8b5e3c').attr('opacity', 0.18);
         sg.append('text')
-          .attr('x',0).attr('y',genY+GEN_R+12)
-          .attr('text-anchor','middle').attr('font-size',7).attr('fill','#555')
-          .text(totalMW.toLocaleString()+'MW');
+          .attr('x', 0).attr('y', ky + 4)
+          .attr('text-anchor', 'middle')
+          .attr('font-size', 9).attr('font-weight', '600').attr('fill', VC[kv] || '#8b5e3c')
+          .text(`${kv} kV`);
+      });
+      sg.append('text')
+        .attr('x', 0).attr('y', bh/2 - 8)
+        .attr('text-anchor', 'middle')
+        .attr('font-size', 8).attr('fill', '#4496e0').attr('font-style', 'italic')
+        .text('⤢ double-click to expand');
+      // Interactions
+      sg.style('cursor', 'pointer')
+        .on('dblclick', function(ev) {
+          ev.stopPropagation();
+          renderState(stateName, sub.metroRegion.id);
+        })
+        .on('click', function(ev) {
+          ev.stopPropagation();
+          showPopup(
+            `<div class="popup-title">${sub.label}</div>
+             <div class="popup-grid">
+               <span class="popup-label">Substations</span><span class="popup-value">${sub.metroSubCount}</span>
+               <span class="popup-label">Voltages</span><span class="popup-value">${sub.voltages.join(' / ')} kV</span>
+             </div>
+             <div style="margin-top:10px;font-size:11px;color:#8b949e">Double-click to open metro diagram</div>`,
+            sub.x, sub.y);
+        });
+      continue;   // skip normal substation rendering
+    }
+
+    const volts = sub.voltages;
+
+    if (sub.orient === 'V') {
+      // ── V-ORIENTED: vertical bus bars arranged left→right by decreasing kV ──
+      const maxHH  = Math.max(BUS_MIN_HW, ...volts.map(kv => busHalfH(sub, kv)));
+      const totalW = (volts.length - 1) * BUS_SPACING;
+      const genBelow = sub.generators.length > 0;
+      const genExtraW = genBelow ? GEN_R * 2 + 30 : 0;
+
+      // Opaque background — masks any transit lines that pass through this sub's footprint
+      sg.append('rect')
+        .attr('x', -12).attr('y', -maxHH - 8)
+        .attr('width', totalW + 24 + genExtraW)
+        .attr('height', (maxHH + 8) * 2)
+        .attr('fill', 'rgba(250,250,248,0.97)').attr('stroke', 'none')
+        .attr('pointer-events', 'none');
+      sg.append('rect')
+        .attr('x', -12).attr('y', -maxHH - 8)
+        .attr('width', totalW + 24 + genExtraW)
+        .attr('height', (maxHH + 8) * 2)
+        .attr('fill','transparent').attr('stroke','none')
+        .on('click', function(ev) {
+          ev.stopPropagation();
+          showPopup(popupSubstation(sub, stateName), sub.x, sub.y);
+        });
+
+      for (let i = 0; i < volts.length; i++) {
+        const kv  = volts[i];
+        const bx  = i * BUS_SPACING;
+        const hh  = busHalfH(sub, kv);
+        const col = VC[kv] || '#8b5e3c';
+        const bw  = VW[kv] || 2;
+        sg.append('line')
+          .attr('x1',bx).attr('x2',bx).attr('y1',-hh).attr('y2',hh)
+          .attr('stroke',col).attr('stroke-width',bw+2).attr('stroke-linecap','square');
+        sg.append('text')
+          .attr('x',bx).attr('y',-hh - 4)
+          .attr('text-anchor','middle')
+          .attr('font-size',8).attr('font-weight','600').attr('fill',col)
+          .text(`${kv}kV`);
+      }
+
+      sg.append('text')
+        .attr('x', totalW / 2).attr('y', -maxHH - 16)
+        .attr('text-anchor','middle')
+        .attr('font-weight','bold').attr('font-size',10).attr('fill','#1a1a2e')
+        .text(sub.label);
+
+      // Transformer symbols — horizontal overlapping circles between adjacent vertical bus bars
+      for (let i = 0; i < volts.length - 1; i++) {
+        const x1  = i * BUS_SPACING;
+        const x2  = (i + 1) * BUS_SPACING;
+        const midX = (x1 + x2) / 2;
+        const sep  = XFMR_R * 0.65;
+        const nY   = Math.min(Math.max(sub.xfmrCount || 2, 1), 4);
+        const totH = (nY - 1) * 24;
+
+        for (let t = 0; t < nY; t++) {
+          const cy  = -totH / 2 + t * 24;
+          const lCX = midX - sep;
+          const rCX = midX + sep;
+          sg.append('line')
+            .attr('x1',x1).attr('y1',cy).attr('x2',lCX - XFMR_R).attr('y2',cy)
+            .attr('stroke','#2a2a3a').attr('stroke-width',1.5);
+          sg.append('line')
+            .attr('x1',x2).attr('y1',cy).attr('x2',rCX + XFMR_R).attr('y2',cy)
+            .attr('stroke','#2a2a3a').attr('stroke-width',1.5);
+          const xfGroup = sg.append('g').style('cursor','pointer')
+            .on('click', (ev) => {
+              ev.stopPropagation();
+              showPopup(popupTransformer(sub, volts[i], volts[i+1]), sub.x + midX, sub.y + cy);
+            });
+          xfGroup.append('circle')
+            .attr('cx',lCX).attr('cy',cy).attr('r',XFMR_R)
+            .attr('stroke','#2a2a3a').attr('fill','rgba(250,250,248,1.0)').attr('stroke-width',1.5);
+          xfGroup.append('circle')
+            .attr('cx',rCX).attr('cy',cy).attr('r',XFMR_R)
+            .attr('stroke','#2a2a3a').attr('fill','rgba(250,250,248,1.0)').attr('stroke-width',1.5);
+        }
+      }
+
+      if (genBelow) {
+        // V-oriented: generators attach to the rightmost (lowest-kV) bus bar,
+        // stacked vertically to the right of it so they don't float.
+        const rightBx = totalW;   // x of rightmost bus bar (relative to sub)
+        const n       = sub.generators.length;
+        const totH    = (n - 1) * GEN_STEP;
+        sub.generators.forEach((gen, gi) => {
+          const gy   = -totH / 2 + gi * GEN_STEP;
+          const gx   = rightBx + GEN_R + 22;
+          const gcol = gen.status === 'Operating' ? '#3fb950' : '#d29922';
+          sg.append('line')
+            .attr('x1',rightBx).attr('y1',gy).attr('x2',gx - GEN_R).attr('y2',gy)
+            .attr('stroke','#777').attr('stroke-width',1);
+          const gg = sg.append('g').attr('class','gen-sym')
+            .on('click', (ev) => {
+              ev.stopPropagation();
+              showPopup(popupGenerator(gen), sub.x + gx, sub.y + gy);
+            });
+          gg.append('circle')
+            .attr('cx',gx).attr('cy',gy).attr('r',GEN_R)
+            .attr('fill',gcol).attr('opacity',0.9)
+            .attr('stroke','rgba(250,250,248,0.8)').attr('stroke-width',1.2);
+          gg.append('text')
+            .attr('x',gx).attr('y',gy + 3.5)
+            .attr('text-anchor','middle')
+            .attr('font-size',6).attr('font-weight','bold').attr('fill','#fff')
+            .text(gen.tech.slice(0,4));
+        });
+        const totalMW = sub.generators.reduce((s,g) => s + g.mw, 0);
+        if (totalMW > 0) {
+          const gxLabel = totalW + GEN_R + 22;
+          const gyLabel = totH / 2 + GEN_R + 12;
+          sg.append('text')
+            .attr('x', gxLabel).attr('y', gyLabel)
+            .attr('text-anchor','middle').attr('font-size',7).attr('fill','#555')
+            .text(totalMW.toLocaleString() + 'MW');
+        }
+      }
+
+    } else {
+      // ── H-ORIENTED: horizontal bus bars stacked top→bottom by decreasing kV ──
+      const maxHW  = Math.max(BUS_MIN_HW, ...volts.map(kv => busHalfW(sub, kv)));
+      const totalH = (volts.length - 1) * BUS_SPACING + (sub.generators.length > 0 ? GEN_R*2 + 35 : 5);
+
+      // Opaque background — masks any transit lines that pass through this sub's footprint
+      sg.append('rect')
+        .attr('x', -maxHW - 8).attr('y', -24)
+        .attr('width', (maxHW + 8) * 2).attr('height', totalH + 32)
+        .attr('fill', 'rgba(250,250,248,0.97)').attr('stroke', 'none')
+        .attr('pointer-events', 'none');
+      sg.append('rect')
+        .attr('x', -maxHW - 8).attr('y', -24)
+        .attr('width', (maxHW + 8) * 2).attr('height', totalH + 32)
+        .attr('fill','transparent').attr('stroke','none')
+        .on('click', function(ev) {
+          ev.stopPropagation();
+          showPopup(popupSubstation(sub, stateName), sub.x, sub.y);
+        });
+
+      for (let i = 0; i < volts.length; i++) {
+        const kv  = volts[i];
+        const by  = i * BUS_SPACING;
+        const hw  = busHalfW(sub, kv);
+        const col = VC[kv] || '#8b5e3c';
+        const bw  = VW[kv] || 2;
+        sg.append('line')
+          .attr('x1',-hw).attr('x2',hw).attr('y1',by).attr('y2',by)
+          .attr('stroke',col).attr('stroke-width',bw+2).attr('stroke-linecap','square');
+        sg.append('text')
+          .attr('x',hw + 7).attr('y',by + 4.5)
+          .attr('font-size',8).attr('font-weight','600').attr('fill',col)
+          .text(`${kv}kV`);
+      }
+
+      sg.append('text')
+        .attr('x',0).attr('y',-16)
+        .attr('text-anchor','middle')
+        .attr('font-weight','bold').attr('font-size',10).attr('fill','#1a1a2e')
+        .text(sub.label);
+
+      for (let i = 0; i < volts.length - 1; i++) {
+        const y1   = i * BUS_SPACING;
+        const y2   = (i + 1) * BUS_SPACING;
+        const nX   = Math.min(Math.max(sub.xfmrCount || 2, 1), 4);
+        const totW = (nX - 1) * 24;
+        for (let t = 0; t < nX; t++) {
+          const cx   = -totW / 2 + t * 24;
+          const midY  = (y1 + y2) / 2;
+          const sep   = XFMR_R * 0.65;
+          const topCY = midY - sep;
+          const botCY = midY + sep;
+          sg.append('line')
+            .attr('x1',cx).attr('y1',y1).attr('x2',cx).attr('y2',topCY - XFMR_R)
+            .attr('stroke','#2a2a3a').attr('stroke-width',1.5);
+          sg.append('line')
+            .attr('x1',cx).attr('y1',y2).attr('x2',cx).attr('y2',botCY + XFMR_R)
+            .attr('stroke','#2a2a3a').attr('stroke-width',1.5);
+          const xfGroup = sg.append('g').style('cursor','pointer')
+            .on('click', (ev) => {
+              ev.stopPropagation();
+              showPopup(popupTransformer(sub, volts[i], volts[i+1]), sub.x + cx, sub.y + midY);
+            });
+          xfGroup.append('circle')
+            .attr('cx',cx).attr('cy',topCY).attr('r',XFMR_R)
+            .attr('stroke','#2a2a3a').attr('fill','rgba(250,250,248,1.0)').attr('stroke-width',1.5);
+          xfGroup.append('circle')
+            .attr('cx',cx).attr('cy',botCY).attr('r',XFMR_R)
+            .attr('stroke','#2a2a3a').attr('fill','rgba(250,250,248,1.0)').attr('stroke-width',1.5);
+        }
+      }
+
+      if (sub.generators.length > 0) {
+        const lastY = (volts.length - 1) * BUS_SPACING;
+        const genY  = lastY + GEN_R + 22;
+        const n     = sub.generators.length;
+        const totW  = (n - 1) * GEN_STEP;
+        sub.generators.forEach((gen, gi) => {
+          const gx   = -totW / 2 + gi * GEN_STEP;
+          const gcol = gen.status === 'Operating' ? '#3fb950' : '#d29922';
+          sg.append('line')
+            .attr('x1',gx).attr('y1',lastY).attr('x2',gx).attr('y2',genY - GEN_R)
+            .attr('stroke','#777').attr('stroke-width',1);
+          const gg = sg.append('g').attr('class','gen-sym')
+            .on('click', (ev) => {
+              ev.stopPropagation();
+              showPopup(popupGenerator(gen), sub.x + gx, sub.y + genY);
+            });
+          gg.append('circle')
+            .attr('cx',gx).attr('cy',genY).attr('r',GEN_R)
+            .attr('fill',gcol).attr('opacity',0.9)
+            .attr('stroke','rgba(250,250,248,0.8)').attr('stroke-width',1.2);
+          gg.append('text')
+            .attr('x',gx).attr('y',genY + 3.5)
+            .attr('text-anchor','middle')
+            .attr('font-size',6).attr('font-weight','bold').attr('fill','#fff')
+            .text(gen.tech.slice(0,4));
+        });
+        const totalMW = sub.generators.reduce((s,g) => s + g.mw, 0);
+        if (totalMW > 0) {
+          sg.append('text')
+            .attr('x',0).attr('y', genY + GEN_R + 12)
+            .attr('text-anchor','middle').attr('font-size',7).attr('fill','#555')
+            .text(totalMW.toLocaleString() + 'MW');
+        }
       }
     }
   }
@@ -882,20 +1352,45 @@ function fitView({ substations }) {
 // ══════════════════════════════════════════════════════════════════════════════
 //  MAIN
 // ══════════════════════════════════════════════════════════════════════════════
-function renderState(stateName) {
+function renderState(stateName, regionId = null) {
   if (!allLines) return;
+  currentState  = stateName;
+  currentRegion = regionId;
+  hidePopup();
+
+  // Update breadcrumb
+  const bcEl     = document.getElementById('breadcrumb');
+  const bcState  = document.getElementById('bc-state');
+  const bcRegion = document.getElementById('bc-region');
+  if (regionId !== null) {
+    const region = getMetroRegions(stateName).find(m => m.id === regionId);
+    bcState.textContent  = stateName;
+    bcRegion.textContent = region ? region.label : regionId;
+    bcEl.style.display   = 'inline-flex';
+    bcState.onclick = () => renderState(stateName, null);
+  } else {
+    bcEl.style.display = 'none';
+  }
+
   const loadEl = document.getElementById('loading');
-  loadEl.textContent = `Building ${stateName} SLD…`;
+  loadEl.textContent = regionId
+    ? `Building ${stateName} metro SLD…`
+    : `Building ${stateName} SLD…`;
   loadEl.style.display = 'block';
 
   setTimeout(() => {
-    const net  = buildNetwork(stateName, 132);
-    layoutNetwork(net);
-    const conX = computeConX(net);
-    const { gapTs, geom } = computeGapTs(net, conX);
-    drawSLD(net, conX, gapTs, geom, stateName);
-    fitView(net);
-    loadEl.style.display = 'none';
+    try {
+      const net  = buildNetwork(stateName, 132, regionId);
+      layoutNetwork(net);
+      const conOff = computeConOffsets(net);
+      const { gapTs, geom } = computeGapTs(net, conOff);
+      drawSLD(net, conOff, gapTs, geom, stateName);
+      fitView(net);
+      loadEl.style.display = 'none';
+    } catch(err) {
+      loadEl.textContent = 'Error: ' + err.message;
+      console.error(err);
+    }
   }, 30);
 }
 </script>
