@@ -836,7 +836,9 @@ function bindMapEvents() {
       row.dataset.cpct,
       row.dataset.desc,
       cache.weekly || [],
-      cache.lineName || ''
+      cache.lineName || '',
+      cache.constrs || [],
+      cache.lineBpct
     );
   });
 
@@ -932,9 +934,11 @@ function bindMapEvents() {
       // Binding constraints — all shown as clickable rows
       const constrs = tryParse(p.binding_constraints) || [];
       if (constrs.length) {
-        // Cache the line's time-series data so the modal can retrieve it on click
+        // Cache all data the modal needs — keyed once per popup open
         window._constrChartCache = {
           weekly: tryParse(p.weekly_stats) || tryParse(p.monthly_stats) || [],
+          constrs: constrs,
+          lineBpct: p.binding_pct != null ? parseFloat(p.binding_pct) : null,
           lineName: p.name || 'Transmission Line'
         };
 
@@ -1871,20 +1875,37 @@ function buildCongestionChartLarge(data) {
   return buildCongestionChart(data, { W: 510, H: 200, PL: 50, PR: 10, PT: 16, PB: 28, dotR: 4, fontSize: 10 });
 }
 
-function openConstraintModal(cid, cpct, desc, weeklyData, lineName) {
+function openConstraintModal(cid, cpct, desc, weeklyData, lineName, allConstrs, lineBpct) {
   const existing = document.getElementById('constr-modal');
   if (existing) existing.remove();
 
   const bpctNum = parseFloat(cpct) || 0;
   const bColour = bpctNum > 50 ? '#f85149' : bpctNum > 20 ? '#f0883e' : bpctNum > 5 ? '#d29922' : '#79c0ff';
 
-  const chartSvg = weeklyData.length >= 2
-    ? buildCongestionChartLarge(weeklyData)
-    : `<div style="color:#8b949e;font-size:12px;padding:20px 0;text-align:center">No time-series data available for this line</div>`;
+  const hasTimeSeries = weeklyData.length >= 2;
 
-  // Build binding frequency legend rows from weeklyData
-  let bindingWeeks = 0, totalWeeks = weeklyData.length;
+  // Binding weeks count from time series
+  let bindingWeeks = 0;
   weeklyData.forEach(d => { if ((parseFloat(d.binding_pct) || 0) > 0) bindingWeeks++; });
+
+  // Chart section: time series if available, else constraint comparison bar chart
+  let chartSection = '';
+  if (hasTimeSeries) {
+    chartSection = `
+      <div style="font-size:12px;font-weight:600;color:#8b949e;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:4px">Line Headroom Over Time</div>
+      <div style="font-size:11px;color:#8b949e;margin-bottom:8px;line-height:1.5">
+        <span style="display:inline-block;width:12px;height:3px;background:#58a6ff;vertical-align:middle;margin-right:3px;border-radius:1px"></span> Weekly avg headroom (RHS − LHS).
+        Coloured bars &amp; dots = weeks when constraint was binding.
+        Bound in ${bindingWeeks} of ${weeklyData.length} weeks.
+      </div>
+      ${buildCongestionChartLarge(weeklyData)}
+      <div style="font-size:10px;color:#8b949e;margin-top:6px">Headroom = constraint limit (RHS) − actual flow (LHS) in MW. Below zero = constraint actively binding. Jan 2025 – Feb 2026.</div>`;
+  } else if (allConstrs && allConstrs.length > 1) {
+    // Fallback: bar chart comparing all constraints on this line by binding %
+    chartSection = buildConstraintBarChart(cid, allConstrs, lineBpct);
+  } else {
+    chartSection = `<div style="color:#8b949e;font-size:12px;padding:16px 0;text-align:center">Weekly headroom data not available for this line.</div>`;
+  }
 
   const modal = document.createElement('div');
   modal.id = 'constr-modal';
@@ -1913,24 +1934,14 @@ function openConstraintModal(cid, cpct, desc, weeklyData, lineName) {
           <div style="background:#30363d;height:10px;border-radius:5px;overflow:hidden;margin-bottom:6px">
             <div style="width:${Math.min(100,bpctNum)}%;height:100%;background:${bColour};border-radius:5px"></div>
           </div>
-          ${totalWeeks > 0 ? `<div style="font-size:11px;color:#8b949e">Bound in ${bindingWeeks} of ${totalWeeks} weeks in the analysis period</div>` : ''}
+          ${lineBpct != null ? `<div style="font-size:11px;color:#8b949e">Line overall: ${lineBpct.toFixed(1)}% binding across all constraints</div>` : ''}
+          ${hasTimeSeries && bindingWeeks > 0 ? `<div style="font-size:11px;color:#8b949e;margin-top:2px">Binding in ${bindingWeeks} of ${weeklyData.length} weeks on record</div>` : ''}
         </div>
       </div>
 
-      <div style="font-size:12px;font-weight:600;color:#8b949e;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:4px">Line Headroom Over Time</div>
-      <div style="font-size:11px;color:#8b949e;margin-bottom:8px;line-height:1.5">
-        Headroom = constraint RHS − LHS (MW). <span style="color:#3fb950">Green</span> = ample spare capacity,
-        <span style="color:#d29922">amber</span> = tight, <span style="color:#f85149">red</span> = constraint binding (below zero).
-        Coloured dots mark weeks when this line was constrained.
-      </div>
-      ${chartSvg}
-      <div style="font-size:10px;color:#8b949e;margin-top:6px">
-        When this constraint is binding, it sets the effective flow limit on this line.
-        The headroom chart shows the line's available capacity (Jan 2025 – Feb 2026).
-      </div>
+      ${chartSection}
     </div>`;
 
-  // Set text content safely to avoid HTML injection from data strings
   modal.querySelector('#constr-modal-linename').textContent = lineName;
   modal.querySelector('#constr-modal-desc').textContent = desc;
 
@@ -1940,6 +1951,63 @@ function openConstraintModal(cid, cpct, desc, weeklyData, lineName) {
   modal.querySelector('#constr-modal-close').addEventListener('click', () => modal.remove());
   const escHandler = e => { if (e.key === 'Escape') { modal.remove(); document.removeEventListener('keydown', escHandler); } };
   document.addEventListener('keydown', escHandler);
+}
+
+// Bar chart comparing all constraints on a line by binding %, highlighted by selected cid
+function buildConstraintBarChart(selectedCid, constrs, lineBpct) {
+  const sorted = [...constrs].filter(c => c.id).sort((a, b) => (b.binding_pct || 0) - (a.binding_pct || 0));
+  const maxPct  = Math.max(...sorted.map(c => c.binding_pct || 0), 1);
+
+  const ROW_H   = 28, LABEL_W = 160, BAR_AREA = 320, TOTAL_W = LABEL_W + BAR_AREA + 50;
+  const H = sorted.length * ROW_H + 36;
+
+  let svg = `<svg width="${TOTAL_W}" height="${H}" style="display:block;margin-top:4px;font-family:sans-serif">`;
+
+  // Title row
+  svg += `<text x="0" y="14" fill="#8b949e" font-size="10" font-weight="600" text-transform="uppercase">Constraint</text>`;
+  svg += `<text x="${LABEL_W}" y="14" fill="#8b949e" font-size="10">% binding (Jan 2025 – Feb 2026)</text>`;
+
+  sorted.forEach((c, i) => {
+    const y = 24 + i * ROW_H;
+    const pct = parseFloat(c.binding_pct) || 0;
+    const barW = (pct / maxPct) * BAR_AREA * 0.85;
+    const isSelected = c.id === selectedCid;
+    const barCol = pct > 50 ? '#f85149' : pct > 20 ? '#f0883e' : pct > 5 ? '#d29922' : '#79c0ff';
+    const rowFill = isSelected ? 'rgba(88,166,255,0.07)' : 'none';
+
+    // Row background highlight for selected
+    if (isSelected) svg += `<rect x="0" y="${y-2}" width="${TOTAL_W}" height="${ROW_H-2}" fill="${rowFill}" rx="3"/>`;
+
+    // Constraint ID label — truncate to fit
+    const labelText = c.id.length > 22 ? c.id.slice(0, 20) + '…' : c.id;
+    const labelCol = isSelected ? '#79c0ff' : '#e6edf3';
+    const labelWeight = isSelected ? '700' : '400';
+    svg += `<text x="0" y="${y + 14}" fill="${labelCol}" font-size="10" font-weight="${labelWeight}">${labelText}</text>`;
+
+    // Bar
+    svg += `<rect x="${LABEL_W}" y="${y+5}" width="${Math.max(2, barW)}" height="14" fill="${barCol}" opacity="${isSelected ? 1 : 0.6}" rx="2"/>`;
+
+    // Percentage label
+    svg += `<text x="${LABEL_W + Math.max(2, barW) + 5}" y="${y+16}" fill="${isSelected ? barCol : '#8b949e'}" font-size="10" font-weight="${isSelected ? '700' : '400'}">${pct > 0 ? pct.toFixed(1) + '%' : '<1%'}</text>`;
+  });
+
+  // Line overall binding pct reference line
+  if (lineBpct != null && lineBpct > 0) {
+    const refX = LABEL_W + (lineBpct / maxPct) * BAR_AREA * 0.85;
+    svg += `<line x1="${refX}" y1="22" x2="${refX}" y2="${H-4}" stroke="#8b949e" stroke-width="1" stroke-dasharray="3,2" opacity="0.5"/>`;
+    svg += `<text x="${refX+3}" y="21" fill="#8b949e" font-size="9">line avg ${lineBpct.toFixed(1)}%</text>`;
+  }
+
+  svg += `</svg>`;
+
+  return `
+    <div style="font-size:12px;font-weight:600;color:#8b949e;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:6px">Constraints on This Line</div>
+    <div style="font-size:11px;color:#8b949e;margin-bottom:10px;line-height:1.5">
+      All binding constraints on this line ranked by frequency. <span style="color:#79c0ff;font-weight:600">${selectedCid}</span> highlighted.
+      Each bar shows how often that constraint set the active limit during the analysis period.
+    </div>
+    <div style="overflow-x:auto">${svg}</div>
+    <div style="font-size:10px;color:#8b949e;margin-top:8px">Weekly headroom time series not available for this line. Showing aggregate binding frequency per constraint (Jan 2025 – Feb 2026).</div>`;
 }
 
 // ─────────────────────────────────────────
