@@ -77,6 +77,9 @@
     .mlf-good { color: #3fb950; }
     .mlf-ok   { color: #d29922; }
     .mlf-poor { color: #f85149; }
+    .mlf-row  { display: flex; justify-content: space-between; font-size: 12px; padding: 2px 0; }
+    .mlf-change-up   { color: #3fb950; font-size: 11px; margin-left: 4px; }
+    .mlf-change-down { color: #f85149; font-size: 11px; margin-left: 4px; }
 
     /* ── Cursor on interactive elements ── */
     .sub-group { cursor: pointer; }
@@ -273,6 +276,12 @@ function mlfClass(v) {
   return v >= 0.97 ? 'mlf-good' : v >= 0.93 ? 'mlf-ok' : 'mlf-poor';
 }
 
+function tryParse(val) {
+  if (!val || val === 'null' || val === '[]') return null;
+  if (typeof val === 'object') return val;
+  try { return JSON.parse(val.replace(/'/g, '"')); } catch { return null; }
+}
+
 // Build MLF load lookup: substation name → mlf record
 function buildMlfLoadLookup() {
   const lk = new Map();
@@ -322,6 +331,12 @@ function buildNetwork(stateName, minKv = 132, regionId = null) {
         xfmrCount: 0,
         generators: [],
         mlfLoad: null,
+        // enriched from allSubs:
+        subClass: null, operationalStatus: null, suburb: null,
+        currentRatingMva: null, faultLevels: null, xfmrRatings: null,
+        mlfGen: null, mlfGenImport: null, mlfGenExport: null,
+        mlfGenLoad: null, mlfRegion: null, mlfChange: null,
+        lrfMax: null, lrfMedMax: null,
         geo: null, x: 0, y: 0,
       });
     }
@@ -355,7 +370,12 @@ function buildNetwork(stateName, minKv = 132, regionId = null) {
         circuits: 0, name: p.name,
         normRating: p.psse_norm_min_mva || null,
         emergRating: p.psse_emerg_min_mva || null,
+        normMax: p.psse_norm_max_mva || null,
+        emergMax: p.psse_emerg_max_mva || null,
         lengthM: p.length_m || null,
+        status: p.status || null,
+        lineClass: p.line_class || null,
+        lineId: p.line_id || null,
       });
     }
     const edge = edgeMap.get(eKey);
@@ -395,14 +415,31 @@ function buildNetwork(stateName, minKv = 132, regionId = null) {
     }
   }
 
-  // Enrich with xfmr_count
+  // Enrich with xfmr_count and additional properties from allSubs
   for (const sub of subMap.values()) {
     const match = allSubs.features.find(s =>
       normSub(s.properties.name) === sub.id &&
       (s.properties.state === stateName || !s.properties.state)
     );
-    if (match?.properties?.xfmr_count > 0) sub.xfmrCount = match.properties.xfmr_count;
-    else if (sub.voltages.length > 1)       sub.xfmrCount = 2;
+    if (match) {
+      const mp = match.properties;
+      if (mp.xfmr_count > 0) sub.xfmrCount = mp.xfmr_count;
+      sub.subClass         = mp.class || null;
+      sub.operationalStatus= mp.operationalstatus || null;
+      sub.suburb           = mp.suburb || null;
+      sub.currentRatingMva = mp.current_rating_mva || null;
+      sub.faultLevels      = tryParse(mp.fault_levels);
+      sub.xfmrRatings      = tryParse(mp.xfmr_ratings);
+      sub.mlfGen           = mp.mlf_gen_2026_27 != null ? parseFloat(mp.mlf_gen_2026_27) : null;
+      sub.mlfGenImport     = mp.mlf_gen_import_2026_27 != null ? parseFloat(mp.mlf_gen_import_2026_27) : null;
+      sub.mlfGenExport     = mp.mlf_gen_export_2026_27 != null ? parseFloat(mp.mlf_gen_export_2026_27) : null;
+      sub.mlfGenLoad       = mp.mlf_load_2026_27 != null ? parseFloat(mp.mlf_load_2026_27) : null;
+      sub.mlfRegion        = mp.mlf_region || null;
+      sub.mlfChange        = mp.mlf_change != null ? parseFloat(mp.mlf_change) : null;
+      sub.lrfMax           = mp.lrf_max_local != null ? parseFloat(mp.lrf_max_local) : null;
+      sub.lrfMedMax        = mp.lrf_med_max_local != null ? parseFloat(mp.lrf_med_max_local) : null;
+    }
+    if (sub.xfmrCount === 0 && sub.voltages.length > 1) sub.xfmrCount = 2;
   }
 
   // Enrich with MLF load
@@ -433,6 +470,7 @@ function buildNetwork(stateName, minKv = 132, regionId = null) {
         mw: Math.round(p.capacity_mw || 0),
         status: p.dev_status, es: p.energy_source || '–',
         company: p.company || p.developer || null,
+        startupDate: p.startup_date || null,
         mlfGen: mlfRec?.mlf_2026_27 || null,
         mlfImp: mlfRec?.mlf_import_2026_27 || null,
         mlfExp: mlfRec?.mlf_export_2026_27 || null,
@@ -682,6 +720,7 @@ function computeConOffsets({ substations, edges }) {
 // ══════════════════════════════════════════════════════════════════════════════
 const EXIT_PAD    = 130;  // clearance zone outside sub — no other lines enter this zone
 const BRIDGE_SPREAD = 28; // spread between parallel bridge levels from same bus bar
+const PERP_STUB   = 34;   // perpendicular stub from bus bar before routing for middle-bus connections
 
 // exitGeom: connection point on bus bar + perpendicular exit level.
 // Returns { x, y, mode:'VHV'|'HVH', exitVal }
@@ -697,40 +736,48 @@ function exitGeom(sub, kv, off, neighborX, neighborY) {
   const n = sub.voltages.length;
 
   if (sub.orient !== 'V') {
-    // H-oriented: horizontal bus bars stacked top→bottom
+    // H-oriented: horizontal bus bars stacked top→bottom.
+    // All connections enter perpendicular (vertically) to the horizontal bus bar.
     const cx   = sub.x + off.xOff;
     const cy   = sub.y + i * BUS_SPACING;
     const span = (n - 1) * BUS_SPACING;
+    const maxHW = Math.max(BUS_MIN_HW, ...sub.voltages.map(k => busHalfW(sub, k)));
 
     if (i === 0) {
-      // Top bus: exit perpendicular upward.  bridgeOff < 0 → further above.
-      return { x: cx, y: cy, mode: 'VHV', exitVal: sub.y - EXIT_PAD + bo };
+      // Top bus: perpendicular exit UP. bx=x, by=y (no extra stub needed).
+      return { bx: cx, by: cy, x: cx, y: cy, mode: 'VHV', exitVal: sub.y - EXIT_PAD + bo };
     } else if (i === n - 1) {
-      // Bottom bus: exit perpendicular downward.
-      return { x: cx, y: cy, mode: 'VHV', exitVal: sub.y + span + EXIT_PAD + bo };
+      // Bottom bus: perpendicular exit DOWN.
+      return { bx: cx, by: cy, x: cx, y: cy, mode: 'VHV', exitVal: sub.y + span + EXIT_PAD + bo };
     } else {
-      // Middle bus: exit sideways to avoid crossing sibling bus bars.
-      const maxHW = Math.max(BUS_MIN_HW, ...sub.voltages.map(k => busHalfW(sub, k)));
-      const side  = neighborX >= sub.x ? 1 : -1;
-      return { x: cx, y: cy, mode: 'HVH', exitVal: sub.x + side * (maxHW + EXIT_PAD) + off.xOff };
+      // Middle bus: short perpendicular stub (vertical, into the gap between buses)
+      // then exit sideways. This ensures the line enters the bus perpendicularly.
+      const side    = neighborX >= sub.x ? 1 : -1;
+      const stubDir = neighborY <= cy ? -1 : 1;  // toward gap with more room
+      return { bx: cx, by: cy, x: cx, y: cy + stubDir * PERP_STUB,
+               mode: 'HVH', exitVal: sub.x + side * (maxHW + EXIT_PAD) + off.xOff };
     }
   } else {
-    // V-oriented: vertical bus bars arranged left→right
+    // V-oriented: vertical bus bars arranged left→right.
+    // All connections enter perpendicular (horizontally) to the vertical bus bar.
     const cx   = sub.x + i * BUS_SPACING;
     const cy   = sub.y + off.yOff;
     const span = (n - 1) * BUS_SPACING;
+    const maxHH = Math.max(BUS_MIN_HW, ...sub.voltages.map(k => busHalfH(sub, k)));
 
     if (i === 0) {
-      // Leftmost bus: exit perpendicular leftward.
-      return { x: cx, y: cy, mode: 'HVH', exitVal: sub.x - EXIT_PAD + bo };
+      // Leftmost bus: perpendicular exit LEFT.
+      return { bx: cx, by: cy, x: cx, y: cy, mode: 'HVH', exitVal: sub.x - EXIT_PAD + bo };
     } else if (i === n - 1) {
-      // Rightmost bus: exit perpendicular rightward.
-      return { x: cx, y: cy, mode: 'HVH', exitVal: sub.x + span + EXIT_PAD + bo };
+      // Rightmost bus: perpendicular exit RIGHT.
+      return { bx: cx, by: cy, x: cx, y: cy, mode: 'HVH', exitVal: sub.x + span + EXIT_PAD + bo };
     } else {
-      // Middle bus: exit vertically.
-      const maxHH = Math.max(BUS_MIN_HW, ...sub.voltages.map(k => busHalfH(sub, k)));
-      const side  = neighborY >= sub.y ? 1 : -1;
-      return { x: cx, y: cy, mode: 'VHV', exitVal: sub.y + side * (maxHH + EXIT_PAD) + bo };
+      // Middle bus: short perpendicular stub (horizontal, into the gap between buses)
+      // then exit vertically.
+      const side    = neighborY >= sub.y ? 1 : -1;
+      const stubDir = neighborX <= cx ? -1 : 1;
+      return { bx: cx, by: cy, x: cx + stubDir * PERP_STUB, y: cy,
+               mode: 'VHV', exitVal: sub.y + side * (maxHH + EXIT_PAD) + bo };
     }
   }
 }
@@ -744,14 +791,18 @@ function edgePts(e, conOff, substations) {
   const srcG = exitGeom(fs, e.voltage, fo,  ts.x, ts.y);
   const tgtG = exitGeom(ts, e.voltage, to_, fs.x, fs.y);
 
-  const sx = srcG.x, sy = srcG.y;
-  const tx = tgtG.x, ty = tgtG.y;
+  // bsx/bsy = bus-bar connection point (start of perpendicular stub)
+  // sx/sy   = post-stub routing start (used for bridge/connector segments)
+  const bsx = srcG.bx, bsy = srcG.by;
+  const sx  = srcG.x,  sy  = srcG.y;
+  const btx = tgtG.bx, bty = tgtG.by;
+  const tx  = tgtG.x,  ty  = tgtG.y;
   const eSrc = srcG.exitVal, eTgt = tgtG.exitVal;
   const srcMode = srcG.mode, tgtMode = tgtG.mode;
   const midX = (sx + tx) / 2;
   const midY = (sy + ty) / 2;
 
-  return { sx, sy, tx, ty, eSrc, eTgt, srcMode, tgtMode, midX, midY };
+  return { bsx, bsy, sx, sy, btx, bty, tx, ty, eSrc, eTgt, srcMode, tgtMode, midX, midY };
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -851,36 +902,60 @@ function buildOrthPath(g, gaps0, offset, gaps1) {
     return d;
   }
 
-  const { sx, sy, tx, ty, eSrc, eTgt, srcMode, tgtMode, midX, midY } = g;
+  const { bsx, bsy, sx, sy, btx, bty, tx, ty, eSrc, eTgt, srcMode, tgtMode, midX, midY } = g;
+
+  // Perpendicular stubs exist when the bus-bar point differs from the routing start.
+  // hasSrcStub: middle-bus connections that need a short perp segment before the main path.
+  const hasSrcStub = Math.hypot(bsx - sx, bsy - sy) > 0.5;
+  const hasTgtStub = Math.hypot(btx - tx, bty - ty) > 0.5;
 
   if (srcMode === 'VHV' && tgtMode === 'VHV') {
-    // Both stubs vertical.  offset shifts stub X so double circuits stay separate.
+    // Vertical stubs; offset shifts X so double circuits stay separate.
     const sxo = sx + off, txo = tx + off;
-    let d = `M${sxo.toFixed(1)},${sy.toFixed(1)} L${sxo.toFixed(1)},${eSrc.toFixed(1)}`;
+    // Source: horizontal perp stub (V-middle bus) or no stub (outer bus).
+    let d = hasSrcStub
+      ? `M${(bsx+off).toFixed(1)},${bsy.toFixed(1)} L${sxo.toFixed(1)},${sy.toFixed(1)}`
+      : `M${sxo.toFixed(1)},${sy.toFixed(1)}`;
+    d += ` L${sxo.toFixed(1)},${eSrc.toFixed(1)}`;
     d += gappedH(sxo, midX + off, eSrc, gaps0);
     d += ` L${(midX+off).toFixed(1)},${eTgt.toFixed(1)}`;
     d += gappedH(midX + off, txo, eTgt, gaps1);
     d += ` L${txo.toFixed(1)},${ty.toFixed(1)}`;
+    if (hasTgtStub) d += ` L${(btx+off).toFixed(1)},${bty.toFixed(1)}`;
     return d;
 
   } else if (srcMode === 'HVH' && tgtMode === 'HVH') {
-    // Both stubs horizontal.  offset shifts stub Y.
+    // Horizontal stubs; offset shifts Y so double circuits stay separate.
     const syo = sy + off, tyo = ty + off;
-    let d = `M${sx.toFixed(1)},${syo.toFixed(1)}`;
-    d += gappedH(sx, eSrc, syo, gaps0);         // source H-stub (treated as gapped H for consistency)
+    // Source: vertical perp stub (H-middle bus) or no stub (outer V bus).
+    let d = hasSrcStub
+      ? `M${bsx.toFixed(1)},${bsy.toFixed(1)} L${sx.toFixed(1)},${syo.toFixed(1)}`
+      : `M${sx.toFixed(1)},${syo.toFixed(1)}`;
+    d += gappedH(sx, eSrc, syo, gaps0);
     d += ` L${eSrc.toFixed(1)},${(midY+off).toFixed(1)} L${eTgt.toFixed(1)},${(midY+off).toFixed(1)} L${eTgt.toFixed(1)},${tyo.toFixed(1)}`;
     d += gappedH(eTgt, tx, tyo, gaps1);
+    if (hasTgtStub) d += ` L${btx.toFixed(1)},${bty.toFixed(1)}`;
     return d;
 
   } else if (srcMode === 'VHV') {
-    // VHV source, HVH target: single elbow
+    // VHV source (possibly H-perp stub), HVH target (possibly V-perp stub): single elbow.
     const sxo = sx + off;
-    return `M${sxo.toFixed(1)},${sy.toFixed(1)} L${sxo.toFixed(1)},${eSrc.toFixed(1)} L${eTgt.toFixed(1)},${eSrc.toFixed(1)} L${eTgt.toFixed(1)},${ty.toFixed(1)} L${tx.toFixed(1)},${ty.toFixed(1)}`;
+    let d = hasSrcStub
+      ? `M${(bsx+off).toFixed(1)},${bsy.toFixed(1)} L${sxo.toFixed(1)},${sy.toFixed(1)}`
+      : `M${sxo.toFixed(1)},${sy.toFixed(1)}`;
+    d += ` L${sxo.toFixed(1)},${eSrc.toFixed(1)} L${eTgt.toFixed(1)},${eSrc.toFixed(1)} L${eTgt.toFixed(1)},${ty.toFixed(1)} L${tx.toFixed(1)},${ty.toFixed(1)}`;
+    if (hasTgtStub) d += ` L${btx.toFixed(1)},${bty.toFixed(1)}`;
+    return d;
 
   } else {
-    // HVH source, VHV target: single elbow
+    // HVH source (possibly V-perp stub), VHV target (possibly H-perp stub): single elbow.
     const syo = sy + off;
-    return `M${sx.toFixed(1)},${syo.toFixed(1)} L${eSrc.toFixed(1)},${syo.toFixed(1)} L${eSrc.toFixed(1)},${eTgt.toFixed(1)} L${tx.toFixed(1)},${eTgt.toFixed(1)} L${tx.toFixed(1)},${ty.toFixed(1)}`;
+    let d = hasSrcStub
+      ? `M${bsx.toFixed(1)},${bsy.toFixed(1)} L${sx.toFixed(1)},${syo.toFixed(1)}`
+      : `M${sx.toFixed(1)},${syo.toFixed(1)}`;
+    d += ` L${eSrc.toFixed(1)},${syo.toFixed(1)} L${eSrc.toFixed(1)},${eTgt.toFixed(1)} L${tx.toFixed(1)},${eTgt.toFixed(1)} L${tx.toFixed(1)},${ty.toFixed(1)}`;
+    if (hasTgtStub) d += ` L${btx.toFixed(1)},${bty.toFixed(1)}`;
+    return d;
   }
 }
 
@@ -890,10 +965,12 @@ function buildOrthPath(g, gaps0, offset, gaps1) {
 function popupSubstation(sub, stateName) {
   let h = `<div class="popup-title">${sub.label}</div>`;
   h += `<div class="popup-grid">`;
+  h += `<span class="popup-label">Voltage</span><span class="popup-value">${sub.voltages.join(' / ')} kV</span>`;
   h += `<span class="popup-label">State</span><span class="popup-value">${stateName}</span>`;
-  h += `<span class="popup-label">Voltages</span><span class="popup-value">${sub.voltages.join(' / ')} kV</span>`;
-  if (sub.xfmrCount > 0)
-    h += `<span class="popup-label">Transformers</span><span class="popup-value">${sub.xfmrCount}</span>`;
+  if (sub.subClass)          h += `<span class="popup-label">Class</span><span class="popup-value">${sub.subClass}</span>`;
+  if (sub.operationalStatus) h += `<span class="popup-label">Status</span><span class="popup-value">${sub.operationalStatus}</span>`;
+  if (sub.suburb)            h += `<span class="popup-label">Suburb</span><span class="popup-value">${sub.suburb}</span>`;
+  if (sub.currentRatingMva)  h += `<span class="popup-label">Rating</span><span class="popup-value">${sub.currentRatingMva} MVA</span>`;
   h += `</div>`;
 
   // Connections per voltage
@@ -907,13 +984,77 @@ function popupSubstation(sub, stateName) {
     h += `</div>`;
   }
 
-  // MLF load
-  if (sub.mlfLoad) {
-    const m = sub.mlfLoad;
-    h += `<div class="popup-section"><div class="popup-section-title">MLF Load 2026–27</div>`;
-    h += `<div class="popup-grid">`;
-    if (m.mlf_2026_27) h += `<span class="popup-label">Load MLF</span><span class="popup-value ${mlfClass(m.mlf_2026_27)}">${(+m.mlf_2026_27).toFixed(4)}</span>`;
-    if (m.tni)         h += `<span class="popup-label">TNI</span><span class="popup-value">${m.tni}</span>`;
+  // Fault levels
+  if (sub.faultLevels && sub.faultLevels.length) {
+    h += `<div class="popup-section"><div class="popup-section-title">Fault Levels</div>`;
+    sub.faultLevels.slice(0, 3).forEach(fl => {
+      h += `<div class="mlf-row"><span>${fl.voltage_kv} kV</span><span>3Ph max: ${fl.fault_3ph_max || '–'} kA | min: ${fl.fault_3ph_min || '–'} kA</span></div>`;
+    });
+    h += `</div>`;
+  }
+
+  // Transformers
+  if (sub.xfmrCount > 0 && sub.voltages[0] >= 220) {
+    const ratings = sub.xfmrRatings;
+    h += `<div class="popup-section"><div class="popup-section-title">Transformers (PSSE)</div>`;
+    if (ratings && ratings.length) {
+      const grouped = {};
+      ratings.forEach(r => {
+        const key = `${r.kv}_${r.norm}`;
+        if (!grouped[key]) grouped[key] = { kv: r.kv, norm: r.norm, emerg: r.emerg, count: 0 };
+        grouped[key].count++;
+      });
+      Object.values(grouped).sort((a, b) => b.norm - a.norm).forEach(g => {
+        const emergStr = g.emerg && g.emerg !== g.norm ? ` / ${g.emerg} emerg` : '';
+        h += `<div class="mlf-row"><span>${g.count} × ${g.norm} MVA${emergStr}</span><span style="color:#8b949e">${g.kv} kV side</span></div>`;
+      });
+      h += `<div style="font-size:11px;color:#8b949e;margin-top:3px">Min normal rating across PSSE seasonal snapshots</div>`;
+    } else {
+      h += `<div class="popup-grid"><span class="popup-label">Count</span><span class="popup-value">${sub.xfmrCount}</span></div>`;
+    }
+    h += `</div>`;
+  }
+
+  // MLF
+  const hasGenMlf  = sub.mlfGen != null || sub.mlfGenExport != null;
+  const hasLoadMlf = sub.mlfGenLoad != null;
+  // fallback: old mlfLoad record
+  const mL = sub.mlfLoad;
+  if (hasGenMlf || hasLoadMlf || mL) {
+    h += `<div class="popup-section"><div class="popup-section-title">Marginal Loss Factors 2026-27</div>`;
+    if (hasGenMlf) {
+      const hasDual = sub.mlfGenImport != null && sub.mlfGenExport != null;
+      const chg = sub.mlfChange != null
+        ? `<span class="${sub.mlfChange >= 0 ? 'mlf-change-up' : 'mlf-change-down'}">${sub.mlfChange >= 0 ? '▲' : '▼'}${Math.abs(sub.mlfChange).toFixed(4)}</span>`
+        : '';
+      if (hasDual) {
+        h += `<div class="mlf-row"><span>Export (discharge)</span><span class="${mlfClass(sub.mlfGenExport)}">${sub.mlfGenExport.toFixed(4)} ${chg}</span></div>`;
+        h += `<div class="mlf-row"><span>Import (charge)</span><span class="${mlfClass(sub.mlfGenImport)}">${sub.mlfGenImport.toFixed(4)}</span></div>`;
+      } else if (sub.mlfGen != null) {
+        h += `<div class="mlf-row"><span>Generator${sub.mlfRegion ? ` (${sub.mlfRegion})` : ''}</span><span class="${mlfClass(sub.mlfGen)}">${sub.mlfGen.toFixed(4)} ${chg}</span></div>`;
+      }
+    }
+    if (hasLoadMlf) {
+      h += `<div class="mlf-row"><span>Load${sub.mlfRegion ? ` (${sub.mlfRegion})` : ''}</span><span class="${mlfClass(sub.mlfGenLoad)}">${sub.mlfGenLoad.toFixed(4)}</span></div>`;
+    } else if (mL?.mlf_2026_27) {
+      h += `<div class="mlf-row"><span>Load${mL.tni ? ` (${mL.tni})` : ''}</span><span class="${mlfClass(+mL.mlf_2026_27)}">${(+mL.mlf_2026_27).toFixed(4)}</span></div>`;
+    }
+    h += `</div>`;
+  }
+
+  // LRF
+  if (sub.lrfMax != null && sub.lrfMax > 0) {
+    const near = sub.lrfMax, med = sub.lrfMedMax || 0;
+    const nearCol = near > 0.42 ? '#3fb950' : near > 0.30 ? '#8bc34a' : near > 0.20 ? '#d29922' : near > 0.10 ? '#f0883e' : '#f85149';
+    const tierLabel = near > 0.42 ? 'High (top 10%)' : near > 0.30 ? 'Good' : near > 0.20 ? 'Moderate' : near > 0.10 ? 'Below median' : 'Low';
+    const medCol = med > 0.42 ? '#3fb950' : med > 0.30 ? '#8bc34a' : med > 0.20 ? '#d29922' : med > 0.10 ? '#f0883e' : '#f85149';
+    h += `<div class="popup-section"><div class="popup-section-title">ELI — Locational Reliability Factor</div>`;
+    h += `<div style="font-size:12px;margin-bottom:4px;display:flex;gap:16px">`;
+    h += `<span><span style="color:#8b949e">Near-term: </span><span style="color:${nearCol};font-weight:700">${near.toFixed(3)}</span><span style="color:${nearCol};font-size:11px"> ${tierLabel}</span></span>`;
+    if (med > 0) {
+      const medTier = med > 0.42 ? 'High' : med > 0.30 ? 'Good' : med > 0.20 ? 'Moderate' : med > 0.10 ? 'Below median' : 'Low';
+      h += `<span><span style="color:#8b949e">Med-term: </span><span style="color:${medCol};font-weight:700">${med.toFixed(3)}</span><span style="color:${medCol};font-size:11px"> ${medTier}</span></span>`;
+    }
     h += `</div></div>`;
   }
 
@@ -924,19 +1065,33 @@ function popupLine(edge, stateName) {
   let h = `<div class="popup-title">${edge.name || 'Transmission Line'}</div>`;
   h += `<div class="popup-grid">`;
   h += `<span class="popup-label">Voltage</span><span class="popup-value">${edge.voltage} kV</span>`;
-  h += `<span class="popup-label">Circuits</span><span class="popup-value">${edge.circuits}</span>`;
   h += `<span class="popup-label">State</span><span class="popup-value">${stateName}</span>`;
+  if (edge.status)    h += `<span class="popup-label">Status</span><span class="popup-value">${edge.status}</span>`;
+  if (edge.lineClass) h += `<span class="popup-label">Class</span><span class="popup-value">${edge.lineClass}</span>`;
+  h += `<span class="popup-label">Circuits</span><span class="popup-value">${edge.circuits}</span>`;
+  if (edge.lengthM)   h += `<span class="popup-label">Length</span><span class="popup-value">${(edge.lengthM/1000).toFixed(1)} km</span>`;
+  if (edge.lineId)    h += `<span class="popup-label">Line ID</span><span class="popup-value">${edge.lineId}</span>`;
   h += `<span class="popup-label">From</span><span class="popup-value">${edge.from}</span>`;
   h += `<span class="popup-label">To</span><span class="popup-value">${edge.to}</span>`;
-  if (edge.lengthM)
-    h += `<span class="popup-label">Length</span><span class="popup-value">${(edge.lengthM/1000).toFixed(1)} km</span>`;
   h += `</div>`;
   if (edge.normRating || edge.emergRating) {
-    h += `<div class="popup-section"><div class="popup-section-title">Ratings (PSSE)</div>`;
+    const normMin = edge.normRating, normMax = edge.normMax;
+    const emergMin = edge.emergRating, emergMax = edge.emergMax;
+    h += `<div class="popup-section"><div class="popup-section-title">PSSE Ratings (seasonal snapshots)</div>`;
     h += `<div class="popup-grid">`;
-    if (edge.normRating)  h += `<span class="popup-label">Normal (N)</span><span class="popup-value">${Math.round(edge.normRating)} MVA</span>`;
-    if (edge.emergRating) h += `<span class="popup-label">Emergency</span><span class="popup-value">${Math.round(edge.emergRating)} MVA</span>`;
-    h += `</div></div>`;
+    if (normMin) {
+      const normStr = (normMax && normMax !== normMin)
+        ? `${Math.round(normMin).toLocaleString()} – ${Math.round(normMax).toLocaleString()} MVA`
+        : `${Math.round(normMin).toLocaleString()} MVA`;
+      h += `<span class="popup-label">Normal (N)</span><span class="popup-value">${normStr}</span>`;
+    }
+    if (emergMin) {
+      const emergStr = (emergMax && emergMax !== emergMin)
+        ? `${Math.round(emergMin).toLocaleString()} – ${Math.round(emergMax).toLocaleString()} MVA`
+        : `${Math.round(emergMin).toLocaleString()} MVA`;
+      h += `<span class="popup-label">Emergency (N-1)</span><span class="popup-value">${emergStr}</span>`;
+    }
+    h += `</div><div style="font-size:11px;color:#8b949e;margin-top:4px">Min–max across seasonal snapshots (2024-25)</div></div>`;
   }
   return h;
 }
@@ -951,6 +1106,8 @@ function popupGenerator(gen) {
     h += `<span class="popup-label">Capacity</span><span class="popup-value">${gen.mw.toLocaleString()} MW</span>`;
   if (gen.company)
     h += `<span class="popup-label">Developer</span><span class="popup-value">${gen.company}</span>`;
+  if (gen.startupDate)
+    h += `<span class="popup-label">Start-Up</span><span class="popup-value">${gen.startupDate}</span>`;
   h += `</div>`;
 
   const hasDual = gen.mlfImp != null && gen.mlfExp != null;
@@ -977,6 +1134,22 @@ function popupTransformer(sub, fromKv, toKv) {
   h += `<span class="popup-label">Secondary</span><span class="popup-value" style="color:${VC[toKv]||'#888'}">${toKv} kV</span>`;
   h += `<span class="popup-label">Count</span><span class="popup-value">${sub.xfmrCount}</span>`;
   h += `</div>`;
+  const ratings = sub.xfmrRatings;
+  if (ratings && ratings.length) {
+    h += `<div class="popup-section"><div class="popup-section-title">Ratings (PSSE)</div>`;
+    const grouped = {};
+    ratings.forEach(r => {
+      const key = `${r.kv}_${r.norm}`;
+      if (!grouped[key]) grouped[key] = { kv: r.kv, norm: r.norm, emerg: r.emerg, count: 0 };
+      grouped[key].count++;
+    });
+    Object.values(grouped).sort((a, b) => b.norm - a.norm).forEach(g => {
+      const emergStr = g.emerg && g.emerg !== g.norm ? ` / ${g.emerg} emerg` : '';
+      h += `<div class="mlf-row"><span>${g.count} × ${g.norm} MVA${emergStr}</span><span style="color:#8b949e">${g.kv} kV side</span></div>`;
+    });
+    h += `<div style="font-size:11px;color:#8b949e;margin-top:3px">Min normal rating across PSSE seasonal snapshots</div>`;
+    h += `</div>`;
+  }
   return h;
 }
 
@@ -1053,32 +1226,32 @@ function drawSLD({ substations, edges }, conOff, gapTs, geom, stateName) {
         .attr('fill', '#e8f4fd').attr('stroke', '#4496e0')
         .attr('stroke-width', 2).attr('stroke-dasharray', '8,4');
       sg.append('text')
-        .attr('x', 0).attr('y', -bh/2 + 18)
+        .attr('x', 0).attr('y', -bh/2 + 24)
         .attr('text-anchor', 'middle')
-        .attr('font-size', 11).attr('font-weight', 'bold').attr('fill', '#1a3a5c')
+        .attr('font-size', 22).attr('font-weight', 'bold').attr('fill', '#1a3a5c')
         .text(sub.label);
       sg.append('text')
-        .attr('x', 0).attr('y', -bh/2 + 32)
+        .attr('x', 0).attr('y', -bh/2 + 44)
         .attr('text-anchor', 'middle')
-        .attr('font-size', 9).attr('fill', '#555')
+        .attr('font-size', 18).attr('fill', '#555')
         .text(`${sub.metroSubCount} substations`);
       // Voltage swatches
       sub.voltages.forEach((kv, i) => {
-        const ky = -bh/2 + 50 + i * 18;
+        const ky = -bh/2 + 68 + i * 26;
         sg.append('rect')
-          .attr('x', -50).attr('y', ky - 6)
-          .attr('width', 100).attr('height', 12).attr('rx', 3)
+          .attr('x', -60).attr('y', ky - 10)
+          .attr('width', 120).attr('height', 18).attr('rx', 4)
           .attr('fill', VC[kv] || '#8b5e3c').attr('opacity', 0.18);
         sg.append('text')
-          .attr('x', 0).attr('y', ky + 4)
+          .attr('x', 0).attr('y', ky + 5)
           .attr('text-anchor', 'middle')
-          .attr('font-size', 9).attr('font-weight', '600').attr('fill', VC[kv] || '#8b5e3c')
+          .attr('font-size', 16).attr('font-weight', '600').attr('fill', VC[kv] || '#8b5e3c')
           .text(`${kv} kV`);
       });
       sg.append('text')
-        .attr('x', 0).attr('y', bh/2 - 8)
+        .attr('x', 0).attr('y', bh/2 - 10)
         .attr('text-anchor', 'middle')
-        .attr('font-size', 8).attr('fill', '#4496e0').attr('font-style', 'italic')
+        .attr('font-size', 14).attr('fill', '#4496e0').attr('font-style', 'italic')
         .text('⤢ double-click to expand');
       // Interactions
       sg.style('cursor', 'pointer')
@@ -1136,16 +1309,16 @@ function drawSLD({ substations, edges }, conOff, gapTs, geom, stateName) {
           .attr('x1',bx).attr('x2',bx).attr('y1',-hh).attr('y2',hh)
           .attr('stroke',col).attr('stroke-width',bw+2).attr('stroke-linecap','square');
         sg.append('text')
-          .attr('x',bx).attr('y',-hh - 4)
+          .attr('x',bx).attr('y',-hh - 6)
           .attr('text-anchor','middle')
-          .attr('font-size',8).attr('font-weight','600').attr('fill',col)
+          .attr('font-size',16).attr('font-weight','600').attr('fill',col)
           .text(`${kv}kV`);
       }
 
       sg.append('text')
-        .attr('x', totalW / 2).attr('y', -maxHH - 16)
+        .attr('x', totalW / 2).attr('y', -maxHH - 24)
         .attr('text-anchor','middle')
-        .attr('font-weight','bold').attr('font-size',10).attr('fill','#1a1a2e')
+        .attr('font-weight','bold').attr('font-size',20).attr('fill','#1a1a2e')
         .text(sub.label);
 
       // Transformer symbols — horizontal overlapping circles between adjacent vertical bus bars
@@ -1250,15 +1423,15 @@ function drawSLD({ substations, edges }, conOff, gapTs, geom, stateName) {
           .attr('x1',-hw).attr('x2',hw).attr('y1',by).attr('y2',by)
           .attr('stroke',col).attr('stroke-width',bw+2).attr('stroke-linecap','square');
         sg.append('text')
-          .attr('x',hw + 7).attr('y',by + 4.5)
-          .attr('font-size',8).attr('font-weight','600').attr('fill',col)
+          .attr('x',hw + 10).attr('y',by + 6)
+          .attr('font-size',16).attr('font-weight','600').attr('fill',col)
           .text(`${kv}kV`);
       }
 
       sg.append('text')
-        .attr('x',0).attr('y',-16)
+        .attr('x',0).attr('y',-24)
         .attr('text-anchor','middle')
-        .attr('font-weight','bold').attr('font-size',10).attr('fill','#1a1a2e')
+        .attr('font-weight','bold').attr('font-size',20).attr('fill','#1a1a2e')
         .text(sub.label);
 
       for (let i = 0; i < volts.length - 1; i++) {

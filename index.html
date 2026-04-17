@@ -131,6 +131,15 @@
     ::-webkit-scrollbar { width: 5px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
+
+    /* ── Constraint rows (clickable) ── */
+    .constr-row { transition: background 0.15s; border-radius: 4px; }
+    .constr-row:hover { background: rgba(88,166,255,0.08); }
+
+    /* ── Constraint detail modal ── */
+    #constr-modal * { box-sizing: border-box; }
+    #constr-modal ::-webkit-scrollbar { width: 5px; }
+    #constr-modal ::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
   </style>
 </head>
 <body>
@@ -381,6 +390,7 @@ let mlfMode = false;
 let activeFilters = { voltage: '', state: '', status: '' };
 
 const popup = new maplibregl.Popup({ closeButton: true, maxWidth: '360px' });
+popup.on('close', () => { document.getElementById('constr-modal')?.remove(); });
 
 Promise.all([
   fetch('transmission_lines.geojson').then(r => r.json()),
@@ -815,6 +825,22 @@ function addLayers() {
 // MAP EVENTS
 // ─────────────────────────────────────────
 function bindMapEvents() {
+  // Delegated listener for constraint detail rows — permanent, lives for page lifetime
+  document.body.addEventListener('click', e => {
+    const row = e.target.closest('.constr-row');
+    if (!row) return;
+    e.stopPropagation();
+    const cache = window._constrChartCache || {};
+    openConstraintModal(
+      row.dataset.cid,
+      row.dataset.cpct,
+      row.dataset.desc,
+      cache.weekly || [],
+      cache.lineName || ''
+    );
+  });
+
+
   // Line click
   map.on('click', 'lines-layer', e => {
     const p = e.features[0].properties;
@@ -903,22 +929,45 @@ function bindMapEvents() {
         html += `<div style="font-size:10px;color:#8b949e;margin-top:2px">Headroom = constraint limit − actual flow (MW). Below zero = constraint binding. Dots = weeks where binding occurred.</div>`;
       }
 
-      // Top constraints
+      // Binding constraints — all shown as clickable rows
       const constrs = tryParse(p.binding_constraints) || [];
       if (constrs.length) {
-        html += `<div style="margin-top:7px;font-size:11px;color:#8b949e;font-weight:600">Binding constraints:</div>`;
-        constrs.slice(0, 3).forEach(c => {
+        // Cache the line's time-series data so the modal can retrieve it on click
+        window._constrChartCache = {
+          weekly: tryParse(p.weekly_stats) || tryParse(p.monthly_stats) || [],
+          lineName: p.name || 'Transmission Line'
+        };
+
+        html += `<div style="margin-top:8px;font-size:11px;color:#8b949e;font-weight:600;margin-bottom:4px">
+          Binding constraints (${constrs.length}) — click for detail:</div>`;
+
+        constrs.forEach(c => {
           if (!c.id) return;
-          const cpct = c.binding_pct != null ? c.binding_pct.toFixed(1) + '%' : '–';
+          const cpctNum = c.binding_pct != null ? parseFloat(c.binding_pct) : 0;
+          const cpctStr = c.binding_pct != null ? cpctNum.toFixed(1) + '%' : '–';
+          const barCol  = cpctNum > 50 ? '#f85149' : cpctNum > 20 ? '#f0883e' : cpctNum > 5 ? '#d29922' : '#79c0ff';
           const desc = (c.desc || '')
             .replace(/^Out\s*=\s*[^,]+,\s*/i, '')
             .replace(/,?\s*Feedback$/i, '')
             .replace(/,?\s*\(Wt\s*=.*$/i, '')
-            .slice(0, 85);
-          html += `<div style="font-size:11px;padding:3px 0;border-bottom:1px solid #21262d">
-            <span style="color:#e6edf3;font-weight:600">${c.id}</span>
-            <span style="color:${bColour};float:right;font-weight:600">${cpct}</span>
-            <br><span style="color:#8b949e">${desc}</span>
+            .slice(0, 90);
+          // data-* attrs carry all info needed by delegated click handler — no closures needed
+          html += `<div class="constr-row"
+              data-cid="${c.id}"
+              data-cpct="${cpctStr}"
+              data-desc="${desc.replace(/"/g, '&quot;')}"
+              style="display:flex;align-items:center;gap:8px;padding:5px 4px;border-bottom:1px solid #21262d;cursor:pointer">
+            <div style="flex:1;min-width:0">
+              <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:2px">
+                <span style="color:#e6edf3;font-weight:600;font-size:11px">${c.id}</span>
+                <span style="color:${barCol};font-weight:700;font-size:11px;flex-shrink:0;margin-left:8px">${cpctStr}</span>
+              </div>
+              <div style="background:#21262d;border-radius:2px;height:3px;margin-bottom:2px">
+                <div style="width:${Math.min(100,cpctNum)}%;height:100%;background:${barCol};border-radius:2px"></div>
+              </div>
+              <div style="color:#8b949e;font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${desc}</div>
+            </div>
+            <span style="color:#58a6ff;font-size:16px;flex-shrink:0;opacity:0.6">›</span>
           </div>`;
         });
       }
@@ -1694,9 +1743,15 @@ function bindingColour(pct) {
  *
  * Works with weekly_stats {week, binding_pct, avg_headroom, min_headroom, ...}
  */
-function buildCongestionChart(data) {
-  const W = 268, H = 130;
-  const PL = 42, PR = 6, PT = 12, PB = 22;
+function buildCongestionChart(data, opts) {
+  const W  = (opts && opts.W)  ?? 268;
+  const H  = (opts && opts.H)  ?? 130;
+  const PL = (opts && opts.PL) ?? 42;
+  const PR = (opts && opts.PR) ?? 6;
+  const PT = (opts && opts.PT) ?? 12;
+  const PB = (opts && opts.PB) ?? 22;
+  const dotR     = (opts && opts.dotR)     ?? 2.5;
+  const fontSize = (opts && opts.fontSize) ?? 8;
   const iW = W - PL - PR, iH = H - PT - PB;
 
   const sorted = [...data].sort((a, b) => {
@@ -1744,7 +1799,7 @@ function buildCongestionChart(data) {
 
   // 0-line — always visible now
   svg += `<line x1="${PL}" y1="${zeroY.toFixed(1)}" x2="${PL+iW}" y2="${zeroY.toFixed(1)}" stroke="#e6edf3" stroke-width="1" opacity="0.7" stroke-dasharray="4,3"/>`;
-  svg += `<text x="${PL-3}" y="${(zeroY+3).toFixed(1)}" text-anchor="end" fill="#e6edf3" font-size="8" opacity="0.8">0</text>`;
+  svg += `<text x="${PL-3}" y="${(zeroY+3).toFixed(1)}" text-anchor="end" fill="#e6edf3" font-size="${fontSize}" opacity="0.8">0</text>`;
 
   // Headroom line
   const pts = hrVals.map((v, i) => v != null ? `${xPx(i).toFixed(1)},${yPx(v).toFixed(1)}` : null);
@@ -1764,7 +1819,7 @@ function buildCongestionChart(data) {
     const pct = parseFloat(d.binding_pct) || 0;
     if (pct <= 0 || hrVals[i] == null) return;
     const col = pct > 20 ? '#f85149' : pct > 5 ? '#f0883e' : '#d29922';
-    svg += `<circle cx="${xPx(i).toFixed(1)}" cy="${yPx(hrVals[i]).toFixed(1)}" r="2.5" fill="${col}" opacity="0.9"/>`;
+    svg += `<circle cx="${xPx(i).toFixed(1)}" cy="${yPx(hrVals[i]).toFixed(1)}" r="${dotR}" fill="${col}" opacity="0.9"/>`;
   });
 
   // Y axis labels (MW)
@@ -1775,9 +1830,9 @@ function buildCongestionChart(data) {
   };
   [yMax, 0, yMin].forEach(v => {
     if (v === 0 && (zeroY < PT || zeroY > PT + iH)) return;
-    svg += `<text x="${PL-3}" y="${(yPx(v)+3).toFixed(1)}" text-anchor="end" fill="#8b949e" font-size="8">${nice(v)}</text>`;
+    svg += `<text x="${PL-3}" y="${(yPx(v)+3).toFixed(1)}" text-anchor="end" fill="#8b949e" font-size="${fontSize}">${nice(v)}</text>`;
   });
-  svg += `<text x="9" y="${(PT+iH/2).toFixed(1)}" text-anchor="middle" fill="#8b949e" font-size="8" transform="rotate(-90,9,${(PT+iH/2).toFixed(1)})">MW</text>`;
+  svg += `<text x="9" y="${(PT+iH/2).toFixed(1)}" text-anchor="middle" fill="#8b949e" font-size="${fontSize}" transform="rotate(-90,9,${(PT+iH/2).toFixed(1)})">MW</text>`;
 
   // X axis labels (month ticks)
   // Group by month and label at first week of each month
@@ -1804,12 +1859,87 @@ function buildCongestionChart(data) {
       label = ['','J','F','M','A','M','J','J','A','S','O','N','D'][mo] + '\'' + yr;
     }
     if (label) {
-      svg += `<text x="${xPx(i).toFixed(1)}" y="${H-6}" text-anchor="middle" fill="#8b949e" font-size="7">${label}</text>`;
+      svg += `<text x="${xPx(i).toFixed(1)}" y="${H-6}" text-anchor="middle" fill="#8b949e" font-size="${fontSize-1}">${label}</text>`;
     }
   });
 
   svg += `</svg>`;
   return svg;
+}
+
+function buildCongestionChartLarge(data) {
+  return buildCongestionChart(data, { W: 510, H: 200, PL: 50, PR: 10, PT: 16, PB: 28, dotR: 4, fontSize: 10 });
+}
+
+function openConstraintModal(cid, cpct, desc, weeklyData, lineName) {
+  const existing = document.getElementById('constr-modal');
+  if (existing) existing.remove();
+
+  const bpctNum = parseFloat(cpct) || 0;
+  const bColour = bpctNum > 50 ? '#f85149' : bpctNum > 20 ? '#f0883e' : bpctNum > 5 ? '#d29922' : '#79c0ff';
+
+  const chartSvg = weeklyData.length >= 2
+    ? buildCongestionChartLarge(weeklyData)
+    : `<div style="color:#8b949e;font-size:12px;padding:20px 0;text-align:center">No time-series data available for this line</div>`;
+
+  // Build binding frequency legend rows from weeklyData
+  let bindingWeeks = 0, totalWeeks = weeklyData.length;
+  weeklyData.forEach(d => { if ((parseFloat(d.binding_pct) || 0) > 0) bindingWeeks++; });
+
+  const modal = document.createElement('div');
+  modal.id = 'constr-modal';
+  modal.style.cssText = 'position:fixed;inset:0;z-index:500;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.65);backdrop-filter:blur(3px)';
+
+  modal.innerHTML = `
+    <div style="background:#161b22;border:1px solid #30363d;border-radius:10px;
+                padding:22px 24px;width:600px;max-width:96vw;max-height:88vh;
+                overflow-y:auto;position:relative;box-shadow:0 16px 40px rgba(0,0,0,0.7)">
+      <button id="constr-modal-close"
+        style="position:absolute;top:10px;right:14px;background:none;border:none;
+               color:#8b949e;font-size:22px;cursor:pointer;line-height:1;padding:0">&times;</button>
+
+      <div style="font-size:11px;color:#8b949e;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:4px" id="constr-modal-linename"></div>
+      <div style="font-size:18px;font-weight:700;color:#e6edf3;margin-bottom:4px">${cid}</div>
+      <div style="font-size:12px;color:#8b949e;margin-bottom:14px;line-height:1.4" id="constr-modal-desc"></div>
+
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px;
+                  padding:12px 14px;background:#21262d;border-radius:8px">
+        <div style="flex-shrink:0">
+          <div style="font-size:10px;color:#8b949e;margin-bottom:2px">Binding frequency</div>
+          <div style="font-size:26px;font-weight:700;color:${bColour};line-height:1">${cpct}</div>
+          <div style="font-size:10px;color:#8b949e;margin-top:2px">of dispatch intervals</div>
+        </div>
+        <div style="flex:1">
+          <div style="background:#30363d;height:10px;border-radius:5px;overflow:hidden;margin-bottom:6px">
+            <div style="width:${Math.min(100,bpctNum)}%;height:100%;background:${bColour};border-radius:5px"></div>
+          </div>
+          ${totalWeeks > 0 ? `<div style="font-size:11px;color:#8b949e">Bound in ${bindingWeeks} of ${totalWeeks} weeks in the analysis period</div>` : ''}
+        </div>
+      </div>
+
+      <div style="font-size:12px;font-weight:600;color:#8b949e;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:4px">Line Headroom Over Time</div>
+      <div style="font-size:11px;color:#8b949e;margin-bottom:8px;line-height:1.5">
+        Headroom = constraint RHS − LHS (MW). <span style="color:#3fb950">Green</span> = ample spare capacity,
+        <span style="color:#d29922">amber</span> = tight, <span style="color:#f85149">red</span> = constraint binding (below zero).
+        Coloured dots mark weeks when this line was constrained.
+      </div>
+      ${chartSvg}
+      <div style="font-size:10px;color:#8b949e;margin-top:6px">
+        When this constraint is binding, it sets the effective flow limit on this line.
+        The headroom chart shows the line's available capacity (Jan 2025 – Feb 2026).
+      </div>
+    </div>`;
+
+  // Set text content safely to avoid HTML injection from data strings
+  modal.querySelector('#constr-modal-linename').textContent = lineName;
+  modal.querySelector('#constr-modal-desc').textContent = desc;
+
+  document.body.appendChild(modal);
+
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  modal.querySelector('#constr-modal-close').addEventListener('click', () => modal.remove());
+  const escHandler = e => { if (e.key === 'Escape') { modal.remove(); document.removeEventListener('keydown', escHandler); } };
+  document.addEventListener('keydown', escHandler);
 }
 
 // ─────────────────────────────────────────
