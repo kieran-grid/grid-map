@@ -144,6 +144,45 @@
 </head>
 <body>
 
+<!-- ── Password gate ── -->
+<div id="auth-gate" style="position:fixed;inset:0;background:#0d1117;z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column">
+  <div style="background:#161b22;border:1px solid #30363d;border-radius:10px;padding:36px 44px;min-width:320px;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.6)">
+    <div style="font-size:22px;font-weight:700;color:#58a6ff;margin-bottom:6px">⚡ GridXplore Oz</div>
+    <div style="font-size:13px;color:#8b949e;margin-bottom:28px">Under development — restricted access</div>
+    <input id="auth-input" type="password" placeholder="Password"
+      style="width:100%;padding:10px 14px;background:#21262d;border:1px solid #30363d;border-radius:6px;color:#e6edf3;font-size:14px;margin-bottom:12px;outline:none;box-sizing:border-box" />
+    <button id="auth-btn"
+      style="width:100%;padding:10px;background:#238636;border:none;border-radius:6px;color:#fff;font-size:14px;font-weight:600;cursor:pointer">
+      Enter
+    </button>
+    <div id="auth-error" style="color:#f85149;font-size:12px;margin-top:10px;min-height:16px"></div>
+  </div>
+</div>
+<script>
+(function () {
+  if (sessionStorage.getItem('gx_auth') === '1') {
+    document.getElementById('auth-gate').style.display = 'none';
+    return;
+  }
+  function tryAuth() {
+    if (document.getElementById('auth-input').value === 'Grid_KK') {
+      sessionStorage.setItem('gx_auth', '1');
+      document.getElementById('auth-gate').style.display = 'none';
+    } else {
+      document.getElementById('auth-error').textContent = 'Incorrect password — try again';
+      document.getElementById('auth-input').value = '';
+      document.getElementById('auth-input').focus();
+    }
+  }
+  document.getElementById('auth-btn').addEventListener('click', tryAuth);
+  document.getElementById('auth-input').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') tryAuth();
+    document.getElementById('auth-error').textContent = '';
+  });
+  setTimeout(function () { document.getElementById('auth-input').focus(); }, 100);
+})();
+</script>
+
 <!-- ── Header ── -->
 <div id="header">
   <h1>⚡ GridXplore Oz</h1>
@@ -988,10 +1027,15 @@ function bindMapEvents() {
     }
     if (p.binding_pct != null) {
       const bpct = parseFloat(p.binding_pct);
+      const peakPct = p.peak_contingency_pct != null ? parseFloat(p.peak_contingency_pct) : null;
       const bColour = bpct > 50 ? '#f85149' : bpct > 20 ? '#f0883e' : bpct > 5 ? '#d29922' : bpct > 1 ? '#79c0ff' : '#8b949e';
       html += `<div class="popup-section"><div class="popup-section-title">Congestion (Jan 2025 – Feb 2026)</div>`;
       html += `<div class="popup-grid">`;
-      html += `<span class="popup-label">Avg binding</span><span class="popup-value" style="color:${bColour};font-weight:700">${bpct.toFixed(1)}% of intervals</span>`;
+      html += `<span class="popup-label">Normal ops</span><span class="popup-value" style="color:${bColour};font-weight:700">${bpct.toFixed(1)}% of intervals</span>`;
+      if (peakPct != null && peakPct > bpct + 0.5) {
+        const pkColour = peakPct > 50 ? '#f85149' : peakPct > 20 ? '#f0883e' : peakPct > 5 ? '#d29922' : '#79c0ff';
+        html += `<span class="popup-label">Contingency peak</span><span class="popup-value" style="color:${pkColour}">${peakPct.toFixed(1)}%</span>`;
+      }
       html += `</div>`;
 
       // Weekly headroom chart — shows the primary (most-binding) constraint on this line.
@@ -1009,7 +1053,7 @@ function bindMapEvents() {
         window._constrChartCache = {
           weekly: tryParse(p.weekly_stats) || tryParse(p.monthly_stats) || [],
           constrs: constrs,
-          lineBpct: p.binding_pct != null ? parseFloat(p.binding_pct) : null,
+          lineBpct: p.peak_contingency_pct != null ? parseFloat(p.peak_contingency_pct) : (p.binding_pct != null ? parseFloat(p.binding_pct) : null),
           lineName: p.name || 'Transmission Line'
         };
 
@@ -2014,7 +2058,7 @@ function openConstraintModal(cid, cpct, desc, weeklyData, lineName, allConstrs, 
         <span style="display:inline-block;width:14px;border-top:2px dashed #58a6ff;vertical-align:middle;margin-right:4px;opacity:0.6"></span>Avg headroom
         &nbsp;&nbsp;
         <span style="display:inline-block;width:8px;height:8px;background:#f0883e;border-radius:50%;vertical-align:middle;margin-right:4px"></span>Binding week
-        <br>Bound in ${bindingWeeks} of ${weeklyData.length} weeks on record.
+        <br>Bound in ${bindingWeeks} of ${weeklyData.length} active weeks (constraint was present in dispatch for ${weeklyData.length} of the ~61 weeks in dataset).
       </div>
       ${buildCongestionChartLarge(weeklyData)}
       <div style="font-size:10px;color:#8b949e;margin-top:6px;line-height:1.45">
@@ -2059,7 +2103,7 @@ function openConstraintModal(cid, cpct, desc, weeklyData, lineName, allConstrs, 
             <div style="width:${Math.min(100,bpctNum)}%;height:100%;background:${bColour};border-radius:5px"></div>
           </div>
           ${lineBpct != null ? `<div style="font-size:11px;color:#8b949e">Line overall: ${lineBpct.toFixed(1)}% binding across all constraints</div>` : ''}
-          ${hasTimeSeries && bindingWeeks > 0 ? `<div style="font-size:11px;color:#8b949e;margin-top:2px">Binding in ${bindingWeeks} of ${weeklyData.length} weeks on record</div>` : ''}
+          ${hasTimeSeries ? `<div style="font-size:11px;color:#8b949e;margin-top:2px">Binding in ${bindingWeeks} of ${weeklyData.length} active weeks (${weeklyData.length} of ~61 total)</div>` : ''}
         </div>
       </div>
 
