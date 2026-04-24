@@ -15,16 +15,9 @@
     "2026_01",
     "2026_02"
   ],
-  "total_constraints": 6910,
-  "lines_with_binding_data": 156,
+  "total_constraints": 6765,
+  "lines_with_binding_data": 185,
   "top_binding": [
-    {
-      "constraintid": "NC_Q_MPP_1",
-      "binding_pct": 100.0,
-      "total_intervals": 321,
-      "line_matched": [],
-      "description": ""
-    },
     {
       "constraintid": "#PPCCGT_D_E",
       "binding_pct": 100.0,
@@ -47,83 +40,6 @@
       "description": ""
     },
     {
-      "constraintid": "NC_V_LYA2",
-      "binding_pct": 100.0,
-      "total_intervals": 4,
-      "line_matched": [],
-      "description": ""
-    },
-    {
-      "constraintid": "NC_Q_KINGASF1",
-      "binding_pct": 100.0,
-      "total_intervals": 27,
-      "line_matched": [],
-      "description": ""
-    },
-    {
-      "constraintid": "NC_N_VP6",
-      "binding_pct": 100.0,
-      "total_intervals": 6,
-      "line_matched": [],
-      "description": ""
-    },
-    {
-      "constraintid": "NC_N_VP5",
-      "binding_pct": 100.0,
-      "total_intervals": 59,
-      "line_matched": [],
-      "description": ""
-    },
-    {
-      "constraintid": "NC_Q_MPP_2",
-      "binding_pct": 100.0,
-      "total_intervals": 380,
-      "line_matched": [],
-      "description": ""
-    },
-    {
-      "constraintid": "NC_V_KARSF1",
-      "binding_pct": 100.0,
-      "total_intervals": 1,
-      "line_matched": [],
-      "description": ""
-    },
-    {
-      "constraintid": "NC_V_GIRGSF",
-      "binding_pct": 100.0,
-      "total_intervals": 1,
-      "line_matched": [],
-      "description": ""
-    },
-    {
-      "constraintid": "NC_Q_YARANSF1",
-      "binding_pct": 100.0,
-      "total_intervals": 59,
-      "line_matched": [],
-      "description": ""
-    },
-    {
-      "constraintid": "NC_Q_GSTONE5",
-      "binding_pct": 100.0,
-      "total_intervals": 5,
-      "line_matched": [],
-      "description": ""
-    },
-    {
-      "constraintid": "NC_S_HPR1",
-      "binding_pct": 100.0,
-      "total_intervals": 9,
-      "line_matched": [],
-      "description": ""
-    },
-    {
-      "constraintid": "NC_N_CAPBES1",
-      "binding_pct": 100.0,
-      "total_intervals": 12,
-      "line_matched": [],
-      "description": ""
-    },
-    {
       "constraintid": "$WAGGNSF1",
       "binding_pct": 100.0,
       "total_intervals": 49,
@@ -138,27 +54,6 @@
       "description": "NSW1-QLD1 <= MAX(34, InitialFlow - 200) (Wt=35)"
     },
     {
-      "constraintid": "NC_Q_SWAN_E",
-      "binding_pct": 100.0,
-      "total_intervals": 5,
-      "line_matched": [],
-      "description": ""
-    },
-    {
-      "constraintid": "NC_N_BERYLSF1",
-      "binding_pct": 100.0,
-      "total_intervals": 726,
-      "line_matched": [],
-      "description": ""
-    },
-    {
-      "constraintid": "NC_S_BLYTHB1",
-      "binding_pct": 100.0,
-      "total_intervals": 31,
-      "line_matched": [],
-      "description": ""
-    },
-    {
       "constraintid": "N>WG_CB4102_9R6_9R5",
       "binding_pct": 100.0,
       "total_intervals": 55,
@@ -166,13 +61,6 @@
         "Wagga 132 to Wagga North"
       ],
       "description": "Out=Wagga330 132kV bus section CB 4102, avoid O/L Wagga North to Wagga132  (9R6) on trip of Wagga 330 #2 330/132kV transformer, Feedback"
-    },
-    {
-      "constraintid": "NC_N_GULLRWF2",
-      "binding_pct": 100.0,
-      "total_intervals": 35,
-      "line_matched": [],
-      "description": ""
     },
     {
       "constraintid": "CA_SYDS_56BD5936_1",
@@ -224,67 +112,11 @@
       "description": ""
     },
     {
-      "constraintid": "NC_Q_MIDDLSF1",
-      "binding_pct": 100.0,
-      "total_intervals": 11,
-      "line_matched": [],
-      "description": ""
-    },
-    {
-      "constraintid": "NC_S_CLEMGPWF",
-      "binding_pct": 100.0,
-      "total_intervals": 173,
-      "line_matched": [],
-      "description": ""
-    },
-    {
       "constraintid": "#MANSLR1_E1",
       "binding_pct": 100.0,
       "total_intervals": 48,
       "line_matched": [],
       "description": "NMLS1M.ENERGY * 1 <= 0 (Wt = 360)"
-    },
-    {
-      "constraintid": "NC_Q_GANGARR1",
-      "binding_pct": 100.0,
-      "total_intervals": 8,
-      "line_matched": [],
-      "description": ""
-    },
-    {
-      "constraintid": "NC_V_MCKAY1",
-      "binding_pct": 100.0,
-      "total_intervals": 2,
-      "line_matched": [],
-      "description": ""
-    },
-    {
-      "constraintid": "NC_Q_STAN-4",
-      "binding_pct": 100.0,
-      "total_intervals": 10,
-      "line_matched": [],
-      "description": ""
-    },
-    {
-      "constraintid": "NC_V_MOKOSF1",
-      "binding_pct": 100.0,
-      "total_intervals": 96,
-      "line_matched": [],
-      "description": ""
-    },
-    {
-      "constraintid": "NC_Q_WDBESS1",
-      "binding_pct": 100.0,
-      "total_intervals": 9,
-      "line_matched": [],
-      "description": ""
-    },
-    {
-      "constraintid": "NC_Q_TARONG#1",
-      "binding_pct": 100.0,
-      "total_intervals": 4,
-      "line_matched": [],
-      "description": ""
     },
     {
       "constraintid": "$ERB01",
@@ -294,86 +126,9 @@
       "description": ""
     },
     {
-      "constraintid": "NC_Q_CPP_4",
-      "binding_pct": 100.0,
-      "total_intervals": 6,
-      "line_matched": [],
-      "description": ""
-    },
-    {
-      "constraintid": "NC_N_NEWENSF1",
-      "binding_pct": 100.0,
-      "total_intervals": 36,
-      "line_matched": [],
-      "description": ""
-    },
-    {
-      "constraintid": "NC_S_LADBROK1",
-      "binding_pct": 100.0,
-      "total_intervals": 1,
-      "line_matched": [],
-      "description": ""
-    },
-    {
-      "constraintid": "NC_S_LADBROK2",
-      "binding_pct": 100.0,
-      "total_intervals": 1,
-      "line_matched": [],
-      "description": ""
-    },
-    {
-      "constraintid": "NC_Q_WARWSF1",
-      "binding_pct": 100.0,
-      "total_intervals": 1,
-      "line_matched": [],
-      "description": ""
-    },
-    {
-      "constraintid": "NC_Q_OAKEY1SF",
-      "binding_pct": 100.0,
-      "total_intervals": 25,
-      "line_matched": [],
-      "description": ""
-    },
-    {
-      "constraintid": "NC_Q_CALL_B_2",
-      "binding_pct": 100.0,
-      "total_intervals": 2,
-      "line_matched": [],
-      "description": ""
-    },
-    {
-      "constraintid": "NC_Q_W/HOE#2",
-      "binding_pct": 100.0,
-      "total_intervals": 10,
-      "line_matched": [],
-      "description": ""
-    },
-    {
-      "constraintid": "NC_N_MP2",
-      "binding_pct": 100.0,
-      "total_intervals": 8,
-      "line_matched": [],
-      "description": ""
-    },
-    {
-      "constraintid": "NC_S_ADPBA1",
-      "binding_pct": 100.0,
-      "total_intervals": 55,
-      "line_matched": [],
-      "description": ""
-    },
-    {
       "constraintid": "Q-LILYSF_MVAR",
       "binding_pct": 100.0,
       "total_intervals": 121,
-      "line_matched": [],
-      "description": ""
-    },
-    {
-      "constraintid": "NC_N_QBYNB1",
-      "binding_pct": 100.0,
-      "total_intervals": 2,
       "line_matched": [],
       "description": ""
     },
@@ -390,48 +145,6 @@
       "total_intervals": 406,
       "line_matched": [],
       "description": "SBPS1B.ENERGY * 1 = 32 (Wt = 755)"
-    },
-    {
-      "constraintid": "NC_N_JEMALNG1",
-      "binding_pct": 100.0,
-      "total_intervals": 41,
-      "line_matched": [],
-      "description": ""
-    },
-    {
-      "constraintid": "NC_N_WOLARSF1",
-      "binding_pct": 100.0,
-      "total_intervals": 2,
-      "line_matched": [],
-      "description": ""
-    },
-    {
-      "constraintid": "NC_N_NYNGAN1",
-      "binding_pct": 100.0,
-      "total_intervals": 5,
-      "line_matched": [],
-      "description": ""
-    },
-    {
-      "constraintid": "NC_V_COHUNSF1",
-      "binding_pct": 100.0,
-      "total_intervals": 3,
-      "line_matched": [],
-      "description": ""
-    },
-    {
-      "constraintid": "NC_S_TB2B1",
-      "binding_pct": 100.0,
-      "total_intervals": 9,
-      "line_matched": [],
-      "description": ""
-    },
-    {
-      "constraintid": "NC_N_GOONSF1",
-      "binding_pct": 100.0,
-      "total_intervals": 7,
-      "line_matched": [],
-      "description": ""
     },
     {
       "constraintid": "N_WLWLSF1_0INV",
@@ -455,55 +168,6 @@
       "description": "Constraint Automation, O/L 967:L967:Z:132@KOOLKHAN@NSW for CTG LNPD on trip of COFFS-LISMORE 89 330KV LINE.  Generated by STNET[NORCR5] Host NORREGEEMP8(EMPSYD)"
     },
     {
-      "constraintid": "NC_V_YWPS4",
-      "binding_pct": 100.0,
-      "total_intervals": 10,
-      "line_matched": [],
-      "description": ""
-    },
-    {
-      "constraintid": "NC_N_BW02",
-      "binding_pct": 100.0,
-      "total_intervals": 4,
-      "line_matched": [],
-      "description": ""
-    },
-    {
-      "constraintid": "NC_Q_BARRON-2",
-      "binding_pct": 100.0,
-      "total_intervals": 1,
-      "line_matched": [],
-      "description": ""
-    },
-    {
-      "constraintid": "NC_Q_ULPBESS1",
-      "binding_pct": 100.0,
-      "total_intervals": 22,
-      "line_matched": [],
-      "description": "Non Conformance Constraint for ULINDAPARKBESS1"
-    },
-    {
-      "constraintid": "NC_V_LVES1",
-      "binding_pct": 100.0,
-      "total_intervals": 4,
-      "line_matched": [],
-      "description": "Non Conformance Constraint for LATROBE VALLEY ES1"
-    },
-    {
-      "constraintid": "NC_Q_TARONG#4",
-      "binding_pct": 100.0,
-      "total_intervals": 2,
-      "line_matched": [],
-      "description": ""
-    },
-    {
-      "constraintid": "NC_V_MRTLSWF1",
-      "binding_pct": 100.0,
-      "total_intervals": 12,
-      "line_matched": [],
-      "description": ""
-    },
-    {
       "constraintid": "$PUMP2",
       "binding_pct": 100.0,
       "total_intervals": 12,
@@ -511,58 +175,9 @@
       "description": ""
     },
     {
-      "constraintid": "NC_Q_TARONG#3",
-      "binding_pct": 100.0,
-      "total_intervals": 2,
-      "line_matched": [],
-      "description": ""
-    },
-    {
       "constraintid": "$STUBSF1",
       "binding_pct": 100.0,
       "total_intervals": 62,
-      "line_matched": [],
-      "description": ""
-    },
-    {
-      "constraintid": "NC_Q_DDPS1",
-      "binding_pct": 100.0,
-      "total_intervals": 1,
-      "line_matched": [],
-      "description": ""
-    },
-    {
-      "constraintid": "NC_N_ERB01",
-      "binding_pct": 100.0,
-      "total_intervals": 2,
-      "line_matched": [],
-      "description": "Non Conformance Constraint for ERARING BESS 1"
-    },
-    {
-      "constraintid": "NC_V_RANGEB1",
-      "binding_pct": 100.0,
-      "total_intervals": 3,
-      "line_matched": [],
-      "description": ""
-    },
-    {
-      "constraintid": "NC_V_KESSB1",
-      "binding_pct": 100.0,
-      "total_intervals": 5,
-      "line_matched": [],
-      "description": "Non Conformance Constraint for KESSB1"
-    },
-    {
-      "constraintid": "NC_N_HUNTER1",
-      "binding_pct": 100.0,
-      "total_intervals": 6,
-      "line_matched": [],
-      "description": "Non Conformance Constraint for HUNTER 1"
-    },
-    {
-      "constraintid": "NC_N_NEVERSF1",
-      "binding_pct": 100.0,
-      "total_intervals": 3,
       "line_matched": [],
       "description": ""
     },
@@ -586,160 +201,6 @@
       "total_intervals": 6,
       "line_matched": [],
       "description": ""
-    },
-    {
-      "constraintid": "NC_Q_WANDSF1",
-      "binding_pct": 100.0,
-      "total_intervals": 2,
-      "line_matched": [],
-      "description": ""
-    },
-    {
-      "constraintid": "NC_S_BNGSF2",
-      "binding_pct": 100.0,
-      "total_intervals": 2,
-      "line_matched": [],
-      "description": ""
-    },
-    {
-      "constraintid": "NC_N_RESS1",
-      "binding_pct": 100.0,
-      "total_intervals": 3,
-      "line_matched": [],
-      "description": ""
-    },
-    {
-      "constraintid": "NC_Q_GREENB1",
-      "binding_pct": 100.0,
-      "total_intervals": 1,
-      "line_matched": [],
-      "description": ""
-    },
-    {
-      "constraintid": "NC_Q_MOUSF1",
-      "binding_pct": 100.0,
-      "total_intervals": 2,
-      "line_matched": [],
-      "description": ""
-    },
-    {
-      "constraintid": "NC_Q_RRSF1",
-      "binding_pct": 100.0,
-      "total_intervals": 28,
-      "line_matched": [],
-      "description": ""
-    },
-    {
-      "constraintid": "NC_V_LYA1",
-      "binding_pct": 100.0,
-      "total_intervals": 1,
-      "line_matched": [],
-      "description": ""
-    },
-    {
-      "constraintid": "NC_Q_GSTONE6",
-      "binding_pct": 100.0,
-      "total_intervals": 3,
-      "line_matched": [],
-      "description": ""
-    },
-    {
-      "constraintid": "NC_S_GSWF1B1",
-      "binding_pct": 100.0,
-      "total_intervals": 17,
-      "line_matched": [],
-      "description": ""
-    },
-    {
-      "constraintid": "NC_S_GSWF1A",
-      "binding_pct": 100.0,
-      "total_intervals": 13,
-      "line_matched": [],
-      "description": ""
-    },
-    {
-      "constraintid": "NC_N_DPNTB1",
-      "binding_pct": 100.0,
-      "total_intervals": 1,
-      "line_matched": [],
-      "description": ""
-    },
-    {
-      "constraintid": "NC_Q_TNPS1",
-      "binding_pct": 100.0,
-      "total_intervals": 3,
-      "line_matched": [],
-      "description": ""
-    },
-    {
-      "constraintid": "NC_V_BULBES1",
-      "binding_pct": 100.0,
-      "total_intervals": 7,
-      "line_matched": [],
-      "description": ""
-    },
-    {
-      "constraintid": "NC_V_MREHA1",
-      "binding_pct": 100.0,
-      "total_intervals": 3,
-      "line_matched": [],
-      "description": "Non Conformance Constraint for MREHA1"
-    },
-    {
-      "constraintid": "NC_Q_ALDGASF1",
-      "binding_pct": 100.0,
-      "total_intervals": 71,
-      "line_matched": [],
-      "description": "Non Conformance Constraint for ALDOGA SOLAR FARM"
-    },
-    {
-      "constraintid": "NC_Q_GSTONE1",
-      "binding_pct": 100.0,
-      "total_intervals": 3,
-      "line_matched": [],
-      "description": ""
-    },
-    {
-      "constraintid": "NC_Q_YABULU",
-      "binding_pct": 100.0,
-      "total_intervals": 6,
-      "line_matched": [],
-      "description": ""
-    },
-    {
-      "constraintid": "NC_S_OSB-AG",
-      "binding_pct": 100.0,
-      "total_intervals": 3,
-      "line_matched": [],
-      "description": ""
-    },
-    {
-      "constraintid": "NC_N_CUSF1",
-      "binding_pct": 100.0,
-      "total_intervals": 26,
-      "line_matched": [],
-      "description": "Non Conformance Constraint for CUSF1"
-    },
-    {
-      "constraintid": "NC_S_CNUNDAWF",
-      "binding_pct": 100.0,
-      "total_intervals": 11,
-      "line_matched": [],
-      "description": ""
-    },
-    {
-      "constraintid": "NC_N_DARLSF1",
-      "binding_pct": 100.0,
-      "total_intervals": 8,
-      "line_matched": [],
-      "description": ""
-    },
-    {
-      "constraintid": "NC_Q_BRNDBES1",
-      "binding_pct": 100.0,
-      "total_intervals": 24,
-      "line_matched": [],
-      "description": "Non Conformance Constraint for BRENDALEBESS1"
     },
     {
       "constraintid": "Q-CLRSF_MVAR",
@@ -826,13 +287,6 @@
       "description": ""
     },
     {
-      "constraintid": "NC_N_WAGGNSF1",
-      "binding_pct": 100.0,
-      "total_intervals": 1,
-      "line_matched": [],
-      "description": ""
-    },
-    {
       "constraintid": "#N-Q-MNSP1_RAMP_E_F",
       "binding_pct": 100.0,
       "total_intervals": 3,
@@ -845,34 +299,6 @@
       "total_intervals": 10185,
       "line_matched": [],
       "description": "VGET1G.ENERGY * 1 <= 0 (Wt = 360)"
-    },
-    {
-      "constraintid": "NC_N_SMTHBES1",
-      "binding_pct": 100.0,
-      "total_intervals": 12,
-      "line_matched": [],
-      "description": "Non Conformance Constraint for SMITHFIELD BESS"
-    },
-    {
-      "constraintid": "NC_T_LI_WY_CA",
-      "binding_pct": 100.0,
-      "total_intervals": 1,
-      "line_matched": [],
-      "description": ""
-    },
-    {
-      "constraintid": "NC_V_LYA3",
-      "binding_pct": 100.0,
-      "total_intervals": 4,
-      "line_matched": [],
-      "description": ""
-    },
-    {
-      "constraintid": "NC_V_HD1WF1",
-      "binding_pct": 100.0,
-      "total_intervals": 2,
-      "line_matched": [],
-      "description": ""
     },
     {
       "constraintid": "#JLA02_D_E",
@@ -896,55 +322,6 @@
       "description": "VJLGB3.ENERGY * 1 = 30 (Wt = 755)"
     },
     {
-      "constraintid": "NC_N_MP1",
-      "binding_pct": 100.0,
-      "total_intervals": 1,
-      "line_matched": [],
-      "description": ""
-    },
-    {
-      "constraintid": "NC_Q_BRAEMAR2",
-      "binding_pct": 100.0,
-      "total_intervals": 2,
-      "line_matched": [],
-      "description": ""
-    },
-    {
-      "constraintid": "NC_Q_WDBESS2",
-      "binding_pct": 100.0,
-      "total_intervals": 39,
-      "line_matched": [],
-      "description": "Non Conformance Constraint for WDBESS STAGE2 BDU"
-    },
-    {
-      "constraintid": "NC_Q_STAN-1",
-      "binding_pct": 100.0,
-      "total_intervals": 1,
-      "line_matched": [],
-      "description": ""
-    },
-    {
-      "constraintid": "NC_V_GPWFEST1",
-      "binding_pct": 100.0,
-      "total_intervals": 17,
-      "line_matched": [],
-      "description": ""
-    },
-    {
-      "constraintid": "NC_V_GPWFEST2",
-      "binding_pct": 100.0,
-      "total_intervals": 17,
-      "line_matched": [],
-      "description": ""
-    },
-    {
-      "constraintid": "NC_V_GPWFEST3",
-      "binding_pct": 100.0,
-      "total_intervals": 17,
-      "line_matched": [],
-      "description": ""
-    },
-    {
       "constraintid": "#CRWARP1_E1",
       "binding_pct": 100.0,
       "total_intervals": 5495,
@@ -952,30 +329,9 @@
       "description": "VCPT1C.ENERGY * 1 <= 0 (Wt = 360)"
     },
     {
-      "constraintid": "NC_Q_CLRKCWF1",
-      "binding_pct": 100.0,
-      "total_intervals": 2,
-      "line_matched": [],
-      "description": ""
-    },
-    {
       "constraintid": "$SWANBBF1",
       "binding_pct": 100.0,
       "total_intervals": 1100,
-      "line_matched": [],
-      "description": ""
-    },
-    {
-      "constraintid": "NC_N_MANSLR1",
-      "binding_pct": 100.0,
-      "total_intervals": 272,
-      "line_matched": [],
-      "description": ""
-    },
-    {
-      "constraintid": "NC_Q_W/HOE#1",
-      "binding_pct": 100.0,
-      "total_intervals": 1,
       "line_matched": [],
       "description": ""
     },
@@ -987,76 +343,6 @@
       "description": "Out = Gullen Range to Yass (3J), stability limit (Snowy-NSW) for loss of Yass-Marulan (4/5) 330kV line"
     },
     {
-      "constraintid": "NC_S_TIB1",
-      "binding_pct": 100.0,
-      "total_intervals": 6,
-      "line_matched": [],
-      "description": ""
-    },
-    {
-      "constraintid": "NC_Q_WANDB1",
-      "binding_pct": 100.0,
-      "total_intervals": 3,
-      "line_matched": [],
-      "description": ""
-    },
-    {
-      "constraintid": "NC_N_WLWLSF1",
-      "binding_pct": 100.0,
-      "total_intervals": 1,
-      "line_matched": [],
-      "description": ""
-    },
-    {
-      "constraintid": "NC_V_GLRWNSF1",
-      "binding_pct": 100.0,
-      "total_intervals": 32,
-      "line_matched": [],
-      "description": ""
-    },
-    {
-      "constraintid": "NC_Q_WOOLGSF1",
-      "binding_pct": 100.0,
-      "total_intervals": 34,
-      "line_matched": [],
-      "description": ""
-    },
-    {
-      "constraintid": "NC_N_WRWF1",
-      "binding_pct": 100.0,
-      "total_intervals": 7,
-      "line_matched": [],
-      "description": ""
-    },
-    {
-      "constraintid": "NC_V_MORTLK12",
-      "binding_pct": 100.0,
-      "total_intervals": 1,
-      "line_matched": [],
-      "description": ""
-    },
-    {
-      "constraintid": "NC_V_YWPS3",
-      "binding_pct": 100.0,
-      "total_intervals": 4,
-      "line_matched": [],
-      "description": ""
-    },
-    {
-      "constraintid": "NC_S_PAREP_ADG1",
-      "binding_pct": 100.0,
-      "total_intervals": 2,
-      "line_matched": [],
-      "description": ""
-    },
-    {
-      "constraintid": "NC_V_LYA4",
-      "binding_pct": 100.0,
-      "total_intervals": 7,
-      "line_matched": [],
-      "description": ""
-    },
-    {
       "constraintid": "#GESF1_E1",
       "binding_pct": 100.0,
       "total_intervals": 86,
@@ -1064,9 +350,727 @@
       "description": "NJDA1G.ENERGY * 1 <= 0 (Wt = 360)"
     },
     {
-      "constraintid": "NC_N_PARSF1",
+      "constraintid": "#MOLNGSF1_E1",
       "binding_pct": 100.0,
-      "total_intervals": 5,
+      "total_intervals": 4,
+      "line_matched": [],
+      "description": "NMOS1M.ENERGY * 1 <= 15 (Wt = 35)"
+    },
+    {
+      "constraintid": "#NSW1_E_20251218",
+      "binding_pct": 100.0,
+      "total_intervals": 79,
+      "line_matched": [],
+      "description": "Multiple NSW1 LHS <= 0 (Wt = 35)"
+    },
+    {
+      "constraintid": "A_N_WTAHB1_ZERO_G_E",
+      "binding_pct": 100.0,
+      "total_intervals": 38,
+      "line_matched": [],
+      "description": "Direction to zero discharge for Waratah  BESS for Dispatch and Predispatch and NOT PASA"
+    },
+    {
+      "constraintid": "A_N_WTAHB1_ZERO_L_E",
+      "binding_pct": 100.0,
+      "total_intervals": 38,
+      "line_matched": [],
+      "description": "Direction to zero charge for Waratah  BESS for Dispatch and Predispatch and NOT PASA"
+    },
+    {
+      "constraintid": "C_V_LANCSF1_ZERO",
+      "binding_pct": 100.0,
+      "total_intervals": 1440,
+      "line_matched": [],
+      "description": "Commissioning constraint for Lancaster Solar Farm of zero MW"
+    },
+    {
+      "constraintid": "#TORRB2_D_E",
+      "binding_pct": 99.96,
+      "total_intervals": 16745,
+      "line_matched": [],
+      "description": "STSB2.ENERGY * 1 = 40 (Wt = 755)"
+    },
+    {
+      "constraintid": "#TORRB3_D_E",
+      "binding_pct": 99.86,
+      "total_intervals": 9468,
+      "line_matched": [],
+      "description": "STSB3.ENERGY * 1 = 40 (Wt = 755)"
+    },
+    {
+      "constraintid": "$GREENB1",
+      "binding_pct": 99.75,
+      "total_intervals": 1179,
+      "line_matched": [],
+      "description": ""
+    },
+    {
+      "constraintid": "SVML_ZERO",
+      "binding_pct": 99.65,
+      "total_intervals": 5930,
+      "line_matched": [],
+      "description": ""
+    },
+    {
+      "constraintid": "S_WP_ISL",
+      "binding_pct": 99.61,
+      "total_intervals": 258,
+      "line_matched": [],
+      "description": ""
+    },
+    {
+      "constraintid": "$GESF1",
+      "binding_pct": 99.53,
+      "total_intervals": 1074,
+      "line_matched": [],
+      "description": ""
+    },
+    {
+      "constraintid": "#NSW1_E_20250926",
+      "binding_pct": 99.26,
+      "total_intervals": 136,
+      "line_matched": [],
+      "description": "Multiple NSW1 LHS <= 100 (Wt = 360)"
+    },
+    {
+      "constraintid": "$KAREEYA4",
+      "binding_pct": 99.01,
+      "total_intervals": 101,
+      "line_matched": [],
+      "description": ""
+    },
+    {
+      "constraintid": "I_CTRL_ISSUE_TE",
+      "binding_pct": 98.92,
+      "total_intervals": 279,
+      "line_matched": [],
+      "description": ""
+    },
+    {
+      "constraintid": "$TARBESS1",
+      "binding_pct": 98.46,
+      "total_intervals": 976,
+      "line_matched": [],
+      "description": ""
+    },
+    {
+      "constraintid": "$MOLNGSF1",
+      "binding_pct": 98.15,
+      "total_intervals": 162,
+      "line_matched": [],
+      "description": ""
+    },
+    {
+      "constraintid": "Q-CKWF_MVAR",
+      "binding_pct": 97.91,
+      "total_intervals": 622,
+      "line_matched": [],
+      "description": "Constraint to violate if Reactive power output of Clarke Creek WF 1+2 is greater than +/10Mvar when it is limited at 0MW output, Swamp if MW >0 (DS only)"
+    },
+    {
+      "constraintid": "A_S_MINTARO_40_E",
+      "binding_pct": 97.29,
+      "total_intervals": 258,
+      "line_matched": [],
+      "description": ""
+    },
+    {
+      "constraintid": "F_T+RREG_0050",
+      "binding_pct": 96.92,
+      "total_intervals": 122112,
+      "line_matched": [],
+      "description": ""
+    },
+    {
+      "constraintid": "F_T+LREG_0050",
+      "binding_pct": 96.86,
+      "total_intervals": 122112,
+      "line_matched": [],
+      "description": ""
+    },
+    {
+      "constraintid": "$CUSF1",
+      "binding_pct": 96.6,
+      "total_intervals": 294,
+      "line_matched": [],
+      "description": ""
+    },
+    {
+      "constraintid": "V_MURRAWRWF_FLT_0",
+      "binding_pct": 96.15,
+      "total_intervals": 104,
+      "line_matched": [],
+      "description": "Limit Murra Warra Wind Farm 1+2 upper limit to 0 MW to manage system stability on the next contingency due to fault level issue"
+    },
+    {
+      "constraintid": "V_KIATAWF_FLT_0",
+      "binding_pct": 96.15,
+      "total_intervals": 104,
+      "line_matched": [],
+      "description": "Limit Kiata Wind Farm upper limit to 0 MW to manage system stability on the next contingency due to fault level issue"
+    },
+    {
+      "constraintid": "N::N_SDUT_2",
+      "binding_pct": 96.0,
+      "total_intervals": 175,
+      "line_matched": [],
+      "description": "Out = Upper Tumut-Stockdill (1) 330kV line, stability limit (Snowy-NSW) for fault of various location between Yass-South Morang area"
+    },
+    {
+      "constraintid": "NSA_S_PPT_42",
+      "binding_pct": 95.86,
+      "total_intervals": 22513,
+      "line_matched": [],
+      "description": "Pelican Point >= 42 MW for Network Support Agreement"
+    },
+    {
+      "constraintid": "Q_STR_7C0K_MEWF_5",
+      "binding_pct": 95.65,
+      "total_intervals": 23,
+      "line_matched": [],
+      "description": ""
+    },
+    {
+      "constraintid": "#SA1_E_20260224",
+      "binding_pct": 94.23,
+      "total_intervals": 52,
+      "line_matched": [],
+      "description": "Multiple SA1 LHS <= 105 (Wt = 35)"
+    },
+    {
+      "constraintid": "$BERYLSF1",
+      "binding_pct": 93.63,
+      "total_intervals": 157,
+      "line_matched": [],
+      "description": ""
+    },
+    {
+      "constraintid": "$KAREEYA2",
+      "binding_pct": 93.33,
+      "total_intervals": 30,
+      "line_matched": [],
+      "description": ""
+    },
+    {
+      "constraintid": "#MINTARO_D_E",
+      "binding_pct": 93.15,
+      "total_intervals": 496,
+      "line_matched": [],
+      "description": "SMPS.ENERGY * 1 = 40 (Wt = 755)"
+    },
+    {
+      "constraintid": "$GSTONE1",
+      "binding_pct": 93.11,
+      "total_intervals": 813,
+      "line_matched": [],
+      "description": ""
+    },
+    {
+      "constraintid": "CA_SYDS_582249B1_1",
+      "binding_pct": 92.98,
+      "total_intervals": 114,
+      "line_matched": [],
+      "description": "Constraint Automation, O/L 947:L947:I:132@WELLNGTN@NSW for Nil Trip Base Case.  Generated by STNET[NORCR1] Host NORREGEEMP7(EMPSYD)"
+    },
+    {
+      "constraintid": "V_MACARTHUR_ZERO",
+      "binding_pct": 92.48,
+      "total_intervals": 1170,
+      "line_matched": [],
+      "description": ""
+    },
+    {
+      "constraintid": "$W/HOE#2",
+      "binding_pct": 91.67,
+      "total_intervals": 24,
+      "line_matched": [],
+      "description": ""
+    },
+    {
+      "constraintid": "F_Q++86_L6",
+      "binding_pct": 91.33,
+      "total_intervals": 346,
+      "line_matched": [],
+      "description": ""
+    },
+    {
+      "constraintid": "F_Q++86_L60",
+      "binding_pct": 90.75,
+      "total_intervals": 346,
+      "line_matched": [],
+      "description": ""
+    },
+    {
+      "constraintid": "VT_ZERO",
+      "binding_pct": 90.48,
+      "total_intervals": 1334,
+      "line_matched": [],
+      "description": ""
+    },
+    {
+      "constraintid": "V_GANNAWR_ZERO",
+      "binding_pct": 90.38,
+      "total_intervals": 52,
+      "line_matched": [],
+      "description": ""
+    },
+    {
+      "constraintid": "I_CTRL_ISSUE_ML",
+      "binding_pct": 90.06,
+      "total_intervals": 171,
+      "line_matched": [],
+      "description": ""
+    },
+    {
+      "constraintid": "N_TARALGAWF_005",
+      "binding_pct": 89.91,
+      "total_intervals": 109,
+      "line_matched": [],
+      "description": ""
+    },
+    {
+      "constraintid": "$GSTONE5",
+      "binding_pct": 89.29,
+      "total_intervals": 336,
+      "line_matched": [],
+      "description": ""
+    },
+    {
+      "constraintid": "V_KIAMSF_FLT_70",
+      "binding_pct": 89.13,
+      "total_intervals": 515,
+      "line_matched": [],
+      "description": "Limit Kiamal solar farm upper limit to 70 MW to manage post contingent voltage oscillation"
+    },
+    {
+      "constraintid": "$GSTONE4",
+      "binding_pct": 88.64,
+      "total_intervals": 449,
+      "line_matched": [],
+      "description": ""
+    },
+    {
+      "constraintid": "$GSTONE2",
+      "binding_pct": 87.92,
+      "total_intervals": 621,
+      "line_matched": [],
+      "description": ""
+    },
+    {
+      "constraintid": "#NSW1-QLD1_RAMP_I_F",
+      "binding_pct": 85.33,
+      "total_intervals": 75,
+      "line_matched": [],
+      "description": "NSW1-QLD1 >= MIN(-2, InitialFlow + 200) (Wt=35)"
+    },
+    {
+      "constraintid": "V_CWWF_FLT_0",
+      "binding_pct": 85.19,
+      "total_intervals": 6199,
+      "line_matched": [],
+      "description": "Limit Crowlands Wind Farm upper limit to 0 MW to manage post contingent voltage oscillation"
+    },
+    {
+      "constraintid": "$LYA2",
+      "binding_pct": 84.34,
+      "total_intervals": 447,
+      "line_matched": [],
+      "description": ""
+    },
+    {
+      "constraintid": "$CHBESS1",
+      "binding_pct": 83.87,
+      "total_intervals": 93,
+      "line_matched": [],
+      "description": ""
+    },
+    {
+      "constraintid": "TV_075_MIN",
+      "binding_pct": 83.78,
+      "total_intervals": 37,
+      "line_matched": [],
+      "description": "Tas to Vic on Basslink minimum requirement of 75 MW"
+    },
+    {
+      "constraintid": "Q_CS_0400",
+      "binding_pct": 83.33,
+      "total_intervals": 120,
+      "line_matched": [],
+      "description": "Qld Central to Qld South upper transfer limit of 400MW (discretionary)"
+    },
+    {
+      "constraintid": "Q_STR_7C0K_KIDSF_9",
+      "binding_pct": 83.33,
+      "total_intervals": 54,
+      "line_matched": [],
+      "description": ""
+    },
+    {
+      "constraintid": "CA_SYDS_588C1B76_1",
+      "binding_pct": 83.33,
+      "total_intervals": 66,
+      "line_matched": [],
+      "description": "Constraint Automation, O/L 945/2:L945:Z:132@WELLNGTN@NSW for CTG LN6W on trip of MT_PIPER-ORANGE-WELLNGT 947 132 LN.  Generated by STNET[NORCR1] Host NORREGEEMP7(EMPSYD)"
+    },
+    {
+      "constraintid": "V_BANNERTSF_FLT_55",
+      "binding_pct": 83.3,
+      "total_intervals": 515,
+      "line_matched": [],
+      "description": "Limit Bannerton Solar Farm upper limit to 55 MW to manage post contingent voltage oscillation"
+    },
+    {
+      "constraintid": "V_WEMENSF_FLT_55",
+      "binding_pct": 82.91,
+      "total_intervals": 515,
+      "line_matched": [],
+      "description": "Limit Wemen Solar Farm upper limit to 55 MW to manage post contingent voltage oscillation"
+    },
+    {
+      "constraintid": "N_SILVERTWF_FLT_100",
+      "binding_pct": 82.43,
+      "total_intervals": 239,
+      "line_matched": [],
+      "description": ""
+    },
+    {
+      "constraintid": "$STAN-1",
+      "binding_pct": 81.37,
+      "total_intervals": 4225,
+      "line_matched": [],
+      "description": ""
+    },
+    {
+      "constraintid": "$KAREEYA1",
+      "binding_pct": 81.32,
+      "total_intervals": 91,
+      "line_matched": [],
+      "description": ""
+    },
+    {
+      "constraintid": "TV_100_MIN",
+      "binding_pct": 80.0,
+      "total_intervals": 25,
+      "line_matched": [],
+      "description": ""
+    },
+    {
+      "constraintid": "$GSTONE6",
+      "binding_pct": 79.66,
+      "total_intervals": 295,
+      "line_matched": [],
+      "description": ""
+    },
+    {
+      "constraintid": "QNTE_SUPPORT",
+      "binding_pct": 79.37,
+      "total_intervals": 63,
+      "line_matched": [],
+      "description": ""
+    },
+    {
+      "constraintid": "$GSTONE3",
+      "binding_pct": 79.21,
+      "total_intervals": 866,
+      "line_matched": [],
+      "description": ""
+    },
+    {
+      "constraintid": "Q_STR_7C0K_DAYSF_9",
+      "binding_pct": 77.78,
+      "total_intervals": 54,
+      "line_matched": [],
+      "description": ""
+    },
+    {
+      "constraintid": "$CALL_B_1",
+      "binding_pct": 77.7,
+      "total_intervals": 3211,
+      "line_matched": [],
+      "description": ""
+    },
+    {
+      "constraintid": "N_X_MBTE_3A",
+      "binding_pct": 76.18,
+      "total_intervals": 12650,
+      "line_matched": [],
+      "description": ""
+    },
+    {
+      "constraintid": "N>>TWCB5102_TX1_86",
+      "binding_pct": 75.0,
+      "total_intervals": 32,
+      "line_matched": [],
+      "description": ""
+    },
+    {
+      "constraintid": "CA_BRIS_5892A65A_1",
+      "binding_pct": 75.0,
+      "total_intervals": 4,
+      "line_matched": [],
+      "description": "Constraint Automation, O/L 275KV_831:39:Z:275@H14_MRDG@QLD for CTG LQOB on trip of 9902 R2_BRAE - R3_BULLI 330KV LINE.  Generated by STNET[BNECR4] Host BNEREGEEMP6(EMPBRI)"
+    },
+    {
+      "constraintid": "SVML_050",
+      "binding_pct": 74.77,
+      "total_intervals": 222,
+      "line_matched": [],
+      "description": ""
+    },
+    {
+      "constraintid": "#V-SA_RAMP_I_F",
+      "binding_pct": 74.47,
+      "total_intervals": 47,
+      "line_matched": [],
+      "description": "V-SA >= MIN(-187, InitialFlow + 50) (Wt=35)"
+    },
+    {
+      "constraintid": "$KAREEYA3",
+      "binding_pct": 74.35,
+      "total_intervals": 230,
+      "line_matched": [],
+      "description": ""
+    },
+    {
+      "constraintid": "N_FINLYSF_FLT_45",
+      "binding_pct": 74.05,
+      "total_intervals": 343,
+      "line_matched": [],
+      "description": ""
+    },
+    {
+      "constraintid": "Q_STR_ALDSF_ZERO",
+      "binding_pct": 73.91,
+      "total_intervals": 23,
+      "line_matched": [],
+      "description": "Limit Aldoga Solar farm to zero MW for system strength requirement"
+    },
+    {
+      "constraintid": "$STAN-2",
+      "binding_pct": 73.36,
+      "total_intervals": 5473,
+      "line_matched": [],
+      "description": ""
+    },
+    {
+      "constraintid": "N>72_94T_75",
+      "binding_pct": 72.86,
+      "total_intervals": 140,
+      "line_matched": [
+        "Molong to Orange North"
+      ],
+      "description": "Out = Mt Piper to Wellington line (72), avoid O/L Molong to Orange North (94T) on trip of Wollar West to Wollar (75) line, Feedback"
+    },
+    {
+      "constraintid": "Q_DDSF_MVAR",
+      "binding_pct": 72.77,
+      "total_intervals": 191,
+      "line_matched": [],
+      "description": ""
+    },
+    {
+      "constraintid": "$KPP_1",
+      "binding_pct": 72.21,
+      "total_intervals": 1166,
+      "line_matched": [],
+      "description": ""
+    },
+    {
+      "constraintid": "N>9ML+94X_947_94T",
+      "binding_pct": 72.04,
+      "total_intervals": 93,
+      "line_matched": [
+        "Wellington to Dubbo (North East)"
+      ],
+      "description": "Out= Crudine Ridge to Mt Piper (9ML) and Panorama to Wallerawang (94X) 132kV lines, avoid O/L Wellington to Orange North (947) on trip of Molong to Orange North (94T), Feedback"
+    },
+    {
+      "constraintid": "$STAN-4",
+      "binding_pct": 72.01,
+      "total_intervals": 3180,
+      "line_matched": [],
+      "description": ""
+    },
+    {
+      "constraintid": "F_Q+8E_L1",
+      "binding_pct": 71.79,
+      "total_intervals": 78,
+      "line_matched": [],
+      "description": "Out =  Sapphire to Armidale (8E) line, Qld Lower 1 sec FCAS requirement. Requirement capped at 20 MW"
+    },
+    {
+      "constraintid": "F_I+ML_L6_APD_LD",
+      "binding_pct": 71.72,
+      "total_intervals": 10665,
+      "line_matched": [],
+      "description": ""
+    },
+    {
+      "constraintid": "F_V_APD01_R6",
+      "binding_pct": 71.54,
+      "total_intervals": 1237,
+      "line_matched": [],
+      "description": ""
+    },
+    {
+      "constraintid": "F_TASCAP_LREG_0400",
+      "binding_pct": 71.43,
+      "total_intervals": 7,
+      "line_matched": [],
+      "description": ""
+    },
+    {
+      "constraintid": "V_ARARATWF_ISL_0",
+      "binding_pct": 71.29,
+      "total_intervals": 916,
+      "line_matched": [],
+      "description": "Limit Ararat Wind Farm upper limit to 0 MW to manage risk of islanding on the next contingency"
+    },
+    {
+      "constraintid": "V_KIATA_ISL_0",
+      "binding_pct": 70.71,
+      "total_intervals": 3721,
+      "line_matched": [],
+      "description": "Kiata Wind Farm upper limit of 0 MW to manage risk of islanding on the next contingency"
+    },
+    {
+      "constraintid": "CA_BRIS_569B1432_1",
+      "binding_pct": 70.45,
+      "total_intervals": 44,
+      "line_matched": [],
+      "description": "Constraint Automation, O/L 275KV_8866:8866:Z:275@H85_COOP@QLD for CTG LQ8Z on trip of 8867 S2_HALYS-S5_WESTD 275KV LINE.  Generated by STNET[BNECR3] Host BNEREGEEMP6(EMPBRI)"
+    },
+    {
+      "constraintid": "CA_BRIS_58730C07_1",
+      "binding_pct": 70.37,
+      "total_intervals": 54,
+      "line_matched": [],
+      "description": "Constraint Automation, O/L EPS_MBTS1_220:LEP1:Z:220@MBTS@VIC for CTG MVPB on trip of DDTS-SMTS1 &DDTS-SMTS2 330KV LINES.  Generated by STNET[NORCR2] Host BNEREGEEMP5(EMPBRI)"
+    },
+    {
+      "constraintid": "$TARONG#4",
+      "binding_pct": 70.14,
+      "total_intervals": 730,
+      "line_matched": [],
+      "description": ""
+    },
+    {
+      "constraintid": "N::N_CNSD_2",
+      "binding_pct": 70.1,
+      "total_intervals": 97,
+      "line_matched": [],
+      "description": "Out = Canberra - Stockdill (3C), stability limit (Snowy-NSW) for fault of various location between Yass-South Morang area"
+    },
+    {
+      "constraintid": "N_WLWLSF2_ZERO",
+      "binding_pct": 70.0,
+      "total_intervals": 10,
+      "line_matched": [],
+      "description": ""
+    },
+    {
+      "constraintid": "CA_SYDS_583B9CD4_1",
+      "binding_pct": 70.0,
+      "total_intervals": 10,
+      "line_matched": [],
+      "description": "Constraint Automation, O/L BATS_BETS_220:LBAT:Z:220@BETS@VIC for CTG LVPD on trip of DDTS-SMTS1 330KV LINE.  Generated by STNET[NORCR1] Host NORREGEEMP8(EMPSYD)"
+    },
+    {
+      "constraintid": "$TARONG#2",
+      "binding_pct": 69.75,
+      "total_intervals": 952,
+      "line_matched": [],
+      "description": ""
+    },
+    {
+      "constraintid": "N_DARLSF_FLT_85",
+      "binding_pct": 69.46,
+      "total_intervals": 239,
+      "line_matched": [],
+      "description": ""
+    },
+    {
+      "constraintid": "V_MTGELIBRAND_ZERO",
+      "binding_pct": 69.23,
+      "total_intervals": 52,
+      "line_matched": [],
+      "description": ""
+    },
+    {
+      "constraintid": "S_DLBAT-G_ISL",
+      "binding_pct": 68.99,
+      "total_intervals": 258,
+      "line_matched": [],
+      "description": ""
+    },
+    {
+      "constraintid": "$CPP_4",
+      "binding_pct": 68.89,
+      "total_intervals": 11312,
+      "line_matched": [],
+      "description": ""
+    },
+    {
+      "constraintid": "Q_STR_7C0K_RUGSF_9",
+      "binding_pct": 68.52,
+      "total_intervals": 54,
+      "line_matched": [],
+      "description": ""
+    },
+    {
+      "constraintid": "F_I+NIL_APD_TL_L60",
+      "binding_pct": 68.03,
+      "total_intervals": 122112,
+      "line_matched": [],
+      "description": ""
+    },
+    {
+      "constraintid": "F_Q++8C_L6",
+      "binding_pct": 67.57,
+      "total_intervals": 8723,
+      "line_matched": [],
+      "description": ""
+    },
+    {
+      "constraintid": "V_WEMENSF_FLT_25",
+      "binding_pct": 67.45,
+      "total_intervals": 1312,
+      "line_matched": [],
+      "description": ""
+    },
+    {
+      "constraintid": "V_KERNGSP1_ZERO",
+      "binding_pct": 67.31,
+      "total_intervals": 52,
+      "line_matched": [],
+      "description": ""
+    },
+    {
+      "constraintid": "F_Q++BCDM_L6",
+      "binding_pct": 67.18,
+      "total_intervals": 4899,
+      "line_matched": [],
+      "description": ""
+    },
+    {
+      "constraintid": "$STAN-3",
+      "binding_pct": 66.69,
+      "total_intervals": 6122,
+      "line_matched": [],
+      "description": ""
+    },
+    {
+      "constraintid": "Q_STR_7C0K_HAYSF_9",
+      "binding_pct": 66.67,
+      "total_intervals": 54,
+      "line_matched": [],
+      "description": ""
+    },
+    {
+      "constraintid": "$TEMPB1",
+      "binding_pct": 66.67,
+      "total_intervals": 3,
       "line_matched": [],
       "description": ""
     }

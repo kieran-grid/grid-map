@@ -166,6 +166,7 @@
       <button class="state-btn toggle-btn" data-state="VIC" style="flex:1;font-size:10px;padding:3px 2px">VIC</button>
       <button class="state-btn toggle-btn" data-state="SA"  style="flex:1;font-size:10px;padding:3px 2px">SA</button>
       <button class="state-btn toggle-btn" data-state="TAS" style="flex:1;font-size:10px;padding:3px 2px">TAS</button>
+      <button class="state-btn toggle-btn" data-state="NZ"  style="flex:1;font-size:10px;padding:3px 2px">NZ</button>
     </div>
 
     <div class="section-title">Layers</div>
@@ -178,10 +179,12 @@
     <label class="layer-row"><input type="checkbox" id="layer-comp" /><div class="layer-dot" style="background:#f0883e;border:2px solid #fff;border-radius:2px"></div>Projects</label>
     <div id="comp-status-filters" style="padding:4px 0 4px 20px;display:flex;flex-wrap:wrap;gap:4px">
       <label style="font-size:11px;display:flex;align-items:center;gap:3px;cursor:pointer"><input type="checkbox" class="comp-status-cb" value="Operating" checked /><span style="color:#3fb950">Operating</span></label>
-      <label style="font-size:11px;display:flex;align-items:center;gap:3px;cursor:pointer"><input type="checkbox" class="comp-status-cb" value="Construction" checked /><span style="color:#d29922">Construction</span></label>
-      <label style="font-size:11px;display:flex;align-items:center;gap:3px;cursor:pointer"><input type="checkbox" class="comp-status-cb" value="Planned" checked /><span style="color:#58a6ff">Planned</span></label>
+      <label style="font-size:11px;display:flex;align-items:center;gap:3px;cursor:pointer"><input type="checkbox" class="comp-status-cb" value="Under Construction" checked /><span style="color:#d29922">Construction</span></label>
+      <label style="font-size:11px;display:flex;align-items:center;gap:3px;cursor:pointer"><input type="checkbox" class="comp-status-cb" value="Financial Close" checked /><span style="color:#f0883e">Fin. Close</span></label>
+      <label style="font-size:11px;display:flex;align-items:center;gap:3px;cursor:pointer"><input type="checkbox" class="comp-status-cb" value="Approved" checked /><span style="color:#58a6ff">Approved</span></label>
+      <label style="font-size:11px;display:flex;align-items:center;gap:3px;cursor:pointer"><input type="checkbox" class="comp-status-cb" value="Application" /><span style="color:#79c0ff">Application</span></label>
+      <label style="font-size:11px;display:flex;align-items:center;gap:3px;cursor:pointer"><input type="checkbox" class="comp-status-cb" value="Concept" /><span style="color:#8b949e">Concept</span></label>
       <label style="font-size:11px;display:flex;align-items:center;gap:3px;cursor:pointer"><input type="checkbox" class="comp-status-cb" value="Repowering" /><span style="color:#c080ff">Repowering</span></label>
-      <label style="font-size:11px;display:flex;align-items:center;gap:3px;cursor:pointer"><input type="checkbox" class="comp-status-cb" value="Decommissioned" /><span style="color:#6e7681">Decommissioned</span></label>
     </div>
 
     <div class="section-title">Substation View</div>
@@ -194,6 +197,22 @@
     </div>
 
     <button id="isp-mode-btn" class="toggle-btn" style="margin-bottom:4px">ISP Upgrades OFF</button>
+    <div id="isp-legend" style="display:none">
+      <div class="section-title">ISP Upgrades — Status</div>
+      <div class="legend-item">
+        <svg width="22" height="8" style="flex-shrink:0"><line x1="0" y1="4" x2="22" y2="4" stroke="#3fb950" stroke-width="3" stroke-dasharray="5,2"/></svg>Committed
+      </div>
+      <div class="legend-item">
+        <svg width="22" height="8" style="flex-shrink:0"><line x1="0" y1="4" x2="22" y2="4" stroke="#d29922" stroke-width="3" stroke-dasharray="6,3"/></svg>Anticipated
+      </div>
+      <div class="legend-item">
+        <svg width="22" height="8" style="flex-shrink:0"><line x1="0" y1="4" x2="22" y2="4" stroke="#58a6ff" stroke-width="3" stroke-dasharray="3,4"/></svg>Actionable
+      </div>
+      <div class="legend-item">
+        <svg width="22" height="8" style="flex-shrink:0"><line x1="0" y1="4" x2="22" y2="4" stroke="#8b949e" stroke-width="3" stroke-dasharray="4,4"/></svg>Future / Other
+      </div>
+      <div style="font-size:11px;color:#8b949e;margin-top:3px">Line colour = voltage level<br>&#9679; = substation/switching station</div>
+    </div>
 
     <div class="section-title">MLF Heatmap</div>
     <div style="display:flex;gap:4px;margin-bottom:4px">
@@ -493,22 +512,28 @@ function addLayers() {
   });
 
   // Congestion binding % layer (hidden by default, covers all lines)
+  const congPct = ['to-number', ['get', 'binding_pct'], 0];
   map.addLayer({
     id: 'lines-congestion',
     type: 'line',
     source: 'lines',
     layout: { 'line-join': 'round', 'line-cap': 'round', 'visibility': 'none' },
-    filter: ['>', ['to-number', ['get', 'binding_pct'], 0], 0],
+    filter: ['>', congPct, 0],
     paint: {
       'line-color': [
         'case',
-        ['>', ['to-number', ['get', 'binding_pct'], 0], 50],  '#f85149',
-        ['>', ['to-number', ['get', 'binding_pct'], 0], 20],  '#f0883e',
-        ['>', ['to-number', ['get', 'binding_pct'], 0], 5],   '#d29922',
+        ['>', congPct, 50], '#f85149',
+        ['>', congPct, 20], '#f0883e',
+        ['>', congPct, 5],  '#d29922',
         '#79c0ff'
       ],
-      'line-width': ['interpolate', ['linear'], ['zoom'], 4, 2, 8, 4, 12, 6],
-      'line-opacity': 0.9
+      'line-width': [
+        'case',
+        ['>', congPct, 50], ['interpolate', ['linear'], ['zoom'], 4, 4, 8, 7, 12, 10],
+        ['>', congPct, 20], ['interpolate', ['linear'], ['zoom'], 4, 3, 8, 5, 12, 8],
+        ['interpolate', ['linear'], ['zoom'], 4, 2, 8, 3.5, 12, 5]
+      ],
+      'line-opacity': 0.92
     }
   });
 
@@ -571,11 +596,14 @@ function addLayers() {
       'circle-radius': ['interpolate', ['linear'], ['zoom'], 4, 5, 8, 8, 12, 12],
       'circle-color': [
         'match', ['get', 'dev_status'],
-        'Operating',      '#3fb950',
-        'Construction',   '#d29922',
-        'Planned',        '#58a6ff',
-        'Repowering',     '#c080ff',
-        'Decommissioned', '#6e7681',
+        'Operating',          '#3fb950',
+        'Under Construction', '#d29922',
+        'Financial Close',    '#f0883e',
+        'Approved',           '#58a6ff',
+        'Application',        '#79c0ff',
+        'Concept',            '#8b949e',
+        'Repowering',         '#c080ff',
+        'Decommissioned',     '#6e7681',
         '#8b949e'
       ],
       'circle-stroke-width': 1.5,
@@ -619,10 +647,10 @@ function addLayers() {
         ['solar pv', 'concentrated solar power (csp)', 'rooftop - c&i',
          'rooftop - residential', 'solar power tower', 'floating pv'], 'tech-solar',
         ['onshore wind', 'offshore wind'], 'tech-wind',
-        ['lithium-ion battery (lib)', 'battery (unspecified)', 'flow battery',
+        ['lithium-ion battery (lib)', 'battery (unspecified)', 'battery', 'flow battery',
          'compressed air energy storage (caes)', 'thermal energy storage (tes)'], 'tech-bess',
-        ['conventional hydro', 'pumped storage'], 'tech-hydro',
-        ['natural gas', 'gas (unspecified)', 'hydrogen electrolyzer'], 'tech-gas',
+        ['conventional hydro', 'pumped storage', 'hydro'], 'tech-hydro',
+        ['natural gas', 'gas (unspecified)', 'gas', 'hydrogen electrolyzer'], 'tech-gas',
         ['coal (unspecified)', 'black coal', 'lignite (brown coal)',
          'waste coal', 'coal gas'], 'tech-coal',
         ['biomass', 'biogas', 'biodegradeble waste', 'bioenergy (unspecified)', 'methane'], 'tech-biomass',
@@ -663,6 +691,17 @@ function addLayers() {
       'line-opacity': 0.28
     }
   });
+  const ispStatusOpacity = ['case',
+    ['==', ['get', 'status'], 'Committed'],   1.0,
+    ['==', ['get', 'status'], 'Anticipated'], 0.82,
+    ['==', ['get', 'status'], 'Actionable'],  0.65,
+    0.5
+  ];
+  const ispStatusWidth = ['case',
+    ['==', ['get', 'status'], 'Committed'],   ['interpolate', ['linear'], ['zoom'], 4, 5, 8, 7, 12, 10],
+    ['==', ['get', 'status'], 'Anticipated'], ['interpolate', ['linear'], ['zoom'], 4, 4, 8, 6, 12, 9],
+    ['interpolate', ['linear'], ['zoom'], 4, 3, 8, 5, 12, 7]
+  ];
   map.addLayer({
     id: 'isp-line',
     type: 'line',
@@ -671,9 +710,9 @@ function addLayers() {
     layout: { visibility: 'none', 'line-join': 'round', 'line-cap': 'round' },
     paint: {
       'line-color': ispVoltColor,
-      'line-width': ['interpolate', ['linear'], ['zoom'], 4, 4, 8, 6, 12, 9],
+      'line-width': ispStatusWidth,
       'line-dasharray': [4, 3],
-      'line-opacity': 0.9
+      'line-opacity': ispStatusOpacity
     }
   });
   map.addLayer({
@@ -724,6 +763,31 @@ function addLayers() {
       'text-halo-width': 14
     },
     minzoom: 5
+  });
+
+  // ISP line endpoint markers (start/end substation nodes)
+  const ispEndpointFeatures = [];
+  ispUpgrades.features.forEach(f => {
+    if (f.geometry.type === 'LineString') {
+      const coords = f.geometry.coordinates;
+      [coords[0], coords[coords.length - 1]].forEach(c => {
+        ispEndpointFeatures.push({ type: 'Feature', geometry: { type: 'Point', coordinates: c }, properties: f.properties });
+      });
+    }
+  });
+  map.addSource('isp-endpoints', { type: 'geojson', data: { type: 'FeatureCollection', features: ispEndpointFeatures } });
+  map.addLayer({
+    id: 'isp-endpoints',
+    type: 'circle',
+    source: 'isp-endpoints',
+    layout: { visibility: 'none' },
+    paint: {
+      'circle-radius': ['interpolate', ['linear'], ['zoom'], 4, 4, 8, 6, 12, 9],
+      'circle-color': ispVoltColor,
+      'circle-stroke-color': '#ffffff',
+      'circle-stroke-width': 1.5,
+      'circle-opacity': ispStatusOpacity
+    }
   });
 
   // ── Live NEM Price layers (hidden by default) ────────────────────────
@@ -1169,21 +1233,54 @@ function bindMapEvents() {
   map.on('click', 'comp-layer', e => {
     const p = e.features[0].properties;
     const statusColour = {
-      'Operating': '#3fb950', 'Construction': '#d29922',
-      'Planned': '#58a6ff', 'Repowering': '#c080ff', 'Decommissioned': '#6e7681'
+      'Operating':          '#3fb950',
+      'Under Construction': '#d29922',
+      'Financial Close':    '#f0883e',
+      'Approved':           '#58a6ff',
+      'Application':        '#79c0ff',
+      'Concept':            '#8b949e',
+      'Repowering':         '#c080ff',
+      'Decommissioned':     '#6e7681',
     }[p.dev_status] || '#8b949e';
 
-    let html = `<div class="popup-title">${p.name || 'Competing Project'}</div>`;
+    const country = p.country || 'Australia';
+    let html = `<div class="popup-title">${p.name || 'Project'}`;
+    if (country === 'New Zealand') html += ` <span style="font-size:11px;font-weight:400;color:#79c0ff;margin-left:4px">[NZ]</span>`;
+    html += `</div>`;
     html += `<div class="popup-grid">`;
     if (p.company)     html += `<span class="popup-label">Company</span><span class="popup-value">${p.company}</span>`;
     if (p.developer && p.developer !== p.company)
                        html += `<span class="popup-label">Developer</span><span class="popup-value">${p.developer}</span>`;
+    if (p.ownership && p.ownership !== p.company)
+                       html += `<span class="popup-label">Ownership</span><span class="popup-value">${p.ownership}</span>`;
     html += `<span class="popup-label">Technology</span><span class="popup-value">${p.energy_source || '–'}</span>`;
-    if (p.capacity_mw) html += `<span class="popup-label">Capacity</span><span class="popup-value">${parseFloat(p.capacity_mw).toLocaleString()} MWac</span>`;
+    if (p.capacity_mw) {
+      let capStr = `${parseFloat(p.capacity_mw).toLocaleString()} MWac`;
+      if (p.storage_mwh) capStr += ` / ${parseFloat(p.storage_mwh).toLocaleString()} MWh`;
+      html += `<span class="popup-label">Capacity</span><span class="popup-value">${capStr}</span>`;
+    }
+    if (p.voltage_kv)  html += `<span class="popup-label">Voltage</span><span class="popup-value">${p.voltage_kv} kV</span>`;
     html += `<span class="popup-label">State</span><span class="popup-value">${p.state || '–'}</span>`;
     html += `<span class="popup-label">Status</span><span class="popup-value" style="color:${statusColour};font-weight:600">${p.dev_status || '–'}</span>`;
-    if (p.startup_date) html += `<span class="popup-label">Start-Up</span><span class="popup-value">${p.startup_date}</span>`;
+    if (p.startup_date)      html += `<span class="popup-label">Start-Up</span><span class="popup-value">${p.startup_date}</span>`;
+    if (p.construction_date) html += `<span class="popup-label">Construction</span><span class="popup-value">${p.construction_date}</span>`;
+    if (p.financial_close)   html += `<span class="popup-label">Fin. Close</span><span class="popup-value">${p.financial_close}</span>`;
     html += `</div>`;
+
+    // EPC / technology section
+    const hasEpc = p.epc || p.turbine_mfr || p.panel_mfr || p.inverter_mfr || p.tracking || p.integrator;
+    if (hasEpc) {
+      html += `<div class="popup-section"><div class="popup-section-title">EPC &amp; Technology</div>`;
+      html += `<div class="popup-grid">`;
+      if (p.epc)         html += `<span class="popup-label">EPC</span><span class="popup-value">${p.epc}</span>`;
+      if (p.turbine_mfr) html += `<span class="popup-label">Turbine</span><span class="popup-value">${p.turbine_mfr}</span>`;
+      if (p.panel_mfr)   html += `<span class="popup-label">Panel</span><span class="popup-value">${p.panel_mfr}</span>`;
+      if (p.inverter_mfr)html += `<span class="popup-label">Inverter</span><span class="popup-value">${p.inverter_mfr}</span>`;
+      if (p.tracking)    html += `<span class="popup-label">Tracking</span><span class="popup-value">${p.tracking}</span>`;
+      if (p.integrator)  html += `<span class="popup-label">Integrator</span><span class="popup-value">${p.integrator}</span>`;
+      if (p.power_elec)  html += `<span class="popup-label">Power Elec.</span><span class="popup-value">${p.power_elec}</span>`;
+      html += `</div></div>`;
+    }
 
     // KCI section
     if (p.kci_status || p.kci_type) {
@@ -1387,6 +1484,9 @@ function bindMapEvents() {
   map.on('mouseleave', 'isp-point',          () => map.getCanvas().style.cursor = '');
   map.on('mouseenter', 'isp-line',           () => map.getCanvas().style.cursor = 'pointer');
   map.on('mouseleave', 'isp-line',           () => map.getCanvas().style.cursor = '');
+  map.on('mouseenter', 'isp-endpoints',      () => map.getCanvas().style.cursor = 'pointer');
+  map.on('mouseleave', 'isp-endpoints',      () => map.getCanvas().style.cursor = '');
+  map.on('click', 'isp-endpoints', e => showIspPopup(e));
   map.on('mouseenter', 'nem-regions-fill',        () => map.getCanvas().style.cursor = 'pointer');
   map.on('mouseleave', 'nem-regions-fill',        () => map.getCanvas().style.cursor = '');
   map.on('mouseenter', 'nem-interconnectors-line',() => map.getCanvas().style.cursor = 'pointer');
@@ -1484,6 +1584,7 @@ function bindSidebar() {
     'VIC': [140.9, -39.2, 150.0, -33.9],
     'SA':  [129.0, -38.1, 141.0, -25.9],
     'TAS': [143.8, -43.6, 148.5, -39.5],
+    'NZ':  [166.4, -47.3, 178.6, -34.3],
   };
   document.querySelectorAll('.state-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -1608,7 +1709,7 @@ function bindSidebar() {
   });
 
   // ISP Upgrades toggle
-  const ISP_LAYERS = ['isp-line-glow', 'isp-line', 'isp-point-glow', 'isp-point', 'isp-labels'];
+  const ISP_LAYERS = ['isp-line-glow', 'isp-line', 'isp-point-glow', 'isp-point', 'isp-endpoints', 'isp-labels'];
   let ispMode = false;
   document.getElementById('isp-mode-btn').addEventListener('click', () => {
     ispMode = !ispMode;
@@ -1616,6 +1717,7 @@ function bindSidebar() {
     btn.textContent = ispMode ? 'ISP Upgrades ON' : 'ISP Upgrades OFF';
     btn.classList.toggle('active', ispMode);
     ISP_LAYERS.forEach(id => map.setLayoutProperty(id, 'visibility', ispMode ? 'visible' : 'none'));
+    document.getElementById('isp-legend').style.display = ispMode ? '' : 'none';
   });
 
   // LRF substation colour toggle

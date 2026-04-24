@@ -1,1 +1,49 @@
-{"type": "FeatureCollection", "features": [{"type": "Feature", "properties": {"id": "NSW1-QLD1", "name": "QNI", "full_name": "Queensland \u2013 NSW Interconnector", "from_region": "NSW1", "to_region": "QLD1", "type": "AC", "mid_lng": 151.5, "mid_lat": -27.8}, "geometry": {"type": "LineString", "coordinates": [[151.5, -29.5], [151.5, -27.8]]}}, {"type": "Feature", "properties": {"id": "N-Q-MNSP1", "name": "Terranora", "full_name": "Terranora Interconnector", "from_region": "NSW1", "to_region": "QLD1", "type": "AC", "mid_lng": 153.4, "mid_lat": -28.1}, "geometry": {"type": "LineString", "coordinates": [[153.3, -28.6], [153.4, -28.1]]}}, {"type": "Feature", "properties": {"id": "VIC1-NSW1", "name": "Murray", "full_name": "Victoria \u2013 NSW Interconnector", "from_region": "VIC1", "to_region": "NSW1", "type": "AC", "mid_lng": 147.1, "mid_lat": -36.1}, "geometry": {"type": "LineString", "coordinates": [[147.1, -36.7], [147.1, -36.1]]}}, {"type": "Feature", "properties": {"id": "V-S-MNSP1", "name": "Heywood", "full_name": "Heywood Interconnector (VIC\u2013SA)", "from_region": "VIC1", "to_region": "SA1", "type": "AC", "mid_lng": 140.5, "mid_lat": -37.6}, "geometry": {"type": "LineString", "coordinates": [[141.6, -38.1], [140.5, -37.6]]}}, {"type": "Feature", "properties": {"id": "V_S_MNSP1", "name": "Murraylink", "full_name": "Murraylink (VIC\u2013SA, DC)", "from_region": "VIC1", "to_region": "SA1", "type": "DC", "mid_lng": 140.4, "mid_lat": -34.2}, "geometry": {"type": "LineString", "coordinates": [[142.2, -34.3], [140.4, -34.2]]}}, {"type": "Feature", "properties": {"id": "T-V-MNSP1", "name": "Basslink", "full_name": "Basslink (TAS\u2013VIC, DC)", "from_region": "TAS1", "to_region": "VIC1", "type": "DC", "mid_lng": 146.8, "mid_lat": -38.3}, "geometry": {"type": "LineString", "coordinates": [[146.8, -41.1], [146.8, -38.3]]}}]}
+{"type": "FeatureCollection", "features": [
+  {"type": "Feature", "properties": {
+    "id": "NSW1-QLD1", "name": "QNI", "full_name": "Queensland – NSW Interconnector",
+    "from_region": "NSW1", "to_region": "QLD1", "type": "AC",
+    "mid_lng": 151.5, "mid_lat": -27.8,
+    "limit_pos_mw": 1078, "limit_neg_mw": 600,
+    "note": "Positive = NSW→QLD. Limits vary by system conditions; typical registered limits shown."
+  }, "geometry": {"type": "LineString", "coordinates": [[151.5, -29.5], [151.5, -27.8]]}},
+
+  {"type": "Feature", "properties": {
+    "id": "N-Q-MNSP1", "name": "Terranora", "full_name": "Terranora Interconnector",
+    "from_region": "NSW1", "to_region": "QLD1", "type": "AC",
+    "mid_lng": 153.4, "mid_lat": -28.1,
+    "limit_pos_mw": 107, "limit_neg_mw": 210,
+    "note": "Positive = NSW→QLD. Small AC interconnector through Terranora/Armidale region."
+  }, "geometry": {"type": "LineString", "coordinates": [[153.3, -28.6], [153.4, -28.1]]}},
+
+  {"type": "Feature", "properties": {
+    "id": "VIC1-NSW1", "name": "Murray", "full_name": "Victoria – NSW Interconnector",
+    "from_region": "VIC1", "to_region": "NSW1", "type": "AC",
+    "mid_lng": 147.1, "mid_lat": -36.1,
+    "limit_pos_mw": 1550, "limit_neg_mw": 1350,
+    "note": "Positive = VIC→NSW. Includes Snowy–NSW and Snowy–VIC paths; combined limit varies with Snowy generation."
+  }, "geometry": {"type": "LineString", "coordinates": [[147.1, -36.7], [147.1, -36.1]]}},
+
+  {"type": "Feature", "properties": {
+    "id": "V-S-MNSP1", "name": "Heywood", "full_name": "Heywood Interconnector (VIC–SA)",
+    "from_region": "VIC1", "to_region": "SA1", "type": "AC",
+    "mid_lng": 140.5, "mid_lat": -37.6,
+    "limit_pos_mw": 650, "limit_neg_mw": 500,
+    "note": "Positive = VIC→SA. AC interconnector; limits contingency-dependent. SA export limit lower due to network constraints."
+  }, "geometry": {"type": "LineString", "coordinates": [[141.6, -38.1], [140.5, -37.6]]}},
+
+  {"type": "Feature", "properties": {
+    "id": "V_S_MNSP1", "name": "Murraylink", "full_name": "Murraylink (VIC–SA, DC)",
+    "from_region": "VIC1", "to_region": "SA1", "type": "DC",
+    "mid_lng": 140.4, "mid_lat": -34.2,
+    "limit_pos_mw": 220, "limit_neg_mw": 220,
+    "note": "Positive = VIC→SA. Underground DC cable; symmetric ±220 MW limit."
+  }, "geometry": {"type": "LineString", "coordinates": [[142.2, -34.3], [140.4, -34.2]]}},
+
+  {"type": "Feature", "properties": {
+    "id": "T-V-MNSP1", "name": "Basslink", "full_name": "Basslink (TAS–VIC, DC)",
+    "from_region": "TAS1", "to_region": "VIC1", "type": "DC",
+    "mid_lng": 146.8, "mid_lat": -38.3,
+    "limit_pos_mw": 594, "limit_neg_mw": 478,
+    "note": "Positive = TAS→VIC. Submarine DC cable; export (TAS→VIC) 594 MW, import (VIC→TAS) 478 MW."
+  }, "geometry": {"type": "LineString", "coordinates": [[146.8, -41.1], [146.8, -38.3]]}}
+]}
