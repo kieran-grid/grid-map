@@ -528,10 +528,10 @@ function addLayers() {
         '#79c0ff'
       ],
       'line-width': [
-        'case',
-        ['>', congPct, 50], ['interpolate', ['linear'], ['zoom'], 4, 4, 8, 7, 12, 10],
-        ['>', congPct, 20], ['interpolate', ['linear'], ['zoom'], 4, 3, 8, 5, 12, 8],
-        ['interpolate', ['linear'], ['zoom'], 4, 2, 8, 3.5, 12, 5]
+        'interpolate', ['linear'], ['zoom'],
+        4,  ['case', ['>', congPct, 50], 4,  ['>', congPct, 20], 3,   2],
+        8,  ['case', ['>', congPct, 50], 7,  ['>', congPct, 20], 5,   3.5],
+        12, ['case', ['>', congPct, 50], 10, ['>', congPct, 20], 8,   5]
       ],
       'line-opacity': 0.92
     }
@@ -697,10 +697,10 @@ function addLayers() {
     ['==', ['get', 'status'], 'Actionable'],  0.65,
     0.5
   ];
-  const ispStatusWidth = ['case',
-    ['==', ['get', 'status'], 'Committed'],   ['interpolate', ['linear'], ['zoom'], 4, 5, 8, 7, 12, 10],
-    ['==', ['get', 'status'], 'Anticipated'], ['interpolate', ['linear'], ['zoom'], 4, 4, 8, 6, 12, 9],
-    ['interpolate', ['linear'], ['zoom'], 4, 3, 8, 5, 12, 7]
+  const ispStatusWidth = ['interpolate', ['linear'], ['zoom'],
+    4,  ['case', ['==', ['get', 'status'], 'Committed'], 5,  ['==', ['get', 'status'], 'Anticipated'], 4, 3],
+    8,  ['case', ['==', ['get', 'status'], 'Committed'], 7,  ['==', ['get', 'status'], 'Anticipated'], 6, 5],
+    12, ['case', ['==', ['get', 'status'], 'Committed'], 10, ['==', ['get', 'status'], 'Anticipated'], 9, 7]
   ];
   map.addLayer({
     id: 'isp-line',
@@ -767,7 +767,7 @@ function addLayers() {
 
   // ISP line endpoint markers (start/end substation nodes)
   const ispEndpointFeatures = [];
-  ispUpgrades.features.forEach(f => {
+  (window.ispData && window.ispData.features ? window.ispData.features : []).forEach(f => {
     if (f.geometry.type === 'LineString') {
       const coords = f.geometry.coordinates;
       [coords[0], coords[coords.length - 1]].forEach(c => {
@@ -895,11 +895,15 @@ function bindMapEvents() {
     if (!row) return;
     e.stopPropagation();
     const cache = window._constrChartCache || {};
+    const cid = row.dataset.cid;
+    // Find this constraint's own weekly_stats (each binding_constraints item now carries its own series)
+    const thisConstr = (cache.constrs || []).find(c => c.id === cid);
+    const weekly = (thisConstr && thisConstr.weekly_stats) ? thisConstr.weekly_stats : [];
     openConstraintModal(
-      row.dataset.cid,
+      cid,
       row.dataset.cpct,
       row.dataset.desc,
-      cache.weekly || [],
+      weekly,
       cache.lineName || '',
       cache.constrs || [],
       cache.lineBpct
@@ -988,11 +992,12 @@ function bindMapEvents() {
       html += `<span class="popup-label">Avg binding</span><span class="popup-value" style="color:${bColour};font-weight:700">${bpct.toFixed(1)}% of intervals</span>`;
       html += `</div>`;
 
-      // Weekly headroom chart
+      // Weekly headroom chart — shows the primary (most-binding) constraint on this line.
+      // For per-constraint detail, click an individual constraint row below to open the modal.
       const weekly = tryParse(p.weekly_stats) || tryParse(p.monthly_stats) || [];
       if (weekly.length >= 2) {
         html += buildCongestionChart(weekly);
-        html += `<div style="font-size:10px;color:#8b949e;margin-top:2px">Headroom = constraint limit − actual flow (MW). Below zero = constraint binding. Dots = weeks where binding occurred.</div>`;
+        html += `<div style="font-size:10px;color:#8b949e;margin-top:2px">Min headroom (solid) &amp; avg headroom (dashed) per week for the most-binding constraint on this line. Click a constraint below for its own series.</div>`;
       }
 
       // Binding constraints — all shown as clickable rows
@@ -1841,13 +1846,16 @@ function bindingColour(pct) {
 }
 
 /**
- * Headroom chart: single line of avg_headroom per week (RHS − LHS, MW).
- * Area above 0 filled green/amber/red by tightness.
- * Area below 0 filled red (constraint binding).
- * 0-line marked with dashed white rule.
- * Dots = weeks where constraint actually bound.
+ * Headroom chart — one data point per week.
+ * Plots min_headroom (tightest moment each week) as the primary polyline,
+ * with avg_headroom as a lighter reference polyline behind.
+ * Headroom = RHS - LHS in MW (AEMO DISPATCHCONSTRAINT).
+ *   RHS = pre-calculated limit (line rating minus fixed loading terms)
+ *   LHS = sum of dispatchable contributions (DUID/interconnector × factor)
+ * min_headroom ≤ 0 → constraint was binding (LHS met or exceeded RHS).
+ * Dots marked on weeks where the constraint bound in at least one interval.
  *
- * Works with weekly_stats {week, binding_pct, avg_headroom, min_headroom, ...}
+ * Works with weekly_stats {week, binding_pct, avg_headroom, min_headroom, max_lhs, min_rhs, ...}
  */
 function buildCongestionChart(data, opts) {
   const W  = (opts && opts.W)  ?? 268;
@@ -1868,22 +1876,23 @@ function buildCongestionChart(data, opts) {
   const n = sorted.length;
   if (n < 2) return '';
 
-  // Prefer avg_headroom; fall back to min_rhs - max_lhs for old format
-  const hrVals = sorted.map(d => {
-    if (d.avg_headroom != null) return parseFloat(d.avg_headroom);
+  // Primary series: min_headroom (tightest moment each week)
+  // Secondary series: avg_headroom (typical headroom across the week)
+  // Fall back to (min_rhs - max_lhs) as a worst-case approximation for old format
+  const minHrVals = sorted.map(d => {
+    if (d.min_headroom != null) return parseFloat(d.min_headroom);
     if (d.min_rhs != null && d.max_lhs != null) return parseFloat(d.min_rhs) - parseFloat(d.max_lhs);
     return null;
   });
-  const minHrVals = sorted.map(d => d.min_headroom != null ? parseFloat(d.min_headroom) : null);
+  const avgHrVals = sorted.map(d => d.avg_headroom != null ? parseFloat(d.avg_headroom) : null);
 
-  const allVals = [...hrVals, ...minHrVals].filter(v => v != null);
+  const allVals = [...minHrVals, ...avgHrVals].filter(v => v != null);
   if (!allVals.length) return '';
 
   const rawMax = Math.max(...allVals, 0);
   const rawMin = Math.min(...allVals, 0);
   const pad    = Math.max((rawMax - rawMin) * 0.12, 20);
   const yMax   = rawMax + pad;
-  // Always include 0 in the y range so the zero-line is always visible
   const yMin   = Math.min(rawMin - pad, -pad * 0.3);
   const yRange = yMax - yMin || 1;
 
@@ -1893,39 +1902,50 @@ function buildCongestionChart(data, opts) {
 
   let svg = `<svg width="${W}" height="${H}" style="display:block;margin-top:8px;overflow:visible">`;
 
-  // Per-week fill bars from 0 to headroom value, coloured by that week's tightness
+  // Per-week fill bars from 0 to min_headroom value (colour-by-tightness)
   const barW = iW / n;
-  hrVals.forEach((v, i) => {
+  minHrVals.forEach((v, i) => {
     if (v == null) return;
-    const col = v < 0 ? '#f85149' : v < 100 ? '#d29922' : '#3fb950';
+    const col = v < 0 ? '#f85149' : v < 50 ? '#f0883e' : v < 200 ? '#d29922' : '#3fb950';
     const y0 = zeroY, y1 = yPx(v);
     const top = Math.min(y0, y1), bh = Math.max(1, Math.abs(y0 - y1));
     svg += `<rect x="${(xPx(i) - barW/2).toFixed(1)}" y="${top.toFixed(1)}" width="${barW.toFixed(1)}" height="${bh.toFixed(1)}" fill="${col}" opacity="0.2"/>`;
   });
 
-  // 0-line — always visible now
+  // 0-line (constraint binding threshold)
   svg += `<line x1="${PL}" y1="${zeroY.toFixed(1)}" x2="${PL+iW}" y2="${zeroY.toFixed(1)}" stroke="#e6edf3" stroke-width="1" opacity="0.7" stroke-dasharray="4,3"/>`;
   svg += `<text x="${PL-3}" y="${(zeroY+3).toFixed(1)}" text-anchor="end" fill="#e6edf3" font-size="${fontSize}" opacity="0.8">0</text>`;
 
-  // Headroom line
-  const pts = hrVals.map((v, i) => v != null ? `${xPx(i).toFixed(1)},${yPx(v).toFixed(1)}` : null);
-  let segments = [], cur = [];
-  pts.forEach(p => {
-    if (p) { cur.push(p); }
-    else if (cur.length) { segments.push(cur); cur = []; }
-  });
-  if (cur.length) segments.push(cur);
-  segments.forEach(seg => {
+  // Helper: build polyline segments, skipping null values
+  const buildSegments = (vals) => {
+    const pts = vals.map((v, i) => v != null ? `${xPx(i).toFixed(1)},${yPx(v).toFixed(1)}` : null);
+    const segs = []; let cur = [];
+    pts.forEach(p => {
+      if (p) { cur.push(p); }
+      else if (cur.length) { segs.push(cur); cur = []; }
+    });
+    if (cur.length) segs.push(cur);
+    return segs;
+  };
+
+  // Avg headroom — lighter/thinner reference line drawn behind
+  buildSegments(avgHrVals).forEach(seg => {
     if (seg.length < 2) return;
-    svg += `<polyline points="${seg.join(' ')}" fill="none" stroke="#58a6ff" stroke-width="1.8" opacity="0.95"/>`;
+    svg += `<polyline points="${seg.join(' ')}" fill="none" stroke="#58a6ff" stroke-width="1.2" opacity="0.45" stroke-dasharray="3,2"/>`;
   });
 
-  // Dots where constraint bound that week
+  // Min headroom — primary solid line (this is the weekly tightest point)
+  buildSegments(minHrVals).forEach(seg => {
+    if (seg.length < 2) return;
+    svg += `<polyline points="${seg.join(' ')}" fill="none" stroke="#79c0ff" stroke-width="1.8" opacity="0.95"/>`;
+  });
+
+  // Dots on min_headroom where constraint actually bound that week
   sorted.forEach((d, i) => {
     const pct = parseFloat(d.binding_pct) || 0;
-    if (pct <= 0 || hrVals[i] == null) return;
+    if (pct <= 0 || minHrVals[i] == null) return;
     const col = pct > 20 ? '#f85149' : pct > 5 ? '#f0883e' : '#d29922';
-    svg += `<circle cx="${xPx(i).toFixed(1)}" cy="${yPx(hrVals[i]).toFixed(1)}" r="${dotR}" fill="${col}" opacity="0.9"/>`;
+    svg += `<circle cx="${xPx(i).toFixed(1)}" cy="${yPx(minHrVals[i]).toFixed(1)}" r="${dotR}" fill="${col}" opacity="0.95"/>`;
   });
 
   // Y axis labels (MW)
@@ -1990,23 +2010,32 @@ function openConstraintModal(cid, cpct, desc, weeklyData, lineName, allConstrs, 
   let bindingWeeks = 0;
   weeklyData.forEach(d => { if ((parseFloat(d.binding_pct) || 0) > 0) bindingWeeks++; });
 
-  // Chart section: time series if available, else constraint comparison bar chart
+  // Chart section: this constraint's own weekly series if available
   let chartSection = '';
   if (hasTimeSeries) {
     chartSection = `
-      <div style="font-size:12px;font-weight:600;color:#8b949e;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:4px">Line Headroom Over Time</div>
+      <div style="font-size:12px;font-weight:600;color:#8b949e;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:4px">Weekly Headroom — this constraint</div>
       <div style="font-size:11px;color:#8b949e;margin-bottom:8px;line-height:1.5">
-        <span style="display:inline-block;width:12px;height:3px;background:#58a6ff;vertical-align:middle;margin-right:3px;border-radius:1px"></span> Weekly avg headroom (RHS − LHS).
-        Coloured bars &amp; dots = weeks when constraint was binding.
-        Bound in ${bindingWeeks} of ${weeklyData.length} weeks.
+        <span style="display:inline-block;width:14px;height:2px;background:#79c0ff;vertical-align:middle;margin-right:4px;border-radius:1px"></span>Min headroom (tightest moment of the week)
+        &nbsp;&nbsp;
+        <span style="display:inline-block;width:14px;border-top:2px dashed #58a6ff;vertical-align:middle;margin-right:4px;opacity:0.6"></span>Avg headroom
+        &nbsp;&nbsp;
+        <span style="display:inline-block;width:8px;height:8px;background:#f0883e;border-radius:50%;vertical-align:middle;margin-right:4px"></span>Binding week
+        <br>Bound in ${bindingWeeks} of ${weeklyData.length} weeks on record.
       </div>
       ${buildCongestionChartLarge(weeklyData)}
-      <div style="font-size:10px;color:#8b949e;margin-top:6px">Headroom = constraint limit (RHS) − actual flow (LHS) in MW. Below zero = constraint actively binding. Jan 2025 – Feb 2026.</div>`;
+      <div style="font-size:10px;color:#8b949e;margin-top:6px;line-height:1.45">
+        <strong>Headroom = RHS − LHS</strong> in MW, from AEMO DISPATCHCONSTRAINT (5-min intervals, aggregated to ISO weeks).
+        RHS is the pre-calculated constraint limit (line rating after fixed loading/contingency adjustments).
+        LHS is the sum of dispatchable contributions (∑ factor × DUID/interconnector MW).
+        <strong>Headroom ≤ 0 = constraint binding</strong> (the protected element is at its limit).
+        Jan 2025 – Feb 2026.
+      </div>`;
   } else if (allConstrs && allConstrs.length > 1) {
     // Fallback: bar chart comparing all constraints on this line by binding %
     chartSection = buildConstraintBarChart(cid, allConstrs, lineBpct);
   } else {
-    chartSection = `<div style="color:#8b949e;font-size:12px;padding:16px 0;text-align:center">Weekly headroom data not available for this line.</div>`;
+    chartSection = `<div style="color:#8b949e;font-size:12px;padding:16px 0;text-align:center">Weekly headroom data not available for this constraint.</div>`;
   }
 
   const modal = document.createElement('div');
