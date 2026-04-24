@@ -294,19 +294,6 @@
 
     <div class="section-title">Filters</div>
     <div class="filter-group">
-      <label>State</label>
-      <select id="filter-state">
-        <option value="">All states</option>
-        <option value="Queensland">QLD</option>
-        <option value="New South Wales">NSW / ACT</option>
-        <option value="Victoria">VIC</option>
-        <option value="South Australia">SA</option>
-        <option value="Tasmania">TAS</option>
-        <option value="Western Australia">WA</option>
-        <option value="Northern Territory">NT</option>
-      </select>
-    </div>
-    <div class="filter-group">
       <label>Line Status</label>
       <select id="filter-status">
         <option value="">All statuses</option>
@@ -513,6 +500,15 @@ function addLayers() {
 
   // Congestion binding % layer (hidden by default, covers all lines)
   const congPct = ['to-number', ['get', 'binding_pct'], 0];
+  // Invisible wide hit-area layer — makes congestion lines easy to click
+  map.addLayer({
+    id: 'lines-congestion-hit',
+    type: 'line',
+    source: 'lines',
+    layout: { 'line-join': 'round', 'line-cap': 'round', 'visibility': 'none' },
+    filter: ['>', congPct, 0],
+    paint: { 'line-color': 'transparent', 'line-width': 16, 'line-opacity': 0 }
+  });
   map.addLayer({
     id: 'lines-congestion',
     type: 'line',
@@ -984,6 +980,12 @@ function bindMapEvents() {
     }
 
     // Constraint binding % + monthly headroom chart
+    if (p.binding_pct == null) {
+      const volt = parseFloat(p.voltage_kv || 0);
+      if (volt >= 132) {
+        html += `<div class="popup-section" style="color:#8b949e;font-size:12px">No binding constraint data for this line (Jan 2025 – Feb 2026)</div>`;
+      }
+    }
     if (p.binding_pct != null) {
       const bpct = parseFloat(p.binding_pct);
       const bColour = bpct > 50 ? '#f85149' : bpct > 20 ? '#f0883e' : bpct > 5 ? '#d29922' : bpct > 1 ? '#79c0ff' : '#8b949e';
@@ -1479,8 +1481,10 @@ function bindMapEvents() {
   }
 
   // Cursors
-  map.on('mouseenter', 'lines-layer',        () => map.getCanvas().style.cursor = 'pointer');
-  map.on('mouseleave', 'lines-layer',        () => map.getCanvas().style.cursor = '');
+  map.on('mouseenter', 'lines-layer',             () => map.getCanvas().style.cursor = 'pointer');
+  map.on('mouseleave', 'lines-layer',             () => map.getCanvas().style.cursor = '');
+  map.on('mouseenter', 'lines-congestion-hit',    () => map.getCanvas().style.cursor = 'pointer');
+  map.on('mouseleave', 'lines-congestion-hit',    () => map.getCanvas().style.cursor = '');
   map.on('mouseenter', 'cps-layer',          () => map.getCanvas().style.cursor = 'pointer');
   map.on('mouseleave', 'cps-layer',          () => map.getCanvas().style.cursor = '');
   map.on('mouseenter', 'comp-layer',         () => map.getCanvas().style.cursor = 'pointer');
@@ -1512,8 +1516,7 @@ function bindMapEvents() {
 function bindFilters() {
   document.querySelectorAll('.volt-cb').forEach(cb =>
     cb.addEventListener('change', applyFilters));
-  ['filter-state', 'filter-status'].forEach(id =>
-    document.getElementById(id).addEventListener('change', applyFilters));
+  document.getElementById('filter-status').addEventListener('change', applyFilters);
 }
 
 function applyFilters() {
@@ -1524,18 +1527,7 @@ function applyFilters() {
     .filter(cb => cb.checked)
     .flatMap(cb => cb.dataset.kvs.split(',').map(Number));
 
-  const state  = document.getElementById('filter-state').value;
   const status = document.getElementById('filter-status').value;
-
-  const STATE_ALIASES = {
-    'Queensland':        ['Queensland'],
-    'New South Wales':   ['New South Wales', 'NSW', 'Australian Capital Territory'],
-    'Victoria':          ['Victoria'],
-    'South Australia':   ['South Australia'],
-    'Tasmania':          ['Tasmania'],
-    'Western Australia': ['Western Australia'],
-    'Northern Territory':['Northern Territory'],
-  };
 
   // ── Lines filter ──
   const lineFilter = ['all'];
@@ -1544,7 +1536,6 @@ function applyFilters() {
       ? ['in', ['get', 'voltage_kv'], ['literal', selectedKvs]]
       : ['==', ['get', 'voltage_kv'], -1]);
   }
-  if (state)  lineFilter.push(['in', ['get', 'state'], ['literal', STATE_ALIASES[state] || [state]]]);
   if (status) lineFilter.push(['==', ['get', 'status'], status]);
 
   map.setFilter('lines-layer', lineFilter.length > 1 ? lineFilter : null);
@@ -1708,7 +1699,9 @@ function bindSidebar() {
     const btn = document.getElementById('congestion-mode-btn');
     btn.textContent = congestionMode ? 'Congestion ON' : 'Congestion OFF';
     btn.classList.toggle('active', congestionMode);
-    map.setLayoutProperty('lines-congestion', 'visibility', congestionMode ? 'visible' : 'none');
+    const vis = congestionMode ? 'visible' : 'none';
+    map.setLayoutProperty('lines-congestion', 'visibility', vis);
+    map.setLayoutProperty('lines-congestion-hit', 'visibility', vis);
     map.setPaintProperty('lines-layer', 'line-opacity', congestionMode ? 0.25 : (loadingState > 0 ? 0.25 : 0.85));
     document.getElementById('congestion-legend').style.display = congestionMode ? '' : 'none';
   });
