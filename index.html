@@ -1245,7 +1245,8 @@ function bindMapEvents() {
       const weekly = tryParse(p.weekly_stats) || tryParse(p.monthly_stats) || [];
       if (weekly.length >= 2) {
         html += buildCongestionChart(weekly);
-        html += `<div style="font-size:10px;color:#8b949e;margin-top:2px">Min headroom (solid) &amp; avg headroom (dashed) per week for the most-binding constraint on this line. Click a constraint below for its own series.</div>`;
+        html += chartColorLegend();
+        html += `<div style="font-size:10px;color:#8b949e;margin-top:4px">Min headroom (solid) &amp; avg headroom (dashed) per week for the most-binding constraint. Click a constraint below for its own series.</div>`;
       }
 
       // Binding constraints — all shown as clickable rows
@@ -2211,16 +2212,37 @@ function buildCongestionChart(data, opts) {
 
   const rawMax = Math.max(...allVals, 0);
   const rawMin = Math.min(...allVals, 0);
-  const pad    = Math.max((rawMax - rawMin) * 0.12, 20);
-  const yMax   = rawMax + pad;
-  const yMin   = Math.min(rawMin - pad, -pad * 0.3);
-  const yRange = yMax - yMin || 1;
+
+  // "Nice" tick step (1, 2, 5 × power of 10) for readable y-axis
+  const niceStep = (range, target) => {
+    const rough = Math.max(range, 1) / target;
+    const mag = Math.pow(10, Math.floor(Math.log10(rough)));
+    const norm = rough / mag;
+    return mag * (norm < 1.5 ? 1 : norm < 3.5 ? 2 : norm < 7.5 ? 5 : 10);
+  };
+  const targetTicks = (opts && opts.W > 400) ? 6 : 4;
+  const step = niceStep(rawMax - rawMin, targetTicks);
+  const yMin = Math.floor(rawMin / step) * step - (rawMin === 0 ? 0 : 0);
+  const yMax = Math.ceil(rawMax / step) * step;
+  const yRange = (yMax - yMin) || 1;
+
+  const ticks = [];
+  for (let v = yMin; v <= yMax + 1e-6; v += step) {
+    ticks.push(Math.round(v * 1e6) / 1e6);
+  }
 
   const yPx = v => PT + iH * (1 - (v - yMin) / yRange);
   const xPx = i => PL + (i + 0.5) * (iW / n);
   const zeroY = yPx(0);
 
   let svg = `<svg width="${W}" height="${H}" style="display:block;margin-top:8px;overflow:visible">`;
+
+  // Subtle gridlines at each nice tick (drawn first, behind bars/lines)
+  ticks.forEach(v => {
+    if (v === 0) return;   // 0 line drawn separately for emphasis
+    const y = yPx(v);
+    svg += `<line x1="${PL}" y1="${y.toFixed(1)}" x2="${PL+iW}" y2="${y.toFixed(1)}" stroke="#30363d" stroke-width="0.5" opacity="0.55"/>`;
+  });
 
   // Per-week fill bars from 0 to min_headroom value (colour-by-tightness)
   const barW = iW / n;
@@ -2232,9 +2254,10 @@ function buildCongestionChart(data, opts) {
     svg += `<rect x="${(xPx(i) - barW/2).toFixed(1)}" y="${top.toFixed(1)}" width="${barW.toFixed(1)}" height="${bh.toFixed(1)}" fill="${col}" opacity="0.2"/>`;
   });
 
-  // 0-line (constraint binding threshold)
-  svg += `<line x1="${PL}" y1="${zeroY.toFixed(1)}" x2="${PL+iW}" y2="${zeroY.toFixed(1)}" stroke="#e6edf3" stroke-width="1" opacity="0.7" stroke-dasharray="4,3"/>`;
-  svg += `<text x="${PL-3}" y="${(zeroY+3).toFixed(1)}" text-anchor="end" fill="#e6edf3" font-size="${fontSize}" opacity="0.8">0</text>`;
+  // 0-line (constraint binding threshold) — emphasised
+  if (zeroY >= PT && zeroY <= PT + iH) {
+    svg += `<line x1="${PL}" y1="${zeroY.toFixed(1)}" x2="${PL+iW}" y2="${zeroY.toFixed(1)}" stroke="#e6edf3" stroke-width="1" opacity="0.85" stroke-dasharray="4,3"/>`;
+  }
 
   // Helper: build polyline segments, skipping null values
   const buildSegments = (vals) => {
@@ -2268,15 +2291,17 @@ function buildCongestionChart(data, opts) {
     svg += `<circle cx="${xPx(i).toFixed(1)}" cy="${yPx(minHrVals[i]).toFixed(1)}" r="${dotR}" fill="${col}" opacity="0.95"/>`;
   });
 
-  // Y axis labels (MW)
+  // Y axis labels at every nice tick (MW)
   const nice = v => {
     const abs = Math.abs(v);
-    if (abs >= 1000) return `${(v/1000).toFixed(1)}k`;
+    if (abs >= 1000) return `${(v/1000).toFixed(abs >= 10000 ? 0 : 1)}k`;
     return Math.round(v).toString();
   };
-  [yMax, 0, yMin].forEach(v => {
-    if (v === 0 && (zeroY < PT || zeroY > PT + iH)) return;
-    svg += `<text x="${PL-3}" y="${(yPx(v)+3).toFixed(1)}" text-anchor="end" fill="#8b949e" font-size="${fontSize}">${nice(v)}</text>`;
+  ticks.forEach(v => {
+    const y = yPx(v);
+    if (y < PT - 2 || y > PT + iH + 2) return;
+    const isZero = v === 0;
+    svg += `<text x="${PL-4}" y="${(y+3).toFixed(1)}" text-anchor="end" fill="${isZero ? '#e6edf3' : '#8b949e'}" font-size="${fontSize}" font-weight="${isZero ? '600' : '400'}">${nice(v)}</text>`;
   });
   svg += `<text x="9" y="${(PT+iH/2).toFixed(1)}" text-anchor="middle" fill="#8b949e" font-size="${fontSize}" transform="rotate(-90,9,${(PT+iH/2).toFixed(1)})">MW</text>`;
 
@@ -2317,6 +2342,26 @@ function buildCongestionChartLarge(data) {
   return buildCongestionChart(data, { W: 510, H: 200, PL: 50, PR: 10, PT: 16, PB: 28, dotR: 4, fontSize: 10 });
 }
 
+// Compact colour-key legend explaining the bar/dot colours under the chart
+function chartColorLegend(opts) {
+  const sw = (color, op) => `<span style="display:inline-block;width:10px;height:10px;background:${color};opacity:${op};vertical-align:middle;border-radius:1px"></span>`;
+  const dot = (color) => `<span style="display:inline-block;width:8px;height:8px;background:${color};vertical-align:middle;border-radius:50%"></span>`;
+  const fs = (opts && opts.large) ? 11 : 10;
+  return `<div style="font-size:${fs}px;color:#8b949e;margin-top:6px;line-height:1.7">
+    <div><strong style="color:#e6edf3">Bar</strong> = weekly min headroom (RHS−LHS):
+      ${sw('#3fb950',0.4)}&nbsp;≥200 MW
+      &nbsp;${sw('#d29922',0.4)}&nbsp;50–200
+      &nbsp;${sw('#f0883e',0.4)}&nbsp;0–50 (very tight)
+      &nbsp;${sw('#f85149',0.4)}&nbsp;&lt;0 (bound)
+    </div>
+    <div><strong style="color:#e6edf3">Dot</strong> = % intervals constraint bound that week:
+      ${dot('#d29922')}&nbsp;0–5%
+      &nbsp;${dot('#f0883e')}&nbsp;5–20%
+      &nbsp;${dot('#f85149')}&nbsp;&gt;20%
+    </div>
+  </div>`;
+}
+
 function openConstraintModal(cid, cpct, desc, weeklyData, lineName, allConstrs, lineBpct) {
   const existing = document.getElementById('constr-modal');
   if (existing) existing.remove();
@@ -2344,6 +2389,7 @@ function openConstraintModal(cid, cpct, desc, weeklyData, lineName, allConstrs, 
         <br>Bound in ${bindingWeeks} of ${weeklyData.length} active weeks (constraint was present in dispatch for ${weeklyData.length} of the ~61 weeks in dataset).
       </div>
       ${buildCongestionChartLarge(weeklyData)}
+      ${chartColorLegend({ large: true })}
       <div style="font-size:10px;color:#8b949e;margin-top:6px;line-height:1.45">
         <strong>Headroom = RHS − LHS</strong> in MW, from AEMO DISPATCHCONSTRAINT (5-min intervals, aggregated to ISO weeks).
         RHS is the pre-calculated constraint limit (line rating after fixed loading/contingency adjustments).
