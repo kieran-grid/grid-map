@@ -238,20 +238,21 @@
 
     <button id="isp-mode-btn" class="toggle-btn" style="margin-bottom:4px">ISP Upgrades OFF</button>
     <div id="isp-legend" style="display:none">
-      <div class="section-title">ISP Upgrades — Status</div>
+      <div class="section-title">ISP Upgrades — Status (line pattern)</div>
       <div class="legend-item">
-        <svg width="22" height="8" style="flex-shrink:0"><line x1="0" y1="4" x2="22" y2="4" stroke="#3fb950" stroke-width="3" stroke-dasharray="5,2"/></svg>Committed
+        <svg width="32" height="10" style="flex-shrink:0"><line x1="0" y1="5" x2="32" y2="5" stroke="#3fb950" stroke-width="3"/></svg>Committed (solid, thickest)
       </div>
       <div class="legend-item">
-        <svg width="22" height="8" style="flex-shrink:0"><line x1="0" y1="4" x2="22" y2="4" stroke="#d29922" stroke-width="3" stroke-dasharray="6,3"/></svg>Anticipated
+        <svg width="32" height="10" style="flex-shrink:0"><line x1="0" y1="5" x2="32" y2="5" stroke="#d29922" stroke-width="3" stroke-dasharray="6,3"/></svg>Anticipated (medium dash)
       </div>
       <div class="legend-item">
-        <svg width="22" height="8" style="flex-shrink:0"><line x1="0" y1="4" x2="22" y2="4" stroke="#58a6ff" stroke-width="3" stroke-dasharray="3,4"/></svg>Actionable
+        <svg width="32" height="10" style="flex-shrink:0"><line x1="0" y1="5" x2="32" y2="5" stroke="#58a6ff" stroke-width="2.5" stroke-dasharray="3,3"/></svg>Actionable (short dash, thinner)
       </div>
-      <div class="legend-item">
-        <svg width="22" height="8" style="flex-shrink:0"><line x1="0" y1="4" x2="22" y2="4" stroke="#8b949e" stroke-width="3" stroke-dasharray="4,4"/></svg>Future / Other
+      <div style="font-size:11px;color:#8b949e;margin-top:6px;line-height:1.45">
+        <strong style="color:#e6edf3">Line core colour</strong> = voltage<br>
+        <strong style="color:#e6edf3">Glow halo + endpoint stroke</strong> = status<br>
+        &#9679; = substation/switching station
       </div>
-      <div style="font-size:11px;color:#8b949e;margin-top:3px">Line colour = voltage level<br>&#9679; = substation/switching station</div>
     </div>
 
     <div class="section-title">MLF Heatmap</div>
@@ -261,13 +262,55 @@
       <button class="toggle-btn mlf-hm-btn"        id="mlf-hm-load" data-mode="load" style="flex:1;padding:4px 6px">Load</button>
     </div>
 
-    <div class="section-title">Voltage Levels</div>
-    <label class="layer-row"><input type="checkbox" class="volt-cb" data-kvs="400,500" checked /><div class="legend-line" style="background:#ffe033;height:4px;width:22px;flex-shrink:0"></div>500 kV</label>
-    <label class="layer-row"><input type="checkbox" class="volt-cb" data-kvs="330"     checked /><div class="legend-line" style="background:#f08020;height:3px;width:22px;flex-shrink:0"></div>330 kV</label>
-    <label class="layer-row"><input type="checkbox" class="volt-cb" data-kvs="275"     checked /><div class="legend-line" style="background:#d040c0;height:3px;width:22px;flex-shrink:0"></div>275 kV</label>
-    <label class="layer-row"><input type="checkbox" class="volt-cb" data-kvs="220"     checked /><div class="legend-line" style="background:#4496e0;height:2px;width:22px;flex-shrink:0"></div>220 kV</label>
-    <label class="layer-row"><input type="checkbox" class="volt-cb" data-kvs="110,132" checked /><div class="legend-line" style="background:#d84040;height:2px;width:22px;flex-shrink:0"></div>132 / 110 kV</label>
-    <label class="layer-row"><input type="checkbox" class="volt-cb" data-kvs="11,22,33,44,66,88"  /><div class="legend-line" style="background:#8b5e3c;height:1px;width:22px;flex-shrink:0"></div>66 kV and below</label>
+    <div class="section-title">Voltages — colour shared across AUS/NZ</div>
+    <table style="width:100%;font-size:11px;border-collapse:collapse;margin-bottom:4px">
+      <thead>
+        <tr style="color:#8b949e;font-weight:600">
+          <th style="padding:2px 0;text-align:center;width:18px"></th>
+          <th style="padding:2px 4px;text-align:left;width:32px"></th>
+          <th style="padding:2px 4px;text-align:left">AUS</th>
+          <th style="padding:2px 4px;text-align:left">NZ</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="padding:3px 0;text-align:center"><input type="checkbox" class="volt-cb" data-kvs="500" checked style="cursor:pointer"/></td>
+          <td style="padding:3px 4px"><div style="background:#ffe033;height:4px;width:24px;border-radius:1px"></div></td>
+          <td style="padding:3px 4px">500 kV</td>
+          <td style="padding:3px 4px;color:#6e7681">—</td>
+        </tr>
+        <tr>
+          <td style="padding:3px 0;text-align:center"><input type="checkbox" class="volt-cb" data-kvs="330,400" checked style="cursor:pointer"/></td>
+          <td style="padding:3px 4px"><div style="background:#f08020;height:3px;width:24px;border-radius:1px"></div></td>
+          <td style="padding:3px 4px">330 kV</td>
+          <td style="padding:3px 4px">400 kV</td>
+        </tr>
+        <tr>
+          <td style="padding:3px 0;text-align:center"><input type="checkbox" class="volt-cb" data-kvs="275,350" checked style="cursor:pointer"/></td>
+          <td style="padding:3px 4px"><div style="background:#d040c0;height:3px;width:24px;border-radius:1px"></div></td>
+          <td style="padding:3px 4px">275 kV</td>
+          <td style="padding:3px 4px">350 kV</td>
+        </tr>
+        <tr>
+          <td style="padding:3px 0;text-align:center"><input type="checkbox" class="volt-cb" data-kvs="220" checked style="cursor:pointer"/></td>
+          <td style="padding:3px 4px"><div style="background:#4496e0;height:3px;width:24px;border-radius:1px"></div></td>
+          <td style="padding:3px 4px">220 kV</td>
+          <td style="padding:3px 4px">220 kV</td>
+        </tr>
+        <tr>
+          <td style="padding:3px 0;text-align:center"><input type="checkbox" class="volt-cb" data-kvs="110,132" checked style="cursor:pointer"/></td>
+          <td style="padding:3px 4px"><div style="background:#d84040;height:2px;width:24px;border-radius:1px"></div></td>
+          <td style="padding:3px 4px">132 / 110 kV</td>
+          <td style="padding:3px 4px">110 kV</td>
+        </tr>
+        <tr>
+          <td style="padding:3px 0;text-align:center"><input type="checkbox" class="volt-cb" data-kvs="11,22,33,44,66,88" style="cursor:pointer"/></td>
+          <td style="padding:3px 4px"><div style="background:#8b5e3c;height:2px;width:24px;border-radius:1px"></div></td>
+          <td style="padding:3px 4px">66 kV</td>
+          <td style="padding:3px 4px">66 kV</td>
+        </tr>
+      </tbody>
+    </table>
 
     <div class="section-title">Legend – % Loading</div>
     <div class="legend-item"><div class="legend-line" style="background:#3fb950;height:4px"></div>&lt; 65%</div>
@@ -285,15 +328,7 @@
       <div style="font-size:11px;color:#8b949e;margin-top:3px">Jan 2025 – Feb 2026 — % of 5-min dispatch<br>intervals constraint was binding</div>
     </div>
 
-    <div id="subs-voltage-legend">
-      <div class="section-title">Legend – Substations</div>
-      <div class="legend-item"><div class="legend-line" style="background:#ffe033;height:8px;border-radius:50%;width:8px"></div>500 kV</div>
-      <div class="legend-item"><div class="legend-line" style="background:#f08020;height:8px;border-radius:50%;width:8px"></div>330 kV</div>
-      <div class="legend-item"><div class="legend-line" style="background:#d040c0;height:8px;border-radius:50%;width:8px"></div>275 kV</div>
-      <div class="legend-item"><div class="legend-line" style="background:#4496e0;height:8px;border-radius:50%;width:8px"></div>220 kV</div>
-      <div class="legend-item"><div class="legend-line" style="background:#d84040;height:8px;border-radius:50%;width:8px"></div>132 / 110 kV</div>
-      <div class="legend-item"><div class="legend-line" style="background:#8b5e3c;height:8px;border-radius:50%;width:8px"></div>66 kV and below</div>
-    </div>
+    <div id="subs-voltage-legend" style="display:none"></div>
     <div id="subs-lrf-legend" style="display:none">
       <div class="section-title">Legend – ELI: LRF (near-term, local region)</div>
       <div class="legend-item"><div class="legend-line" style="background:#3fb950;height:8px;border-radius:50%;width:8px"></div>&gt; 0.42 — high (top 10%)</div>
@@ -718,53 +753,75 @@ function addLayers() {
     '#8b949e'
   ];
 
-  // Glow/highlight layer — wide yellow line (lines) or outer circle (points)
+  // Status-based colour for glow halo and point stroke (matches the legend)
+  const ispStatusColor = ['match', ['get', 'status'],
+    'Committed',   '#3fb950',
+    'Anticipated', '#d29922',
+    'Actionable',  '#58a6ff',
+    '#8b949e'
+  ];
+
+  // Status-based dash patterns (matching legend: Committed solid, Anticipated medium, Actionable short)
+  const ispStatusDash = ['match', ['get', 'status'],
+    'Committed',   ['literal', [1, 0]],     // solid
+    'Anticipated', ['literal', [3, 2]],     // medium dashes
+    'Actionable',  ['literal', [1.5, 2]],   // short dashes
+    ['literal', [4, 4]]                     // future / other
+  ];
+
+  // Filters that match BOTH LineString and MultiLineString (HumeLink Y-shape)
+  const ispLineFilter  = ['any',
+    ['==', ['geometry-type'], 'LineString'],
+    ['==', ['geometry-type'], 'MultiLineString']
+  ];
+  const ispPointFilter = ['==', ['geometry-type'], 'Point'];
+
+  // Glow halo — coloured by status, gives a soft visual cue without dominating
   map.addLayer({
     id: 'isp-line-glow',
     type: 'line',
     source: 'isp',
-    filter: ['==', ['geometry-type'], 'LineString'],
+    filter: ispLineFilter,
     layout: { visibility: 'none', 'line-join': 'round', 'line-cap': 'round' },
     paint: {
-      'line-color': '#f0e040',
-      'line-width': ['interpolate', ['linear'], ['zoom'], 4, 10, 8, 16, 12, 22],
-      'line-opacity': 0.28
+      'line-color': ispStatusColor,
+      'line-width': ['interpolate', ['linear'], ['zoom'], 4, 6, 8, 10, 12, 14],
+      'line-opacity': 0.18,
+      'line-blur': 2
     }
   });
-  const ispStatusOpacity = ['case',
-    ['==', ['get', 'status'], 'Committed'],   1.0,
-    ['==', ['get', 'status'], 'Anticipated'], 0.82,
-    ['==', ['get', 'status'], 'Actionable'],  0.65,
-    0.5
-  ];
+
   const ispStatusWidth = ['interpolate', ['linear'], ['zoom'],
-    4,  ['case', ['==', ['get', 'status'], 'Committed'], 5,  ['==', ['get', 'status'], 'Anticipated'], 4, 3],
-    8,  ['case', ['==', ['get', 'status'], 'Committed'], 7,  ['==', ['get', 'status'], 'Anticipated'], 6, 5],
-    12, ['case', ['==', ['get', 'status'], 'Committed'], 10, ['==', ['get', 'status'], 'Anticipated'], 9, 7]
+    4,  ['match', ['get', 'status'], 'Committed', 4,  'Anticipated', 3,  'Actionable', 2.5,   2],
+    8,  ['match', ['get', 'status'], 'Committed', 6,  'Anticipated', 5,  'Actionable', 4,     3],
+    12, ['match', ['get', 'status'], 'Committed', 9,  'Anticipated', 8,  'Actionable', 6.5,   5]
   ];
+
   map.addLayer({
     id: 'isp-line',
     type: 'line',
     source: 'isp',
-    filter: ['==', ['geometry-type'], 'LineString'],
+    filter: ispLineFilter,
     layout: { visibility: 'none', 'line-join': 'round', 'line-cap': 'round' },
     paint: {
       'line-color': ispVoltColor,
       'line-width': ispStatusWidth,
-      'line-dasharray': [4, 3],
-      'line-opacity': ispStatusOpacity
+      'line-dasharray': ispStatusDash,
+      'line-opacity': 0.95
     }
   });
+
+  // Point glow — coloured by status, soft halo
   map.addLayer({
     id: 'isp-point-glow',
     type: 'circle',
     source: 'isp',
-    filter: ['==', ['geometry-type'], 'Point'],
+    filter: ispPointFilter,
     layout: { visibility: 'none' },
     paint: {
-      'circle-radius': ['interpolate', ['linear'], ['zoom'], 4, 10, 8, 15, 12, 20],
-      'circle-color': '#f0e040',
-      'circle-opacity': 0.25,
+      'circle-radius': ['interpolate', ['linear'], ['zoom'], 4, 8, 8, 13, 12, 18],
+      'circle-color': ispStatusColor,
+      'circle-opacity': 0.22,
       'circle-stroke-width': 0
     }
   });
@@ -772,12 +829,12 @@ function addLayers() {
     id: 'isp-point',
     type: 'circle',
     source: 'isp',
-    filter: ['==', ['geometry-type'], 'Point'],
+    filter: ispPointFilter,
     layout: { visibility: 'none' },
     paint: {
       'circle-radius': ['interpolate', ['linear'], ['zoom'], 4, 6, 8, 9, 12, 13],
       'circle-color': ispVoltColor,
-      'circle-stroke-color': '#f0e040',
+      'circle-stroke-color': ispStatusColor,
       'circle-stroke-width': 2.5,
       'circle-opacity': 0.95
     }
@@ -790,28 +847,40 @@ function addLayers() {
       visibility: 'none',
       'text-field': ['get', 'name'],
       'text-font': ['Open Sans Bold'],
-      'text-size': ['interpolate', ['linear'], ['zoom'], 5, 9, 8, 11, 12, 13],
+      'text-size': ['interpolate', ['linear'], ['zoom'], 5, 10, 8, 12, 12, 14],
       'text-anchor': 'top',
-      'text-offset': [0, 1.2],
+      'text-offset': [0, 1.4],
       'text-allow-overlap': false,
       'text-ignore-placement': false,
-      'text-max-width': 12
+      'text-max-width': 11
     },
     paint: {
-      'text-color': '#f0e040',
-      'text-halo-color': 'rgba(13,17,23,0.95)',
-      'text-halo-width': 14
+      'text-color': '#e6edf3',
+      'text-halo-color': 'rgba(13,17,23,0.92)',
+      'text-halo-width': 2.2
     },
-    minzoom: 5
+    minzoom: 6
   });
 
   // ISP line endpoint markers (start/end substation nodes)
+  // For MultiLineString (e.g., HumeLink Y-shape) we collect endpoints from every segment
   const ispEndpointFeatures = [];
+  const seenEndpoint = new Set();   // dedupe shared junctions (e.g., HumeLink centre)
+  function pushEndpoint(coord, props) {
+    const key = `${coord[0].toFixed(4)},${coord[1].toFixed(4)},${props.name}`;
+    if (seenEndpoint.has(key)) return;
+    seenEndpoint.add(key);
+    ispEndpointFeatures.push({ type: 'Feature', geometry: { type: 'Point', coordinates: coord }, properties: props });
+  }
   (window.ispData && window.ispData.features ? window.ispData.features : []).forEach(f => {
     if (f.geometry.type === 'LineString') {
       const coords = f.geometry.coordinates;
-      [coords[0], coords[coords.length - 1]].forEach(c => {
-        ispEndpointFeatures.push({ type: 'Feature', geometry: { type: 'Point', coordinates: c }, properties: f.properties });
+      pushEndpoint(coords[0], f.properties);
+      pushEndpoint(coords[coords.length - 1], f.properties);
+    } else if (f.geometry.type === 'MultiLineString') {
+      f.geometry.coordinates.forEach(seg => {
+        pushEndpoint(seg[0], f.properties);
+        pushEndpoint(seg[seg.length - 1], f.properties);
       });
     }
   });
@@ -831,14 +900,14 @@ function addLayers() {
   });
 
   // ── New Zealand transmission layers (hidden by default) ─────────────
-  // Colour scheme: consistent with AUS at matching voltages; distinct for NZ-specific levels
-  // 400kV (1 line, HVDC-grade AC): gold  |  350kV (HVDC Cook Strait): cyan
-  // 220kV: blue (same as AUS 220kV)      |  110kV: red (same as AUS 110kV)
-  // 66kV: brown (same as AUS 66kV)       |  default: grey
+  // Voltage colour scheme — pairs each NZ tier with the matching-tier AUS colour
+  // 400 kV (NZ) ↔ 330 kV (AUS) → orange    | 350 kV (NZ HVDC) ↔ 275 kV (AUS) → magenta
+  // 220 kV ↔ 220 kV → blue                 | 110 kV ↔ 132/110 kV → red
+  // 66  kV ↔ 66  kV → brown
   const NZ_VOLT_COLOR = [
     'match', ['to-number', ['get', 'voltage_kv'], 0],
-    400, '#ffe033',
-    350, '#22d3ee',
+    400, '#f08020',
+    350, '#d040c0',
     220, '#4496e0',
     110, '#d84040',
     66,  '#8b5e3c',
@@ -846,8 +915,8 @@ function addLayers() {
   ];
   const NZ_SUB_COLOR = [
     'match', ['to-number', ['get', 'voltage'], 0],
-    400, '#ffe033',
-    350, '#22d3ee',
+    400, '#f08020',
+    350, '#d040c0',
     220, '#4496e0',
     110, '#d84040',
     66,  '#8b5e3c',
@@ -1640,20 +1709,42 @@ function bindMapEvents() {
   map.on('click', 'isp-line',  e => showIspPopup(e));
   function showIspPopup(e) {
     const p   = e.features[0].properties;
-    const kv  = p.voltage_kv ? `${p.voltage_kv} kV` : 'Voltage unknown';
+    const kv  = p.voltage_kv ? `${p.voltage_kv} kV` : '–';
     const statusColors = { Committed:'#3fb950', Anticipated:'#d29922', Actionable:'#58a6ff', Future:'#8b949e' };
     const scol = statusColors[p.status] || '#e6edf3';
-    let html = `<div class="popup-header">${p.name}</div><div class="popup-body">`;
-    html += `<span class="popup-label">Status</span><span class="popup-value" style="color:${scol};font-weight:700">${p.status}</span>`;
-    html += `<span class="popup-label">Type</span><span class="popup-value">${p.project_type}</span>`;
-    html += `<span class="popup-label">Region</span><span class="popup-value">${p.region}</span>`;
-    html += `<span class="popup-label">Voltage</span><span class="popup-value">${kv}</span>`;
-    html += `<span class="popup-label">Proponents</span><span class="popup-value">${p.proponents || '—'}</span>`;
-    if (p.in_service) html += `<span class="popup-label">In Service</span><span class="popup-value">${p.in_service}</span>`;
-    if (p.capacity_note) html += `<span class="popup-label">Capacity</span><span class="popup-value">${p.capacity_note}</span>`;
-    if (p.description) html += `<div style="font-size:11px;color:#8b949e;margin-top:6px;line-height:1.45">${p.description.replace(/\n/g,'<br>')}</div>`;
-    if (p.last_updated) html += `<div style="font-size:10px;color:#6e7681;margin-top:6px">Updated: ${p.last_updated}</div>`;
+
+    // Header — title with status badge
+    let html = `<div class="popup-title">${p.name}</div>`;
+
+    // Status pill row
+    html += `<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap">`;
+    html += `<span style="background:${scol}22;color:${scol};border:1px solid ${scol}80;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700">${p.status}</span>`;
+    if (kv !== '–') html += `<span style="background:#21262d;color:#e6edf3;border:1px solid #30363d;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600">${kv}</span>`;
+    if (p.in_service) html += `<span style="color:#8b949e;font-size:11px">In service: <strong style="color:#e6edf3">${p.in_service}</strong></span>`;
     html += `</div>`;
+
+    // Key facts grid
+    html += `<div class="popup-grid">`;
+    if (p.project_type) html += `<span class="popup-label">Type</span><span class="popup-value">${p.project_type}</span>`;
+    html += `<span class="popup-label">Region</span><span class="popup-value">${p.region || '–'}</span>`;
+    if (p.proponents) html += `<span class="popup-label">Proponents</span><span class="popup-value">${p.proponents}</span>`;
+    html += `</div>`;
+
+    // Capacity section
+    if (p.capacity_note) {
+      html += `<div class="popup-section"><div class="popup-section-title">Capacity</div>`;
+      html += `<div style="font-size:12px;color:#e6edf3;line-height:1.45">${p.capacity_note.replace(/\n/g,'<br>')}</div></div>`;
+    }
+
+    // Description section
+    if (p.description) {
+      html += `<div class="popup-section"><div class="popup-section-title">Description</div>`;
+      html += `<div style="font-size:11px;color:#8b949e;line-height:1.5;max-height:180px;overflow-y:auto;padding-right:4px">${p.description.replace(/\n/g,'<br>')}</div></div>`;
+    }
+
+    // Footer
+    if (p.last_updated) html += `<div style="font-size:10px;color:#6e7681;margin-top:8px;text-align:right">AEMO data updated: ${p.last_updated}</div>`;
+
     popup.setLngLat(e.lngLat).setHTML(html).addTo(map);
   }
 
@@ -1751,6 +1842,18 @@ function applyFilters() {
   map.setFilter('lines-layer', lineFilter.length > 1 ? lineFilter : null);
   map.setFilter('lines-hover', lineFilter.length > 1 ? lineFilter : null);
 
+  // ── NZ lines filter (same voltage tier system) ──
+  const nzLineFilter = ['all'];
+  if (!allChecked) {
+    nzLineFilter.push(selectedKvs.length > 0
+      ? ['in', ['to-number', ['get', 'voltage_kv'], 0], ['literal', selectedKvs]]
+      : ['==', ['get', 'voltage_kv'], -1]);
+  }
+  if (map.getLayer('nz-lines-layer')) {
+    map.setFilter('nz-line-glow',   nzLineFilter.length > 1 ? nzLineFilter : null);
+    map.setFilter('nz-lines-layer', nzLineFilter.length > 1 ? nzLineFilter : null);
+  }
+
   // ── Substations filter ──
   const cpFilter = ['all'];
   if (!allChecked) {
@@ -1760,6 +1863,12 @@ function applyFilters() {
   }
   map.setFilter('cps-layer',  cpFilter.length > 1 ? cpFilter : null);
   map.setFilter('cps-labels', cpFilter.length > 1 ? cpFilter : null);
+
+  // ── NZ substations filter ──
+  if (map.getLayer('nz-subs-layer')) {
+    map.setFilter('nz-subs-layer',  cpFilter.length > 1 ? cpFilter : null);
+    map.setFilter('nz-subs-labels', cpFilter.length > 1 ? cpFilter : null);
+  }
 }
 
 // ─────────────────────────────────────────
@@ -2384,13 +2493,14 @@ async function fetchNZPrices() {
     const data = await res.json();
     const items = data.items || [];
 
-    // Latest trading period per node (API returns 48 periods × 6 nodes)
+    // Latest entry per node — compare by timestamp because trading_period 1-48
+    // wraps daily (e.g. yesterday's TP 33 has a higher TP number than today's TP 32).
     const latest = {};
     items.forEach(item => {
       const node = item.node_id;
-      const tp   = parseInt(item.trading_period) || 0;
-      if (!latest[node] || tp > latest[node].tp) {
-        latest[node] = { tp, price: item.price, timestamp: item.timestamp };
+      const ts   = Date.parse(item.timestamp) || 0;
+      if (!latest[node] || ts > latest[node].ts) {
+        latest[node] = { ts, tp: item.trading_period, price: item.price, timestamp: item.timestamp };
       }
     });
 
