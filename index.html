@@ -212,7 +212,6 @@
     <label class="layer-row"><input type="checkbox" id="layer-satellite" /><div class="layer-dot" style="background:linear-gradient(135deg,#4a7c59,#2d4a8a);border-radius:2px"></div>Satellite</label>
     <label class="layer-row"><input type="checkbox" id="layer-lines" checked /><div class="layer-dot" style="background:#f08020"></div>Transmission Lines</label>
     <label class="layer-row"><input type="checkbox" id="layer-cps" checked /><div class="layer-dot" style="background:#d84040"></div>Substations</label>
-    <label class="layer-row"><input type="checkbox" id="layer-nz" /><div class="layer-dot" style="background:linear-gradient(135deg,#22d3ee,#4496e0,#d84040);border-radius:2px"></div>NZ Grid</label>
     <label class="layer-row"><input type="checkbox" id="layer-nem" /><div class="layer-dot" style="background:linear-gradient(135deg,#3fb950,#d29922,#f85149);border-radius:2px"></div>Live Prices (AUS+NZ)</label>
     <div id="nem-status" style="font-size:11px;color:#8b949e;padding:1px 0 4px 20px;display:none">–</div>
 
@@ -761,16 +760,8 @@ function addLayers() {
     '#8b949e'
   ];
 
-  // Status-based dash patterns (matching legend: Committed solid, Anticipated medium, Actionable short)
-  const ispStatusDash = ['match', ['get', 'status'],
-    'Committed',   ['literal', [1, 0]],     // solid
-    'Anticipated', ['literal', [3, 2]],     // medium dashes
-    'Actionable',  ['literal', [1.5, 2]],   // short dashes
-    ['literal', [4, 4]]                     // future / other
-  ];
-
   // Filters that match BOTH LineString and MultiLineString (HumeLink Y-shape)
-  const ispLineFilter  = ['any',
+  const ispLineGeomFilter = ['any',
     ['==', ['geometry-type'], 'LineString'],
     ['==', ['geometry-type'], 'MultiLineString']
   ];
@@ -781,7 +772,7 @@ function addLayers() {
     id: 'isp-line-glow',
     type: 'line',
     source: 'isp',
-    filter: ispLineFilter,
+    filter: ispLineGeomFilter,
     layout: { visibility: 'none', 'line-join': 'round', 'line-cap': 'round' },
     paint: {
       'line-color': ispStatusColor,
@@ -791,25 +782,31 @@ function addLayers() {
     }
   });
 
-  const ispStatusWidth = ['interpolate', ['linear'], ['zoom'],
-    4,  ['match', ['get', 'status'], 'Committed', 4,  'Anticipated', 3,  'Actionable', 2.5,   2],
-    8,  ['match', ['get', 'status'], 'Committed', 6,  'Anticipated', 5,  'Actionable', 4,     3],
-    12, ['match', ['get', 'status'], 'Committed', 9,  'Anticipated', 8,  'Actionable', 6.5,   5]
-  ];
-
-  map.addLayer({
-    id: 'isp-line',
-    type: 'line',
-    source: 'isp',
-    filter: ispLineFilter,
-    layout: { visibility: 'none', 'line-join': 'round', 'line-cap': 'round' },
-    paint: {
-      'line-color': ispVoltColor,
-      'line-width': ispStatusWidth,
-      'line-dasharray': ispStatusDash,
-      'line-opacity': 0.95
-    }
-  });
+  // line-dasharray cannot be data-driven in MapLibre, so split into one layer per status
+  // with a constant dasharray each. Width is also baked per-status to stay simple.
+  function ispLineLayer(id, status, dashArray, widthMul) {
+    return {
+      id,
+      type: 'line',
+      source: 'isp',
+      filter: ['all', ispLineGeomFilter, ['==', ['get', 'status'], status]],
+      layout: { visibility: 'none', 'line-join': 'round', 'line-cap': 'round' },
+      paint: {
+        'line-color': ispVoltColor,
+        'line-width': ['interpolate', ['linear'], ['zoom'],
+          4,  4   * widthMul,
+          8,  6   * widthMul,
+          12, 9   * widthMul
+        ],
+        'line-dasharray': dashArray,
+        'line-opacity': 0.95
+      }
+    };
+  }
+  map.addLayer(ispLineLayer('isp-line-committed',   'Committed',   [1, 0],   1.0));   // solid, thickest
+  map.addLayer(ispLineLayer('isp-line-anticipated', 'Anticipated', [3, 2],   0.85));  // medium dash
+  map.addLayer(ispLineLayer('isp-line-actionable',  'Actionable',  [1.5, 2], 0.7));   // short dash, thinner
+  map.addLayer(ispLineLayer('isp-line-other',       'Future',      [4, 4],   0.6));
 
   // Point glow — coloured by status, soft halo
   map.addLayer({
@@ -926,12 +923,12 @@ function addLayers() {
   map.addSource('nz-lines', { type: 'geojson', data: window.nzLinesData });
   map.addSource('nz-subs',  { type: 'geojson', data: window.nzSubsData  });
 
-  // NZ line glow
+  // NZ line glow — default visible (controlled by the same Lines checkbox as AUS)
   map.addLayer({
     id: 'nz-line-glow',
     type: 'line',
     source: 'nz-lines',
-    layout: { 'line-join': 'round', 'line-cap': 'round', visibility: 'none' },
+    layout: { 'line-join': 'round', 'line-cap': 'round', visibility: 'visible' },
     paint: {
       'line-color': NZ_VOLT_COLOR,
       'line-width': ['interpolate', ['linear'], ['zoom'], 4, 4, 8, 7, 12, 12],
@@ -939,24 +936,24 @@ function addLayers() {
       'line-blur': 3
     }
   });
-  // NZ lines
+  // NZ lines — default visible (controlled by Lines checkbox)
   map.addLayer({
     id: 'nz-lines-layer',
     type: 'line',
     source: 'nz-lines',
-    layout: { 'line-join': 'round', 'line-cap': 'round', visibility: 'none' },
+    layout: { 'line-join': 'round', 'line-cap': 'round', visibility: 'visible' },
     paint: {
       'line-color': NZ_VOLT_COLOR,
       'line-width': ['interpolate', ['linear'], ['zoom'], 4, 1.2, 8, 2.5, 12, 5],
       'line-opacity': 0.9
     }
   });
-  // NZ substations
+  // NZ substations — default visible (controlled by Substations checkbox)
   map.addLayer({
     id: 'nz-subs-layer',
     type: 'circle',
     source: 'nz-subs',
-    layout: { visibility: 'none' },
+    layout: { visibility: 'visible' },
     paint: {
       'circle-radius': ['interpolate', ['linear'], ['zoom'], 4, 2, 8, 4, 12, 7],
       'circle-color': NZ_SUB_COLOR,
@@ -965,14 +962,14 @@ function addLayers() {
       'circle-opacity': 0.9
     }
   });
-  // NZ substation name labels
+  // NZ substation name labels — default visible (controlled by Substations checkbox)
   map.addLayer({
     id: 'nz-subs-labels',
     type: 'symbol',
     source: 'nz-subs',
     minzoom: 7,
     layout: {
-      visibility: 'none',
+      visibility: 'visible',
       'text-field': ['get', 'name'],
       'text-size': 11,
       'text-offset': [0, 1.2],
@@ -1707,7 +1704,8 @@ function bindMapEvents() {
 
   // ISP Upgrades click popup
   map.on('click', 'isp-point', e => showIspPopup(e));
-  map.on('click', 'isp-line',  e => showIspPopup(e));
+  ['isp-line-committed','isp-line-anticipated','isp-line-actionable','isp-line-other'].forEach(id =>
+    map.on('click', id, e => showIspPopup(e)));
   function showIspPopup(e) {
     const p   = e.features[0].properties;
     const kv  = p.voltage_kv ? `${p.voltage_kv} kV` : '–';
@@ -1764,8 +1762,10 @@ function bindMapEvents() {
   map.on('mouseleave', 'comp-layer',         () => map.getCanvas().style.cursor = '');
   map.on('mouseenter', 'isp-point',          () => map.getCanvas().style.cursor = 'pointer');
   map.on('mouseleave', 'isp-point',          () => map.getCanvas().style.cursor = '');
-  map.on('mouseenter', 'isp-line',           () => map.getCanvas().style.cursor = 'pointer');
-  map.on('mouseleave', 'isp-line',           () => map.getCanvas().style.cursor = '');
+  ['isp-line-committed','isp-line-anticipated','isp-line-actionable','isp-line-other'].forEach(id => {
+    map.on('mouseenter', id, () => map.getCanvas().style.cursor = 'pointer');
+    map.on('mouseleave', id, () => map.getCanvas().style.cursor = '');
+  });
   map.on('mouseenter', 'isp-endpoints',      () => map.getCanvas().style.cursor = 'pointer');
   map.on('mouseleave', 'isp-endpoints',      () => map.getCanvas().style.cursor = '');
   map.on('click', 'isp-endpoints', e => showIspPopup(e));
@@ -1878,16 +1878,17 @@ function applyFilters() {
 function bindSidebar() {
   document.getElementById('layer-lines').addEventListener('change', e => {
     const v = e.target.checked ? 'visible' : 'none';
-    map.setLayoutProperty('lines-layer', 'visibility', v);
-  });
-  document.getElementById('layer-nz').addEventListener('change', e => {
-    const v = e.target.checked ? 'visible' : 'none';
-    ['nz-line-glow', 'nz-lines-layer', 'nz-subs-layer', 'nz-subs-labels'].forEach(id =>
-      map.setLayoutProperty(id, 'visibility', v));
+    // Single toggle controls AUS lines + NZ lines (voltage colours are unified)
+    ['lines-layer', 'nz-line-glow', 'nz-lines-layer'].forEach(id => {
+      if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', v);
+    });
   });
   document.getElementById('layer-cps').addEventListener('change', e => {
     const v = e.target.checked ? 'visible' : 'none';
-    ['cps-layer', 'cps-labels'].forEach(id => map.setLayoutProperty(id, 'visibility', v));
+    // Single toggle controls AUS substations + NZ substations
+    ['cps-layer', 'cps-labels', 'nz-subs-layer', 'nz-subs-labels'].forEach(id => {
+      if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', v);
+    });
   });
   document.getElementById('layer-satellite').addEventListener('change', e => {
     const on = e.target.checked;
@@ -2035,7 +2036,7 @@ function bindSidebar() {
   });
 
   // ISP Upgrades toggle
-  const ISP_LAYERS = ['isp-line-glow', 'isp-line', 'isp-point-glow', 'isp-point', 'isp-endpoints', 'isp-labels'];
+  const ISP_LAYERS = ['isp-line-glow', 'isp-line-committed', 'isp-line-anticipated', 'isp-line-actionable', 'isp-line-other', 'isp-point-glow', 'isp-point', 'isp-endpoints', 'isp-labels'];
   let ispMode = false;
   document.getElementById('isp-mode-btn').addEventListener('click', () => {
     ispMode = !ispMode;
