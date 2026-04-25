@@ -782,28 +782,29 @@ function addLayers() {
     }
   });
 
-  // line-dasharray cannot be data-driven in MapLibre, so split into one layer per status
-  // with a constant dasharray each. Width is also baked per-status to stay simple.
+  // line-dasharray cannot be data-driven in MapLibre and a 0-length gap is rejected,
+  // so split into one layer per status with a constant dasharray (or none for solid).
   function ispLineLayer(id, status, dashArray, widthMul) {
+    const paint = {
+      'line-color': ispVoltColor,
+      'line-width': ['interpolate', ['linear'], ['zoom'],
+        4,  4   * widthMul,
+        8,  6   * widthMul,
+        12, 9   * widthMul
+      ],
+      'line-opacity': 0.95
+    };
+    if (dashArray) paint['line-dasharray'] = dashArray;   // omit for solid lines
     return {
       id,
       type: 'line',
       source: 'isp',
       filter: ['all', ispLineGeomFilter, ['==', ['get', 'status'], status]],
       layout: { visibility: 'none', 'line-join': 'round', 'line-cap': 'round' },
-      paint: {
-        'line-color': ispVoltColor,
-        'line-width': ['interpolate', ['linear'], ['zoom'],
-          4,  4   * widthMul,
-          8,  6   * widthMul,
-          12, 9   * widthMul
-        ],
-        'line-dasharray': dashArray,
-        'line-opacity': 0.95
-      }
+      paint
     };
   }
-  map.addLayer(ispLineLayer('isp-line-committed',   'Committed',   [1, 0],   1.0));   // solid, thickest
+  map.addLayer(ispLineLayer('isp-line-committed',   'Committed',   null,     1.0));   // solid, thickest
   map.addLayer(ispLineLayer('isp-line-anticipated', 'Anticipated', [3, 2],   0.85));  // medium dash
   map.addLayer(ispLineLayer('isp-line-actionable',  'Actionable',  [1.5, 2], 0.7));   // short dash, thinner
   map.addLayer(ispLineLayer('isp-line-other',       'Future',      [4, 4],   0.6));
