@@ -212,7 +212,8 @@
     <label class="layer-row"><input type="checkbox" id="layer-satellite" /><div class="layer-dot" style="background:linear-gradient(135deg,#4a7c59,#2d4a8a);border-radius:2px"></div>Satellite</label>
     <label class="layer-row"><input type="checkbox" id="layer-lines" checked /><div class="layer-dot" style="background:#f08020"></div>Transmission Lines</label>
     <label class="layer-row"><input type="checkbox" id="layer-cps" checked /><div class="layer-dot" style="background:#d84040"></div>Substations</label>
-    <label class="layer-row"><input type="checkbox" id="layer-nem" /><div class="layer-dot" style="background:linear-gradient(135deg,#3fb950,#d29922,#f85149);border-radius:2px"></div>Live NEM Prices</label>
+    <label class="layer-row"><input type="checkbox" id="layer-nz" /><div class="layer-dot" style="background:linear-gradient(135deg,#22d3ee,#4496e0,#d84040);border-radius:2px"></div>NZ Grid</label>
+    <label class="layer-row"><input type="checkbox" id="layer-nem" /><div class="layer-dot" style="background:linear-gradient(135deg,#3fb950,#d29922,#f85149);border-radius:2px"></div>Live Prices (AUS+NZ)</label>
     <div id="nem-status" style="font-size:11px;color:#8b949e;padding:1px 0 4px 20px;display:none">–</div>
 
     <label class="layer-row"><input type="checkbox" id="layer-comp" /><div class="layer-dot" style="background:#f0883e;border:2px solid #fff;border-radius:2px"></div>Projects</label>
@@ -446,7 +447,9 @@ Promise.all([
   fetch('nem_regions.geojson').then(r => r.json()).catch(() => ({ type: 'FeatureCollection', features: [] })),
   fetch('nem_interconnectors.geojson').then(r => r.json()).catch(() => ({ type: 'FeatureCollection', features: [] })),
   fetch('isp_upgrades.geojson').then(r => r.json()).catch(() => ({ type: 'FeatureCollection', features: [] })),
-]).then(([lines, cps, mlf, hhci, comp, nemRegions, nemInter, ispUpgrades]) => {
+  fetch('nz_lines.geojson').then(r => r.json()).catch(() => ({ type: 'FeatureCollection', features: [] })),
+  fetch('nz_substations.geojson').then(r => r.json()).catch(() => ({ type: 'FeatureCollection', features: [] })),
+]).then(([lines, cps, mlf, hhci, comp, nemRegions, nemInter, ispUpgrades, nzLines, nzSubs]) => {
   linesData = lines;
   cpData = cps;
   mlfData = mlf;
@@ -455,6 +458,8 @@ Promise.all([
   window.nemRegionsData = nemRegions;
   window.nemInterData = nemInter;
   window.ispData = ispUpgrades;
+  window.nzLinesData = nzLines;
+  window.nzSubsData = nzSubs;
 
   // store globally
   window.subsData = cps;
@@ -822,6 +827,134 @@ function addLayers() {
       'circle-stroke-color': '#ffffff',
       'circle-stroke-width': 1.5,
       'circle-opacity': ispStatusOpacity
+    }
+  });
+
+  // ── New Zealand transmission layers (hidden by default) ─────────────
+  // Colour scheme: consistent with AUS at matching voltages; distinct for NZ-specific levels
+  // 400kV (1 line, HVDC-grade AC): gold  |  350kV (HVDC Cook Strait): cyan
+  // 220kV: blue (same as AUS 220kV)      |  110kV: red (same as AUS 110kV)
+  // 66kV: brown (same as AUS 66kV)       |  default: grey
+  const NZ_VOLT_COLOR = [
+    'match', ['to-number', ['get', 'voltage_kv'], 0],
+    400, '#ffe033',
+    350, '#22d3ee',
+    220, '#4496e0',
+    110, '#d84040',
+    66,  '#8b5e3c',
+    '#8b949e'
+  ];
+  const NZ_SUB_COLOR = [
+    'match', ['to-number', ['get', 'voltage'], 0],
+    400, '#ffe033',
+    350, '#22d3ee',
+    220, '#4496e0',
+    110, '#d84040',
+    66,  '#8b5e3c',
+    '#607090'
+  ];
+
+  map.addSource('nz-lines', { type: 'geojson', data: window.nzLinesData });
+  map.addSource('nz-subs',  { type: 'geojson', data: window.nzSubsData  });
+
+  // NZ line glow
+  map.addLayer({
+    id: 'nz-line-glow',
+    type: 'line',
+    source: 'nz-lines',
+    layout: { 'line-join': 'round', 'line-cap': 'round', visibility: 'none' },
+    paint: {
+      'line-color': NZ_VOLT_COLOR,
+      'line-width': ['interpolate', ['linear'], ['zoom'], 4, 4, 8, 7, 12, 12],
+      'line-opacity': 0.18,
+      'line-blur': 3
+    }
+  });
+  // NZ lines
+  map.addLayer({
+    id: 'nz-lines-layer',
+    type: 'line',
+    source: 'nz-lines',
+    layout: { 'line-join': 'round', 'line-cap': 'round', visibility: 'none' },
+    paint: {
+      'line-color': NZ_VOLT_COLOR,
+      'line-width': ['interpolate', ['linear'], ['zoom'], 4, 1.2, 8, 2.5, 12, 5],
+      'line-opacity': 0.9
+    }
+  });
+  // NZ substations
+  map.addLayer({
+    id: 'nz-subs-layer',
+    type: 'circle',
+    source: 'nz-subs',
+    layout: { visibility: 'none' },
+    paint: {
+      'circle-radius': ['interpolate', ['linear'], ['zoom'], 4, 2, 8, 4, 12, 7],
+      'circle-color': NZ_SUB_COLOR,
+      'circle-stroke-width': 1,
+      'circle-stroke-color': '#161b22',
+      'circle-opacity': 0.9
+    }
+  });
+  // NZ substation name labels
+  map.addLayer({
+    id: 'nz-subs-labels',
+    type: 'symbol',
+    source: 'nz-subs',
+    minzoom: 7,
+    layout: {
+      visibility: 'none',
+      'text-field': ['get', 'name'],
+      'text-size': 11,
+      'text-offset': [0, 1.2],
+      'text-anchor': 'top',
+      'text-font': ['Noto Sans Regular']
+    },
+    paint: {
+      'text-color': '#e6edf3',
+      'text-halo-color': 'rgba(0,0,0,0.7)',
+      'text-halo-width': 1.2
+    }
+  });
+
+  // NZ live price node source (points filled by fetchNZPrices)
+  map.addSource('nz-prices', {
+    type: 'geojson',
+    data: { type: 'FeatureCollection', features: [] }
+  });
+  map.addLayer({
+    id: 'nz-price-bg',
+    type: 'circle',
+    source: 'nz-prices',
+    layout: { visibility: 'none' },
+    paint: {
+      'circle-radius': 28,
+      'circle-color': ['coalesce', ['get', 'price_color'], '#30363d'],
+      'circle-opacity': 0.75,
+      'circle-stroke-color': '#30363d',
+      'circle-stroke-width': 1.5
+    }
+  });
+  map.addLayer({
+    id: 'nz-price-labels',
+    type: 'symbol',
+    source: 'nz-prices',
+    layout: {
+      visibility: 'none',
+      'text-field': [
+        'concat',
+        ['get', 'name'], '\n',
+        ['get', 'price_label']
+      ],
+      'text-size': 11,
+      'text-font': ['Noto Sans Bold'],
+      'text-anchor': 'center',
+      'text-justify': 'center'
+    },
+    paint: {
+      'text-color': '#ffffff',
+      'text-halo-color': 'rgba(0,0,0,0.5)',
+      'text-halo-width': 0.5
     }
   });
 
@@ -1529,6 +1662,10 @@ function bindMapEvents() {
   map.on('mouseleave', 'lines-layer',             () => map.getCanvas().style.cursor = '');
   map.on('mouseenter', 'lines-congestion-hit',    () => map.getCanvas().style.cursor = 'pointer');
   map.on('mouseleave', 'lines-congestion-hit',    () => map.getCanvas().style.cursor = '');
+  map.on('mouseenter', 'nz-lines-layer',          () => map.getCanvas().style.cursor = 'pointer');
+  map.on('mouseleave', 'nz-lines-layer',          () => map.getCanvas().style.cursor = '');
+  map.on('mouseenter', 'nz-subs-layer',           () => map.getCanvas().style.cursor = 'pointer');
+  map.on('mouseleave', 'nz-subs-layer',           () => map.getCanvas().style.cursor = '');
   map.on('mouseenter', 'cps-layer',          () => map.getCanvas().style.cursor = 'pointer');
   map.on('mouseleave', 'cps-layer',          () => map.getCanvas().style.cursor = '');
   map.on('mouseenter', 'comp-layer',         () => map.getCanvas().style.cursor = 'pointer');
@@ -1540,6 +1677,35 @@ function bindMapEvents() {
   map.on('mouseenter', 'isp-endpoints',      () => map.getCanvas().style.cursor = 'pointer');
   map.on('mouseleave', 'isp-endpoints',      () => map.getCanvas().style.cursor = '');
   map.on('click', 'isp-endpoints', e => showIspPopup(e));
+
+  // NZ line click
+  map.on('click', 'nz-lines-layer', e => {
+    const p = e.features[0].properties;
+    const voltStr = p.voltage_kv ? `${p.voltage_kv} kV` : '–';
+    const lenStr = p.length_m ? `${(p.length_m / 1000).toFixed(1)} km` : '–';
+    let html = `<div class="popup-title">${p.name || 'NZ Transmission Line'}</div>`;
+    html += `<div class="popup-grid">`;
+    html += `<span class="popup-label">Voltage</span><span class="popup-value">${voltStr}</span>`;
+    html += `<span class="popup-label">Length</span><span class="popup-value">${lenStr}</span>`;
+    html += `<span class="popup-label">Code</span><span class="popup-value">${p.code || '–'}</span>`;
+    html += `<span class="popup-label">Operator</span><span class="popup-value">Transpower NZ</span>`;
+    html += `</div>`;
+    popup.setLngLat(e.lngLat).setHTML(html).addTo(map);
+  });
+
+  // NZ substation click
+  map.on('click', 'nz-subs-layer', e => {
+    const p = e.features[0].properties;
+    const voltStr = p.voltage ? `${p.voltage} kV` : '–';
+    let html = `<div class="popup-title">${p.name || 'NZ Substation'}</div>`;
+    html += `<div class="popup-grid">`;
+    html += `<span class="popup-label">Voltage</span><span class="popup-value">${voltStr}</span>`;
+    html += `<span class="popup-label">Code</span><span class="popup-value">${p.code || '–'}</span>`;
+    html += `<span class="popup-label">Operator</span><span class="popup-value">Transpower NZ</span>`;
+    html += `</div>`;
+    popup.setLngLat(e.lngLat).setHTML(html).addTo(map);
+  });
+
   map.on('mouseenter', 'nem-regions-fill',        () => map.getCanvas().style.cursor = 'pointer');
   map.on('mouseleave', 'nem-regions-fill',        () => map.getCanvas().style.cursor = '');
   map.on('mouseenter', 'nem-interconnectors-line',() => map.getCanvas().style.cursor = 'pointer');
@@ -1604,6 +1770,11 @@ function bindSidebar() {
     const v = e.target.checked ? 'visible' : 'none';
     map.setLayoutProperty('lines-layer', 'visibility', v);
   });
+  document.getElementById('layer-nz').addEventListener('change', e => {
+    const v = e.target.checked ? 'visible' : 'none';
+    ['nz-line-glow', 'nz-lines-layer', 'nz-subs-layer', 'nz-subs-labels'].forEach(id =>
+      map.setLayoutProperty(id, 'visibility', v));
+  });
   document.getElementById('layer-cps').addEventListener('change', e => {
     const v = e.target.checked ? 'visible' : 'none';
     ['cps-layer', 'cps-labels'].forEach(id => map.setLayoutProperty(id, 'visibility', v));
@@ -1659,15 +1830,18 @@ function bindSidebar() {
       });
       // Also hide comp-icons (shares no checkbox)
       try { map.setLayoutProperty('comp-icons', 'visibility', 'none'); } catch(_) {}
-      // Show NEM layers
+      // Show NEM + NZ price layers
       NEM_PRICE_LAYERS.forEach(id => map.setLayoutProperty(id, 'visibility', 'visible'));
+      ['nz-price-bg', 'nz-price-labels'].forEach(id => map.setLayoutProperty(id, 'visibility', 'visible'));
       statusEl.style.display = 'block';
       legendEl.style.display = 'block';
       fetchNEMData();
-      window.nemPollTimer = setInterval(fetchNEMData, 5 * 60 * 1000);
+      fetchNZPrices();
+      window.nemPollTimer = setInterval(() => { fetchNEMData(); fetchNZPrices(); }, 5 * 60 * 1000);
     } else {
       if (window.nemPollTimer) { clearInterval(window.nemPollTimer); window.nemPollTimer = null; }
       NEM_PRICE_LAYERS.forEach(id => map.setLayoutProperty(id, 'visibility', 'none'));
+      ['nz-price-bg', 'nz-price-labels'].forEach(id => map.setLayoutProperty(id, 'visibility', 'none'));
       // Re-check grid checkboxes that were on before and fire their handlers
       NEM_GRID_CBS.forEach(id => {
         const cb = document.getElementById(id);
@@ -2176,6 +2350,87 @@ function buildConstraintBarChart(selectedCid, constrs, lineBpct) {
     </div>
     <div style="overflow-x:auto">${svg}</div>
     <div style="font-size:10px;color:#8b949e;margin-top:8px">Weekly headroom time series not available for this line. Showing aggregate binding frequency per constraint (Jan 2025 – Feb 2026).</div>`;
+}
+
+// ─────────────────────────────────────────
+// LIVE NZ PRICES (em6 free 24-hr API)
+// ─────────────────────────────────────────
+const NZ_PRICE_API = 'https://api.em6.co.nz/ords/em6/data_api/price/free_24hrs/';
+
+// Reference node display positions and short display names
+const NZ_PRICE_NODES = {
+  'OTA2201': { name: 'OTA\n(Auckland)',    lng: 174.842, lat: -36.947 },
+  'WKM2201': { name: 'WKM\n(Waikato)',    lng: 175.769, lat: -38.374 },
+  'HAY2201': { name: 'HAY\n(Wellington)', lng: 174.910, lat: -41.260 },
+  'KIK2201': { name: 'KIK\n(Nelson)',     lng: 172.380, lat: -41.740 },
+  'ISL2201': { name: 'ISL\n(Canterbury)', lng: 172.563, lat: -43.530 },
+  'BEN2201': { name: 'BEN\n(Benmore)',    lng: 169.755, lat: -44.517 },
+};
+
+function nzPriceColor(price) {
+  if (price == null) return '#30363d';
+  if (price < 0)    return '#6e40c9';  // negative: purple
+  if (price < 100)  return '#3fb950';  // cheap: green
+  if (price < 200)  return '#d29922';  // moderate: amber
+  if (price < 400)  return '#f0883e';  // high: orange
+  if (price < 800)  return '#f85149';  // very high: red
+  return '#ff0000';                    // extreme: bright red
+}
+
+async function fetchNZPrices() {
+  try {
+    const res = await fetch(NZ_PRICE_API);
+    if (!res.ok) return;
+    const data = await res.json();
+    const items = data.items || [];
+
+    // Latest trading period per node (API returns 48 periods × 6 nodes)
+    const latest = {};
+    items.forEach(item => {
+      const node = item.node_id;
+      const tp   = parseInt(item.trading_period) || 0;
+      if (!latest[node] || tp > latest[node].tp) {
+        latest[node] = { tp, price: item.price, timestamp: item.timestamp };
+      }
+    });
+
+    const features = Object.entries(NZ_PRICE_NODES).map(([nodeId, loc]) => {
+      const rec   = latest[nodeId];
+      const price = rec ? rec.price : null;
+      const label = price != null ? `NZ$${Math.round(price)}` : '–';
+      return {
+        type: 'Feature',
+        geometry: { type: 'Point', coordinates: [loc.lng, loc.lat] },
+        properties: {
+          node_id:     nodeId,
+          name:        loc.name,
+          price:       price,
+          price_color: nzPriceColor(price),
+          price_label: label,
+          timestamp:   rec ? rec.timestamp : null,
+        }
+      };
+    });
+
+    if (map.getSource('nz-prices')) {
+      map.getSource('nz-prices').setData({ type: 'FeatureCollection', features });
+    }
+
+    // Update status bar with latest NZ timestamp
+    const ts = Object.values(latest)[0]?.timestamp;
+    const statusEl = document.getElementById('nem-status');
+    if (statusEl && ts) {
+      const d = new Date(ts);
+      const timeStr = d.toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit' });
+      const existing = statusEl.textContent || '';
+      // Append NZ time if not already there
+      if (!existing.includes('NZ:')) {
+        statusEl.textContent = existing + ` | NZ: ${timeStr} NZST`;
+      }
+    }
+  } catch(e) {
+    console.warn('NZ price fetch failed:', e);
+  }
 }
 
 // ─────────────────────────────────────────
