@@ -1147,7 +1147,10 @@ function bindMapEvents() {
 
 
   // Line click
-  map.on('click', 'lines-layer', e => {
+  // Line popup — shared between lines-layer and the wider lines-congestion-hit layer
+  // (congestion mode renders thin coloured lines; the hit layer is 16px transparent
+  // so clicks register even when not perfectly on the visible stripe)
+  function showLinePopup(e) {
     const p = e.features[0].properties;
     const mlfs = window.mlfLookup[p.line_id] || [];
     let html = `<div class="popup-title">${p.name || 'Transmission Line'}</div>`;
@@ -1305,7 +1308,9 @@ function bindMapEvents() {
     }
 
     popup.setLngLat(e.lngLat).setHTML(html).addTo(map);
-  });
+  }
+  map.on('click', 'lines-layer', showLinePopup);
+  map.on('click', 'lines-congestion-hit', showLinePopup);
 
   // Substation click
   map.on('click', 'cps-layer', e => {
@@ -1796,6 +1801,62 @@ function bindMapEvents() {
     html += `<span class="popup-label">Code</span><span class="popup-value">${p.code || '–'}</span>`;
     html += `<span class="popup-label">Operator</span><span class="popup-value">Transpower NZ</span>`;
     html += `</div>`;
+
+    // ── TPM transmission charges (PY26/27) ──
+    if (p.tpm_total_2627) {
+      const total = parseFloat(p.tpm_total_2627);
+      const m = v => v >= 1e6 ? `NZ$${(v/1e6).toFixed(1)}M` : v >= 1e3 ? `NZ$${(v/1e3).toFixed(0)}k` : `NZ$${Math.round(v)}`;
+      html += `<div class="popup-section"><div class="popup-section-title">Transmission charges (PY26/27)</div>`;
+      html += `<div class="popup-grid">`;
+      html += `<span class="popup-label">Total</span><span class="popup-value" style="font-weight:700;color:#79c0ff">${m(total)}/yr</span>`;
+      const components = [
+        ['Benefit-based', p.tpm_bbc_2627],
+        ['Connection',    p.tpm_cc_2627],
+        ['Residual',      p.tpm_rc_2627],
+        ['Transitional',  p.tpm_tc_2627],
+      ].filter(([_, v]) => v && parseFloat(v) > 0);
+      components.forEach(([label, v]) => {
+        html += `<span class="popup-label">${label}</span><span class="popup-value">${m(parseFloat(v))}</span>`;
+      });
+      html += `</div>`;
+      const customers = tryParse(p.tpm_customers) || [];
+      if (customers.length) {
+        html += `<div style="font-size:10px;color:#8b949e;margin-top:4px">Customers: ${customers.map(c => `${c.name} (${m(c.total)})`).join(', ')}</div>`;
+      }
+      html += `</div>`;
+    }
+
+    // ── Connected generators (within 50 km) ──
+    if (p.gens_count) {
+      const opMw   = parseFloat(p.gens_operating_mw) || 0;
+      const pipeMw = parseFloat(p.gens_pipeline_mw)  || 0;
+      html += `<div class="popup-section"><div class="popup-section-title">Connected generation (within 50 km)</div>`;
+      html += `<div class="popup-grid">`;
+      if (opMw)   html += `<span class="popup-label">Operating</span><span class="popup-value" style="color:#3fb950;font-weight:700">${opMw.toLocaleString()} MW</span>`;
+      if (pipeMw) html += `<span class="popup-label">Pipeline</span><span class="popup-value" style="color:#d29922">${pipeMw.toLocaleString()} MW</span>`;
+      html += `<span class="popup-label">Project count</span><span class="popup-value">${p.gens_count}</span>`;
+      html += `</div>`;
+      const gens = tryParse(p.connected_gens) || [];
+      if (gens.length) {
+        const statusCol = { Operating:'#3fb950', 'Under Construction':'#d29922', 'Financial Close':'#f0883e', Approved:'#58a6ff', Application:'#79c0ff', Concept:'#8b949e', Repowering:'#c080ff', Decommissioned:'#6e7681' };
+        html += `<div style="margin-top:6px;max-height:140px;overflow-y:auto">`;
+        gens.forEach(g => {
+          const cap = g.capacity_mw ? `${parseFloat(g.capacity_mw).toLocaleString()} MW` : '–';
+          const sCol = statusCol[g.dev_status] || '#8b949e';
+          html += `<div style="display:flex;justify-content:space-between;gap:8px;padding:2px 0;font-size:11px;border-bottom:1px solid #21262d">`;
+          html += `<span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${g.name || '–'}</span>`;
+          html += `<span style="color:${sCol};flex-shrink:0">${g.dev_status || '–'}</span>`;
+          html += `<span style="color:#e6edf3;flex-shrink:0;width:62px;text-align:right">${cap}</span>`;
+          html += `</div>`;
+        });
+        html += `</div>`;
+        if (p.gens_count > gens.length) {
+          html += `<div style="font-size:10px;color:#8b949e;margin-top:3px">Showing top ${gens.length} of ${p.gens_count} by capacity</div>`;
+        }
+      }
+      html += `</div>`;
+    }
+
     popup.setLngLat(e.lngLat).setHTML(html).addTo(map);
   });
 
@@ -2555,7 +2616,13 @@ async function fetchNZPrices() {
     const features = Object.entries(NZ_PRICE_NODES).map(([nodeId, loc]) => {
       const rec   = latest[nodeId];
       const price = rec ? rec.price : null;
-      const label = price != null ? `NZ$${Math.round(price)}` : '–';
+      // NZ spot prices regularly sit below $10 (sometimes cents). Round to nearest
+      // dollar above $10 but keep decimals below $10 so $0.02 doesn't render as "$0".
+      const fmt = v => Math.abs(v) >= 100 ? Math.round(v).toString()
+                    : Math.abs(v) >= 10  ? v.toFixed(0)
+                    : Math.abs(v) >= 1   ? v.toFixed(1)
+                    :                      v.toFixed(2);
+      const label = price != null ? `NZ$${fmt(price)}` : '–';
       return {
         type: 'Feature',
         geometry: { type: 'Point', coordinates: [loc.lng, loc.lat] },
