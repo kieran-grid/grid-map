@@ -1791,30 +1791,48 @@ function bindMapEvents() {
 
     // ── Thermal ratings & snapshot loading (from PSS/E Aug 2020) ──
     if (p.rating_mva) {
-      const contR  = parseFloat(p.rating_mva);
-      const emergR = p.rating_emerg_mva ? parseFloat(p.rating_emerg_mva) : null;
-      const flow   = p.flow_mva_peak   ? parseFloat(p.flow_mva_peak)    : null;
-      const flowMW = p.flow_mw_peak    ? parseFloat(p.flow_mw_peak)     : null;
-      const loadPct= p.loading_pct_peak? parseFloat(p.loading_pct_peak) : null;
+      const contR     = parseFloat(p.rating_mva);
+      const emergR    = p.rating_emerg_mva  ? parseFloat(p.rating_emerg_mva)  : null;
+      const flowPeak  = p.flow_mva_peak     ? parseFloat(p.flow_mva_peak)     : null;
+      const flowLight = p.flow_mva_light    ? parseFloat(p.flow_mva_light)    : null;
+      const mwPeak    = p.flow_mw_peak      ? parseFloat(p.flow_mw_peak)      : null;
+      const mwLight   = p.flow_mw_light     ? parseFloat(p.flow_mw_light)     : null;
+      const pctPeak   = p.loading_pct_peak  ? parseFloat(p.loading_pct_peak)  : null;
+      const pctLight  = p.loading_pct_light ? parseFloat(p.loading_pct_light) : null;
+      // Use peak loading for the bar colour; fall back to light if no peak
+      const barPct    = pctPeak ?? pctLight ?? 0;
+      const barCol    = barPct >= 80 ? '#f85149' : barPct >= 50 ? '#d29922' : '#3fb950';
+      const fmtFlow   = (mva, mw) => {
+        const dir = mw !== null ? (mw >= 0 ? ' ▶' : ' ◀') : '';
+        return `${Math.abs(mva).toLocaleString()} MVA${dir}`;
+      };
       html += `<div class="popup-section"><div class="popup-section-title">Thermal ratings (Transpower PSS/E)</div>`;
       html += `<div class="popup-grid">`;
       html += `<span class="popup-label">Continuous</span><span class="popup-value">${contR.toLocaleString()} MVA</span>`;
       if (emergR && emergR !== contR)
         html += `<span class="popup-label">Emergency</span><span class="popup-value">${emergR.toLocaleString()} MVA</span>`;
-      if (flow !== null) {
-        const loadCol = loadPct >= 80 ? '#f85149' : loadPct >= 50 ? '#d29922' : '#3fb950';
-        const dirStr  = flowMW !== null ? (flowMW >= 0 ? ' ▶' : ' ◀') : '';
-        html += `<span class="popup-label">Aug-2020 peak flow</span><span class="popup-value">${Math.abs(flow).toLocaleString()} MVA${dirStr}</span>`;
-        if (loadPct !== null)
-          html += `<span class="popup-label">Loading</span><span class="popup-value" style="color:${loadCol};font-weight:700">${loadPct.toFixed(1)}%</span>`;
+      if (flowPeak !== null) {
+        const col = pctPeak >= 80 ? '#f85149' : pctPeak >= 50 ? '#d29922' : '#3fb950';
+        html += `<span class="popup-label">Peak load flow</span><span class="popup-value">${fmtFlow(flowPeak, mwPeak)}</span>`;
+        html += `<span class="popup-label">Loading (peak)</span><span class="popup-value" style="color:${col};font-weight:700">${pctPeak.toFixed(1)}%</span>`;
+      }
+      if (flowLight !== null) {
+        const col = pctLight >= 80 ? '#f85149' : pctLight >= 50 ? '#d29922' : '#3fb950';
+        html += `<span class="popup-label">Light load flow</span><span class="popup-value">${fmtFlow(flowLight, mwLight)}</span>`;
+        html += `<span class="popup-label">Loading (light)</span><span class="popup-value" style="color:${col}">${pctLight.toFixed(1)}%</span>`;
       }
       html += `</div>`;
-      if (flow !== null) {
-        const barPct = Math.min(loadPct || 0, 100);
-        const barCol = (loadPct || 0) >= 80 ? '#f85149' : (loadPct || 0) >= 50 ? '#d29922' : '#3fb950';
-        html += `<div style="margin:6px 0 2px;height:6px;background:#21262d;border-radius:3px">`;
-        html += `<div style="width:${barPct}%;height:100%;background:${barCol};border-radius:3px;transition:width .3s"></div></div>`;
-        html += `<div style="font-size:10px;color:#8b949e;margin-top:2px">Snapshot: Aug 2020 system peak (NI/SI separate models)</div>`;
+      if (flowPeak !== null || flowLight !== null) {
+        // Stacked bar: light load in muted colour, peak extends on top
+        const lightW = Math.min(pctLight ?? 0, 100);
+        const peakW  = Math.min(pctPeak  ?? 0, 100);
+        html += `<div style="margin:6px 0 2px;height:6px;background:#21262d;border-radius:3px;position:relative">`;
+        if (lightW > 0)
+          html += `<div style="position:absolute;left:0;top:0;width:${lightW}%;height:100%;background:#4d5e4a;border-radius:3px"></div>`;
+        if (peakW > 0)
+          html += `<div style="position:absolute;left:0;top:0;width:${peakW}%;height:100%;background:${barCol};border-radius:3px"></div>`;
+        html += `</div>`;
+        html += `<div style="font-size:10px;color:#8b949e;margin-top:2px">Aug 2020 NI/SI snapshots · bar = peak (bright) / light load (muted)</div>`;
       }
       html += `</div>`;
     }
