@@ -1,0 +1,743 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              146.2,
+              -30.5
+            ],
+            [
+              150.0,
+              -30.5
+            ],
+            [
+              150.2,
+              -31.5
+            ],
+            [
+              149.5,
+              -32.5
+            ],
+            [
+              148.2,
+              -33.5
+            ],
+            [
+              146.5,
+              -33.5
+            ],
+            [
+              146.0,
+              -32.5
+            ],
+            [
+              146.2,
+              -30.5
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "code": "N1",
+        "name": "Central-West Orana",
+        "state": "NSW",
+        "status": "Declared",
+        "energy_types": "Solar, Wind, BESS",
+        "capacity_target_mw": 8000,
+        "capacity_note": "8 GW declared capacity; Phase 1 ~3 GW initial build-out",
+        "network_project": "CWO REZ Transmission Project (Dinawan SS + 500 kV backbone)",
+        "network_status": "Committed (ISP)",
+        "first_connection": "2026",
+        "zone_target": "2030",
+        "description": "First declared REZ under the NSW Electricity Infrastructure Roadmap (2021). Covers the central-western agricultural region around Dubbo and Mudgee. Excellent solar and strong wind resource. The committed network project constructs the new Dinawan 500/330 kV substation and associated backbone — the same node as the PEC Stage 2 terminus.",
+        "status_colour": "#3fb950"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              149.8,
+              -28.5
+            ],
+            [
+              152.0,
+              -28.5
+            ],
+            [
+              152.5,
+              -29.5
+            ],
+            [
+              152.0,
+              -31.2
+            ],
+            [
+              150.2,
+              -31.5
+            ],
+            [
+              149.5,
+              -30.5
+            ],
+            [
+              149.8,
+              -28.5
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "code": "N2",
+        "name": "New England",
+        "state": "NSW",
+        "status": "Declared",
+        "energy_types": "Solar, Wind, BESS",
+        "capacity_target_mw": 8000,
+        "capacity_note": "Up to 8 GW declared capacity across Stages 1 and 2",
+        "network_project": "New England REZ network augmentation (Stages 1 & 2)",
+        "network_status": "Actionable (ISP)",
+        "first_connection": "2027",
+        "zone_target": "2032",
+        "description": "Declared under the NSW Electricity Infrastructure Roadmap (2021). Northern Tablelands region with outstanding solar and wind resource. Strong BESS opportunity given the QNI corridor price separation — sitting between Queensland prices and NSW demand. QNI Connect 500 kV is the longer-term network solution.",
+        "status_colour": "#3fb950"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              141.0,
+              -31.0
+            ],
+            [
+              146.0,
+              -31.0
+            ],
+            [
+              146.2,
+              -32.5
+            ],
+            [
+              146.5,
+              -33.5
+            ],
+            [
+              146.0,
+              -35.0
+            ],
+            [
+              141.0,
+              -35.0
+            ],
+            [
+              141.0,
+              -31.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "code": "N3",
+        "name": "South West NSW",
+        "state": "NSW",
+        "status": "Proposed",
+        "energy_types": "Solar, BESS",
+        "capacity_target_mw": 5000,
+        "capacity_note": "5+ GW potential; not yet formally declared",
+        "network_project": "PEC Stage 2 (Dinawan SS is the eastern gateway)",
+        "network_status": "Anticipated (ISP)",
+        "first_connection": "TBD",
+        "zone_target": "2033+",
+        "description": "Large solar-dominated zone across far western NSW (Riverina / Hay Plain). Enabled by the PEC Stage 2 transmission route which passes near the zone boundary at Dinawan. Predominantly flat terrain, very high solar resource, but long connection distances to major load centres.",
+        "status_colour": "#8b949e"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              150.0,
+              -32.0
+            ],
+            [
+              151.8,
+              -31.8
+            ],
+            [
+              152.5,
+              -32.8
+            ],
+            [
+              152.0,
+              -33.4
+            ],
+            [
+              150.5,
+              -33.2
+            ],
+            [
+              150.0,
+              -32.8
+            ],
+            [
+              150.0,
+              -32.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "code": "N4",
+        "name": "Hunter-Central Coast",
+        "state": "NSW",
+        "status": "Proposed",
+        "energy_types": "Solar, Wind, BESS, Offshore Wind",
+        "capacity_target_mw": 4000,
+        "capacity_note": "3–5 GW potential (onshore + future offshore)",
+        "network_project": "Hunter Transmission Project (Sydney Ring Northern): Bayswater → Eraring",
+        "network_status": "Committed (ISP)",
+        "first_connection": "2026",
+        "zone_target": "2030",
+        "description": "Coal transition zone centred on the Hunter Valley. Eraring (2,880 MW) closed 2025, Bayswater retiring 2030–2033. The HTP committed network project replaces coal thermal capacity with renewable firming. BESS particularly valuable here for inertia and frequency services as coal exits. Proximate to Newcastle/Sydney load demand.",
+        "status_colour": "#8b949e"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              140.5,
+              -36.0
+            ],
+            [
+              143.5,
+              -36.0
+            ],
+            [
+              144.0,
+              -37.0
+            ],
+            [
+              143.5,
+              -38.0
+            ],
+            [
+              142.0,
+              -38.5
+            ],
+            [
+              141.0,
+              -38.5
+            ],
+            [
+              140.5,
+              -38.0
+            ],
+            [
+              140.5,
+              -36.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "code": "V1",
+        "name": "Western Victoria",
+        "state": "VIC",
+        "status": "Declared",
+        "energy_types": "Wind, Solar, BESS",
+        "capacity_target_mw": 6000,
+        "capacity_note": "V1.1 initial allocation heavily committed; total zone 5–7 GW",
+        "network_project": "Western Renewables Link (Sydenham → Bulgana)",
+        "network_status": "Committed (ISP)",
+        "first_connection": "2022 (existing)",
+        "zone_target": "2028",
+        "description": "First declared REZ under the Victorian Renewable Energy Target (VRET). Excellent wind resource; already heavily committed — the V1.1 capacity allocation queue is saturated and connection headroom is limited until WRL (committed) is commissioned. Strong wind but constraints are currently severe on local 220 kV circuits. New projects face long queues; timing relative to WRL commissioning is critical.",
+        "status_colour": "#3fb950"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              146.0,
+              -37.5
+            ],
+            [
+              149.5,
+              -37.5
+            ],
+            [
+              150.5,
+              -38.5
+            ],
+            [
+              149.0,
+              -39.5
+            ],
+            [
+              147.0,
+              -39.5
+            ],
+            [
+              146.0,
+              -38.8
+            ],
+            [
+              146.0,
+              -37.5
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "code": "V2",
+        "name": "Gippsland",
+        "state": "VIC",
+        "status": "Under Investigation",
+        "energy_types": "Offshore Wind, Onshore Wind, BESS",
+        "capacity_target_mw": 4000,
+        "capacity_note": "2–4 GW offshore wind (Victorian Offshore Wind policy target)",
+        "network_project": "Gippsland Offshore Wind — connection hub under investigation",
+        "network_status": "Anticipated (ISP)",
+        "first_connection": "2030+",
+        "zone_target": "2035",
+        "description": "Eastern Gippsland coast is the focus of Vic's offshore wind ambitions. The State Government has declared offshore wind areas (Star of the South and others). The ISP Gippsland offshore project connects a hub near Giffard. Long lead-time due to offshore technology maturity and connection costs. Onshore Gippsland also has moderate wind and solar potential.",
+        "status_colour": "#6e7681"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              141.5,
+              -34.0
+            ],
+            [
+              146.5,
+              -34.0
+            ],
+            [
+              147.0,
+              -35.0
+            ],
+            [
+              145.5,
+              -36.0
+            ],
+            [
+              143.0,
+              -36.0
+            ],
+            [
+              141.5,
+              -36.0
+            ],
+            [
+              141.5,
+              -34.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "code": "V3",
+        "name": "Murray River",
+        "state": "VIC",
+        "status": "Actionable (ISP)",
+        "energy_types": "Solar, BESS",
+        "capacity_target_mw": 5000,
+        "capacity_note": "4–6 GW potential; solar-dominant zone",
+        "network_project": "Murray River REZ network augmentation",
+        "network_status": "Actionable (ISP)",
+        "first_connection": "2028",
+        "zone_target": "2032",
+        "description": "Northern Victorian Mallee region along the Murray corridor. Excellent solar irradiance, flat terrain, large parcels. Less congested than V1 (Western Victoria) — more accessible for new connections. BESS opportunity: VIC overnight trough vs. morning peak spread, and proximity to the VIC-NSW interconnector.",
+        "status_colour": "#d29922"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              143.5,
+              -36.0
+            ],
+            [
+              146.0,
+              -35.5
+            ],
+            [
+              147.0,
+              -36.5
+            ],
+            [
+              146.0,
+              -37.5
+            ],
+            [
+              144.5,
+              -37.5
+            ],
+            [
+              143.5,
+              -37.0
+            ],
+            [
+              143.5,
+              -36.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "code": "V4",
+        "name": "Central North Victoria",
+        "state": "VIC",
+        "status": "Anticipated (ISP)",
+        "energy_types": "Solar, Wind, BESS",
+        "capacity_target_mw": 3500,
+        "capacity_note": "3–4 GW potential",
+        "network_project": "Central North VIC REZ augmentation (longer-term ISP)",
+        "network_status": "Anticipated (ISP)",
+        "first_connection": "2030",
+        "zone_target": "2034",
+        "description": "Central Victorian tablelands around Bendigo and Shepparton. Moderate wind and good solar resource. Longer-term ISP zone — network investment not yet committed. Brownfields opportunity as Loy Yang retires through the 2030s.",
+        "status_colour": "#f0883e"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              143.0,
+              -25.5
+            ],
+            [
+              148.5,
+              -25.5
+            ],
+            [
+              149.0,
+              -27.5
+            ],
+            [
+              148.5,
+              -29.5
+            ],
+            [
+              145.0,
+              -29.5
+            ],
+            [
+              143.0,
+              -28.0
+            ],
+            [
+              143.0,
+              -25.5
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "code": "Q1",
+        "name": "South West Queensland",
+        "state": "QLD",
+        "status": "Proposed",
+        "energy_types": "Solar, Wind, BESS",
+        "capacity_target_mw": 12000,
+        "capacity_note": "10–15 GW potential; solar and wind resource",
+        "network_project": "CQ-SQ Expansion (south QLD network augmentation)",
+        "network_status": "Actionable (ISP)",
+        "first_connection": "2026 (existing projects)",
+        "zone_target": "2030",
+        "description": "Maranoa/Warrego region (Roma/Charleville/Cunnamulla area). Very high solar irradiance, strong wind in the southern parts. Many large-scale solar farms already operating (Darling Downs corridor). CQ-SQ expansion will strengthen the south-QLD transmission backbone. BESS opportunity: QLD afternoon peak prices vs. solar generation midday trough.",
+        "status_colour": "#8b949e"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              147.0,
+              -21.5
+            ],
+            [
+              151.0,
+              -21.5
+            ],
+            [
+              151.5,
+              -23.0
+            ],
+            [
+              151.0,
+              -26.0
+            ],
+            [
+              149.0,
+              -26.0
+            ],
+            [
+              147.0,
+              -25.0
+            ],
+            [
+              147.0,
+              -21.5
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "code": "Q2",
+        "name": "Central Queensland",
+        "state": "QLD",
+        "status": "Proposed",
+        "energy_types": "Solar, Wind, BESS",
+        "capacity_target_mw": 18000,
+        "capacity_note": "15–20 GW potential (largest single REZ by resource)",
+        "network_project": "CQ-SQ Expansion; Gladstone transmission project",
+        "network_status": "Actionable (ISP)",
+        "first_connection": "2025 (existing)",
+        "zone_target": "2032",
+        "description": "Fitzroy/Bowen Basin region — Emerald, Clermont, Biloela, Rockhampton. Largest resource potential of any NEM REZ. Strong existing fleet of coal generators transitioning; brownfields grid capacity being released. CopperString provides a corridor to the north. High development activity — competitive but significant scale opportunity.",
+        "status_colour": "#8b949e"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              139.0,
+              -18.5
+            ],
+            [
+              147.5,
+              -18.5
+            ],
+            [
+              147.5,
+              -21.0
+            ],
+            [
+              144.0,
+              -22.0
+            ],
+            [
+              141.0,
+              -22.0
+            ],
+            [
+              139.0,
+              -21.0
+            ],
+            [
+              139.0,
+              -18.5
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "code": "Q3",
+        "name": "North Queensland",
+        "state": "QLD",
+        "status": "Actionable (ISP)",
+        "energy_types": "Solar, Wind, BESS",
+        "capacity_target_mw": 6000,
+        "capacity_note": "5–7 GW potential enabled by CopperString",
+        "network_project": "CopperString (Townsville → Mt Isa, ~840 km)",
+        "network_status": "Actionable (ISP)",
+        "first_connection": "2029 (CopperString completion)",
+        "zone_target": "2033",
+        "description": "North QLD corridor from Townsville to Mt Isa enabled by CopperString. Extreme solar resource along the corridor. Currently isolated — no connection to NEM except via Townsville. CopperString creates a new 500 kV backbone connecting NW QLD mining loads to renewable generation. First-mover advantage significant given long lead time to commissioning.",
+        "status_colour": "#d29922"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              136.0,
+              -30.5
+            ],
+            [
+              140.5,
+              -30.5
+            ],
+            [
+              140.5,
+              -32.5
+            ],
+            [
+              139.5,
+              -34.5
+            ],
+            [
+              138.0,
+              -35.0
+            ],
+            [
+              136.5,
+              -34.5
+            ],
+            [
+              135.5,
+              -33.0
+            ],
+            [
+              136.0,
+              -30.5
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "code": "S1",
+        "name": "Northern South Australia",
+        "state": "SA",
+        "status": "Proposed",
+        "energy_types": "Solar, Wind, BESS",
+        "capacity_target_mw": 7000,
+        "capacity_note": "5–8 GW potential",
+        "network_project": "Northern Transmission Project (Robertstown→Para) + PEC Stage 2 terminus",
+        "network_status": "Committed (PEC Stage 2) / Actionable (NTP)",
+        "first_connection": "2026 (existing)",
+        "zone_target": "2030",
+        "description": "Mid-North SA around Robertstown, Crystal Brook, Clare, and Port Augusta. PEC Stage 2 western terminus is at Robertstown — this is the key interconnection point to NSW. Northern Transmission Project (Robertstown→Para) is actionable in the ISP. SA market has high FCAS prices — BESS is particularly valuable. Risk: SA is already very high renewable penetration; curtailment in high solar/wind periods is a real challenge.",
+        "status_colour": "#8b949e"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              139.5,
+              -35.5
+            ],
+            [
+              141.0,
+              -35.5
+            ],
+            [
+              141.0,
+              -38.0
+            ],
+            [
+              139.5,
+              -38.0
+            ],
+            [
+              139.5,
+              -35.5
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "code": "S2",
+        "name": "South East South Australia",
+        "state": "SA",
+        "status": "Proposed",
+        "energy_types": "Wind, Solar, BESS",
+        "capacity_target_mw": 3000,
+        "capacity_note": "2–4 GW potential; wind-dominant",
+        "network_project": "South East SA transmission augmentation (longer-term)",
+        "network_status": "Anticipated (ISP)",
+        "first_connection": "2027 (existing projects)",
+        "zone_target": "2033",
+        "description": "South-East SA including Naracoorte, Mt Gambier and Tatiara regions. Good wind resource (similar to western VIC) and some solar. Physically close to the VIC border and Heywood interconnector — price signals follow VIC rather than Adelaide. Less constrained than the SA mid-north; moderate competing project pipeline.",
+        "status_colour": "#8b949e"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              144.5,
+              -40.5
+            ],
+            [
+              146.8,
+              -40.5
+            ],
+            [
+              146.8,
+              -42.0
+            ],
+            [
+              144.5,
+              -42.0
+            ],
+            [
+              144.5,
+              -40.5
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "code": "T1",
+        "name": "North West Tasmania",
+        "state": "TAS",
+        "status": "Actionable (ISP)",
+        "energy_types": "Wind, Pumped Hydro, BESS",
+        "capacity_target_mw": 5000,
+        "capacity_note": "1–2 GW wind (Robbins Island / Granville Harbour); Battery of the Nation up to 5 GW pumped hydro",
+        "network_project": "Project Marinus (Heybridge TAS → Hazelwood VIC, HVDC)",
+        "network_status": "Actionable (ISP)",
+        "first_connection": "2030 (Marinus Link Pole 1)",
+        "zone_target": "2033",
+        "description": "North-west Tasmania is the Battery of the Nation hub. Robbins Island and Granville Harbour wind farms are already committed. Project Marinus (2 × 750 MW HVDC cables) will export clean energy to Victoria. Combined with expanded pumped hydro (Lake Cethana etc.), Tasmania can act as a giant storage battery for the NEM. Key risk: Marinus delay — without it, additional TAS generation cannot reach mainland markets.",
+        "status_colour": "#d29922"
+      }
+    }
+  ]
+}

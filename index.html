@@ -236,6 +236,17 @@
     </div>
 
     <button id="isp-mode-btn" class="toggle-btn" style="margin-bottom:4px">ISP Upgrades OFF</button>
+    <button id="rez-mode-btn" class="toggle-btn" style="margin-bottom:4px">REZ Zones OFF</button>
+    <div id="rez-legend" style="display:none">
+      <div class="section-title">Renewable Energy Zones — Status</div>
+      <div class="legend-item"><span style="display:inline-block;width:14px;height:14px;border-radius:2px;background:#3fb950;opacity:0.7;margin-right:6px;flex-shrink:0"></span>Declared</div>
+      <div class="legend-item"><span style="display:inline-block;width:14px;height:14px;border-radius:2px;background:#58a6ff;opacity:0.7;margin-right:6px;flex-shrink:0"></span>Actionable ISP</div>
+      <div class="legend-item"><span style="display:inline-block;width:14px;height:14px;border-radius:2px;background:#d29922;opacity:0.7;margin-right:6px;flex-shrink:0"></span>Anticipated ISP</div>
+      <div class="legend-item"><span style="display:inline-block;width:14px;height:14px;border-radius:2px;background:#a371f7;opacity:0.7;margin-right:6px;flex-shrink:0"></span>Committed ISP</div>
+      <div class="legend-item"><span style="display:inline-block;width:14px;height:14px;border-radius:2px;background:#f78166;opacity:0.7;margin-right:6px;flex-shrink:0"></span>Proposed</div>
+      <div class="legend-item"><span style="display:inline-block;width:14px;height:14px;border-radius:2px;background:#8b949e;opacity:0.7;margin-right:6px;flex-shrink:0"></span>Under Investigation</div>
+      <div style="font-size:11px;color:#8b949e;margin-top:6px;line-height:1.45">Dashed outline = Proposed / Under Investigation<br>Click zone for capacity &amp; timeline detail</div>
+    </div>
     <div id="isp-legend" style="display:none">
       <div class="section-title">ISP Upgrades — Status (line pattern)</div>
       <div class="legend-item">
@@ -483,7 +494,8 @@ Promise.all([
   fetch('isp_upgrades.geojson').then(r => r.json()).catch(() => ({ type: 'FeatureCollection', features: [] })),
   fetch('nz_lines.geojson').then(r => r.json()).catch(() => ({ type: 'FeatureCollection', features: [] })),
   fetch('nz_substations.geojson').then(r => r.json()).catch(() => ({ type: 'FeatureCollection', features: [] })),
-]).then(([lines, cps, mlf, hhci, comp, nemRegions, nemInter, ispUpgrades, nzLines, nzSubs]) => {
+  fetch('rez.geojson').then(r => r.json()).catch(() => ({ type: 'FeatureCollection', features: [] })),
+]).then(([lines, cps, mlf, hhci, comp, nemRegions, nemInter, ispUpgrades, nzLines, nzSubs, rezData]) => {
   linesData = lines;
   cpData = cps;
   mlfData = mlf;
@@ -494,6 +506,7 @@ Promise.all([
   window.ispData = ispUpgrades;
   window.nzLinesData = nzLines;
   window.nzSubsData = nzSubs;
+  window.rezData = rezData;
 
   // store globally
   window.subsData = cps;
@@ -896,6 +909,117 @@ function addLayers() {
       'circle-opacity': 0.95
     }
   });
+
+  // ── REZ Zones layer (hidden by default) ─────────────────────────────
+  map.addSource('rez', { type: 'geojson', data: window.rezData });
+
+  // Semi-transparent fill coloured by status_colour property
+  map.addLayer({
+    id: 'rez-fill',
+    type: 'fill',
+    source: 'rez',
+    layout: { visibility: 'none' },
+    paint: {
+      'fill-color': ['coalesce', ['get', 'status_colour'], '#8b949e'],
+      'fill-opacity': 0.18
+    }
+  });
+
+  // Outline — dashed for Proposed / Under Investigation, solid for others
+  map.addLayer({
+    id: 'rez-outline-solid',
+    type: 'line',
+    source: 'rez',
+    filter: ['!', ['in', ['get', 'status'], ['literal', ['Proposed', 'Under Investigation']]]],
+    layout: { visibility: 'none', 'line-join': 'round' },
+    paint: {
+      'line-color': ['coalesce', ['get', 'status_colour'], '#8b949e'],
+      'line-width': 1.8,
+      'line-opacity': 0.85
+    }
+  });
+  map.addLayer({
+    id: 'rez-outline-dashed',
+    type: 'line',
+    source: 'rez',
+    filter: ['in', ['get', 'status'], ['literal', ['Proposed', 'Under Investigation']]],
+    layout: { visibility: 'none', 'line-join': 'round' },
+    paint: {
+      'line-color': ['coalesce', ['get', 'status_colour'], '#8b949e'],
+      'line-width': 1.8,
+      'line-opacity': 0.85,
+      'line-dasharray': [4, 3]
+    }
+  });
+
+  // REZ code + name labels
+  map.addLayer({
+    id: 'rez-labels',
+    type: 'symbol',
+    source: 'rez',
+    layout: {
+      visibility: 'none',
+      'text-field': ['concat', ['get', 'code'], '\n', ['get', 'name']],
+      'text-font': ['Open Sans Bold'],
+      'text-size': ['interpolate', ['linear'], ['zoom'], 5, 10, 7, 12, 10, 14],
+      'text-anchor': 'center',
+      'text-max-width': 12,
+      'text-allow-overlap': false
+    },
+    paint: {
+      'text-color': '#e6edf3',
+      'text-halo-color': 'rgba(13,17,23,0.88)',
+      'text-halo-width': 2
+    },
+    minzoom: 5
+  });
+
+  // Click popup for REZ
+  map.on('click', 'rez-fill', e => {
+    const p = e.features[0].properties;
+    const col = p.status_colour || '#8b949e';
+    const etypes = p.energy_types || '—';
+    const capNote = p.capacity_note ? `<div style="font-size:11px;color:#8b949e;margin-top:2px">${p.capacity_note}</div>` : '';
+    const netProj = p.network_project
+      ? `<div style="margin-top:8px"><span style="color:#8b949e;font-size:11px">Network project</span><br>${p.network_project}<br><span style="font-size:11px;color:#8b949e">${p.network_status || ''}</span></div>`
+      : '';
+    const timeline = p.first_connection
+      ? `<tr><td style="color:#8b949e">First connection</td><td>${p.first_connection}</td></tr>` : '';
+    const zoneTarget = p.zone_target
+      ? `<tr><td style="color:#8b949e">Zone target</td><td>${p.zone_target}</td></tr>` : '';
+    const capRow = p.capacity_target_mw
+      ? `<tr><td style="color:#8b949e">Capacity target</td><td>${Number(p.capacity_target_mw).toLocaleString()} MW</td></tr>` : '';
+    const desc = p.description
+      ? `<div style="margin-top:10px;font-size:11px;color:#8b949e;line-height:1.45;border-top:1px solid #30363d;padding-top:8px">${p.description}</div>` : '';
+
+    const html = `
+      <div style="font-family:monospace;font-size:13px;min-width:240px;max-width:320px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+          <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${col};flex-shrink:0"></span>
+          <strong style="font-size:14px">${p.code} — ${p.name}</strong>
+        </div>
+        <div style="margin-bottom:8px">
+          <span style="background:${col};color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:bold">${p.status}</span>
+          &nbsp;<span style="color:#8b949e;font-size:12px">${p.state || ''}</span>
+        </div>
+        <table style="width:100%;border-collapse:collapse;font-size:12px">
+          ${capRow}
+          ${timeline}
+          ${zoneTarget}
+          <tr><td style="color:#8b949e">Energy types</td><td>${etypes}</td></tr>
+        </table>
+        ${capNote}
+        ${netProj}
+        ${desc}
+      </div>`;
+
+    new maplibregl.Popup({ maxWidth: '340px' })
+      .setLngLat(e.lngLat)
+      .setHTML(html)
+      .addTo(map);
+  });
+  map.on('mouseenter', 'rez-fill', () => { map.getCanvas().style.cursor = 'pointer'; });
+  map.on('mouseleave', 'rez-fill', () => { map.getCanvas().style.cursor = ''; });
 
   // ── New Zealand transmission layers (hidden by default) ─────────────
   // Voltage colour scheme — pairs each NZ tier with the matching-tier AUS colour
@@ -2174,6 +2298,18 @@ function bindSidebar() {
     btn.classList.toggle('active', ispMode);
     ISP_LAYERS.forEach(id => map.setLayoutProperty(id, 'visibility', ispMode ? 'visible' : 'none'));
     document.getElementById('isp-legend').style.display = ispMode ? '' : 'none';
+  });
+
+  // REZ Zones toggle
+  const REZ_LAYERS = ['rez-fill', 'rez-outline-solid', 'rez-outline-dashed', 'rez-labels'];
+  let rezMode = false;
+  document.getElementById('rez-mode-btn').addEventListener('click', () => {
+    rezMode = !rezMode;
+    const btn = document.getElementById('rez-mode-btn');
+    btn.textContent = rezMode ? 'REZ Zones ON' : 'REZ Zones OFF';
+    btn.classList.toggle('active', rezMode);
+    REZ_LAYERS.forEach(id => map.setLayoutProperty(id, 'visibility', rezMode ? 'visible' : 'none'));
+    document.getElementById('rez-legend').style.display = rezMode ? '' : 'none';
   });
 
   // LRF substation colour toggle
