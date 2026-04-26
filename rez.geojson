@@ -228,28 +228,28 @@
               -36.0
             ],
             [
-              143.5,
+              143.2,
               -36.0
             ],
             [
-              144.0,
-              -37.0
+              143.4,
+              -36.7
             ],
             [
-              143.5,
-              -38.0
+              143.0,
+              -37.3
             ],
             [
-              142.0,
-              -38.5
+              141.8,
+              -37.8
             ],
             [
               141.0,
-              -38.5
+              -37.8
             ],
             [
               140.5,
-              -38.0
+              -37.3
             ],
             [
               140.5,
@@ -265,12 +265,12 @@
         "status": "Declared",
         "energy_types": "Wind, Solar, BESS",
         "capacity_target_mw": 6000,
-        "capacity_note": "V1.1 initial allocation heavily committed; total zone 5–7 GW",
+        "capacity_note": "V1.1 initial allocation heavily committed; total zone 5–7 GW. Named \"Western\" in 2025 VTP.",
         "network_project": "Western Renewables Link (Sydenham → Bulgana)",
         "network_status": "Committed (ISP)",
         "first_connection": "2022 (existing)",
         "zone_target": "2028",
-        "description": "First declared REZ under the Victorian Renewable Energy Target (VRET). Excellent wind resource; already heavily committed — the V1.1 capacity allocation queue is saturated and connection headroom is limited until WRL (committed) is commissioned. Strong wind but constraints are currently severe on local 220 kV circuits. New projects face long queues; timing relative to WRL commissioning is critical.",
+        "description": "First declared REZ under the Victorian Renewable Energy Target (VRET). Covers the Ararat / Stawell / Grampians corridor. Excellent wind resource; already heavily committed — the V1.1 capacity allocation queue is saturated and connection headroom is limited until WRL (committed) is commissioned. New projects face long queues; timing relative to WRL commissioning is critical. Confirmed as the \"Western\" REZ in the 2025 Victorian Transmission Plan.",
         "status_colour": "#3fb950"
       }
     },
@@ -281,31 +281,31 @@
         "coordinates": [
           [
             [
-              146.0,
+              140.5,
               -37.5
             ],
             [
-              149.5,
+              142.5,
               -37.5
             ],
             [
-              150.5,
-              -38.5
+              143.0,
+              -37.8
             ],
             [
-              149.0,
-              -39.5
-            ],
-            [
-              147.0,
-              -39.5
-            ],
-            [
-              146.0,
+              142.5,
               -38.8
             ],
             [
-              146.0,
+              141.0,
+              -38.8
+            ],
+            [
+              140.5,
+              -38.4
+            ],
+            [
+              140.5,
               -37.5
             ]
           ]
@@ -313,18 +313,18 @@
       },
       "properties": {
         "code": "V2",
-        "name": "Gippsland",
+        "name": "South West Victoria",
         "state": "VIC",
-        "status": "Under Investigation",
-        "energy_types": "Offshore Wind, Onshore Wind, BESS",
-        "capacity_target_mw": 4000,
-        "capacity_note": "2–4 GW offshore wind (Victorian Offshore Wind policy target)",
-        "network_project": "Gippsland Offshore Wind — connection hub under investigation",
+        "status": "Proposed",
+        "energy_types": "Wind, Solar, BESS",
+        "capacity_target_mw": 3500,
+        "capacity_note": "3–4 GW potential; wind-dominant coastal and inland zone. AEMO ISP V4.",
+        "network_project": "South West VIC REZ network augmentation",
         "network_status": "Anticipated (ISP)",
-        "first_connection": "2030+",
-        "zone_target": "2035",
-        "description": "Eastern Gippsland coast is the focus of Vic's offshore wind ambitions. The State Government has declared offshore wind areas (Star of the South and others). The ISP Gippsland offshore project connects a hub near Giffard. Long lead-time due to offshore technology maturity and connection costs. Onshore Gippsland also has moderate wind and solar potential.",
-        "status_colour": "#6e7681"
+        "first_connection": "2030",
+        "zone_target": "2034",
+        "description": "Covers the Portland / Warrnambool / Hamilton coastal and hinterland region — south of the Western Victoria declared REZ. Strong wind resource (proximity to Southern Ocean). Named \"South West\" in the 2025 Victorian Transmission Plan (VTP). AEMO ISP 2024 zone V4. Network augmentation not yet committed; longer-term ISP investment pathway.",
+        "status_colour": "#8b949e"
       }
     },
     {
@@ -350,7 +350,7 @@
               -36.0
             ],
             [
-              143.0,
+              143.2,
               -36.0
             ],
             [
@@ -371,12 +371,12 @@
         "status": "Actionable (ISP)",
         "energy_types": "Solar, BESS",
         "capacity_target_mw": 5000,
-        "capacity_note": "4–6 GW potential; solar-dominant zone",
+        "capacity_note": "4–6 GW potential; solar-dominant zone. Broadly corresponds to AEMO ISP V2.",
         "network_project": "Murray River REZ network augmentation",
         "network_status": "Actionable (ISP)",
         "first_connection": "2028",
         "zone_target": "2032",
-        "description": "Northern Victorian Mallee region along the Murray corridor. Excellent solar irradiance, flat terrain, large parcels. Less congested than V1 (Western Victoria) — more accessible for new connections. BESS opportunity: VIC overnight trough vs. morning peak spread, and proximity to the VIC-NSW interconnector.",
+        "description": "Northern Victorian Mallee region along the Murray River corridor. Excellent solar irradiance, flat terrain, large parcels. Less congested than Western Victoria — more accessible for new connections. BESS opportunity: VIC overnight trough vs. morning peak spread, and proximity to the VIC-NSW interconnector. Corresponds broadly to the AEMO ISP V2 (Murray River) and the \"North West\" zone concept in the 2025 VTP.",
         "status_colour": "#d29922"
       }
     },
@@ -387,32 +387,32 @@
         "coordinates": [
           [
             [
-              143.5,
-              -36.0
+              143.8,
+              -36.2
             ],
             [
               146.0,
-              -35.5
+              -35.8
             ],
             [
-              147.0,
+              146.8,
               -36.5
             ],
             [
               146.0,
-              -37.5
+              -37.3
             ],
             [
-              144.5,
-              -37.5
+              144.8,
+              -37.3
             ],
             [
-              143.5,
+              143.8,
               -37.0
             ],
             [
-              143.5,
-              -36.0
+              143.8,
+              -36.2
             ]
           ]
         ]
@@ -423,13 +423,176 @@
         "state": "VIC",
         "status": "Anticipated (ISP)",
         "energy_types": "Solar, Wind, BESS",
-        "capacity_target_mw": 3500,
-        "capacity_note": "3–4 GW potential",
+        "capacity_target_mw": 3000,
+        "capacity_note": "2.5–3.5 GW; footprint reduced in 2025 VTP after community consultation.",
         "network_project": "Central North VIC REZ augmentation (longer-term ISP)",
         "network_status": "Anticipated (ISP)",
         "first_connection": "2030",
         "zone_target": "2034",
-        "description": "Central Victorian tablelands around Bendigo and Shepparton. Moderate wind and good solar resource. Longer-term ISP zone — network investment not yet committed. Brownfields opportunity as Loy Yang retires through the 2030s.",
+        "description": "Bendigo / Tatura / Shepparton region. Good solar resource, moderate wind. Longer-term ISP zone — network investment not yet committed. The 2025 Victorian Transmission Plan reduced the zone footprint: the Benalla and Glenrowan areas were removed following community consultation due to brolga habitat and irrigated agricultural land concerns. Brownfields opportunity as Loy Yang retires through the 2030s. AEMO ISP V6.",
+        "status_colour": "#f0883e"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              143.0,
+              -37.0
+            ],
+            [
+              144.4,
+              -37.0
+            ],
+            [
+              144.5,
+              -37.5
+            ],
+            [
+              144.2,
+              -38.5
+            ],
+            [
+              143.0,
+              -38.5
+            ],
+            [
+              142.8,
+              -38.0
+            ],
+            [
+              142.8,
+              -37.4
+            ],
+            [
+              143.0,
+              -37.0
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "code": "V5",
+        "name": "Central Highlands",
+        "state": "VIC",
+        "status": "Proposed",
+        "energy_types": "Wind, Solar, BESS",
+        "capacity_target_mw": 4000,
+        "capacity_note": "4.0 GW hosting capacity identified in 2025 VTP; wind dominant.",
+        "network_project": "Central Highlands REZ network augmentation",
+        "network_status": "Under Investigation",
+        "first_connection": "2030",
+        "zone_target": "2035",
+        "description": "New zone introduced by the 2025 Victorian Transmission Plan. Covers the Golden Plains, Corangamite, Pyrenees and parts of Moorabool and Colac Otway local government areas — southwest of Ballarat. Wind is the primary resource; Golden Plains Wind Farm (East & West, ~1,300 MW) is already under development within the zone. Hosting capacity: 4.0 GW. Transmission augmentation pathway not yet committed; VicGrid undertaking detailed network investigations as part of the VTP priority programs. Not a separately defined AEMO ISP zone — sits within the broader Western Victoria ISP footprint.",
+        "status_colour": "#8b949e"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              146.0,
+              -37.5
+            ],
+            [
+              149.5,
+              -37.5
+            ],
+            [
+              150.5,
+              -38.5
+            ],
+            [
+              149.0,
+              -39.0
+            ],
+            [
+              147.0,
+              -39.0
+            ],
+            [
+              146.0,
+              -38.5
+            ],
+            [
+              146.0,
+              -37.5
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "code": "V6",
+        "name": "Gippsland",
+        "state": "VIC",
+        "status": "Proposed",
+        "energy_types": "Onshore Wind, Offshore Wind, Solar, BESS",
+        "capacity_target_mw": 4000,
+        "capacity_note": "2–4 GW onshore; Gippsland Shoreline offshore zone targets 2 GW by 2032, 9 GW by 2040.",
+        "network_project": "Gippsland offshore wind hub (Giffard area) + onshore augmentation",
+        "network_status": "Anticipated (ISP)",
+        "first_connection": "2030+",
+        "zone_target": "2035",
+        "description": "Onshore Gippsland and the adjacent Bass Strait coast. Named \"Gippsland\" in the 2025 VTP and confirmed as a priority zone. Star of the South and other offshore wind projects target the Gippsland coast. VicGrid has identified a dedicated Gippsland Shoreline zone for offshore submarine cable connections — targeting 2 GW offshore by 2032 and 9 GW by 2040. Onshore zone provides moderate wind and solar potential. Long lead-time driven by offshore technology, cable routing, and connection hub investment. AEMO ISP V5 (onshore). See also V7 Gippsland Coast (offshore).",
+        "status_colour": "#8b949e"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              146.0,
+              -38.5
+            ],
+            [
+              149.0,
+              -38.5
+            ],
+            [
+              150.0,
+              -39.0
+            ],
+            [
+              149.5,
+              -40.2
+            ],
+            [
+              147.0,
+              -40.2
+            ],
+            [
+              145.5,
+              -39.5
+            ],
+            [
+              146.0,
+              -38.5
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "code": "V7",
+        "name": "Gippsland Coast (Offshore)",
+        "state": "VIC",
+        "status": "Anticipated (ISP)",
+        "energy_types": "Offshore Wind",
+        "capacity_target_mw": 9000,
+        "capacity_note": "VIC offshore wind policy: 2 GW by 2032, 4 GW by 2035, 9 GW by 2040. AEMO ISP V7.",
+        "network_project": "Gippsland offshore wind transmission hub (Seaspray/Giffard area)",
+        "network_status": "Anticipated (ISP)",
+        "first_connection": "2032 (first offshore wind)",
+        "zone_target": "2040 (full build-out)",
+        "description": "Offshore wind zone in Bass Strait off the Gippsland coast. AEMO ISP V7 (Gippsland Coast). The Victorian Government has declared offshore wind areas across this stretch of Bass Strait — Star of the South (~2.2 GW, near Cape Paterson) is the most advanced project. VicGrid has identified a Gippsland Shoreline transmission hub in the Seaspray / Giffard area to aggregate offshore generation via submarine cables and connect to the onshore 500 kV network. Policy targets: 2 GW offshore wind by 2032, 4 GW by 2035, 9 GW by 2040. Key risks: offshore technology cost, cable routing, marine consenting, and timing of the onshore hub investment.",
         "status_colour": "#f0883e"
       }
     },
