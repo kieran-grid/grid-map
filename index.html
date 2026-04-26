@@ -1780,7 +1780,7 @@ function bindMapEvents() {
   map.on('click', 'nz-lines-layer', e => {
     const p = e.features[0].properties;
     const voltStr = p.voltage_kv ? `${p.voltage_kv} kV` : '–';
-    const lenStr = p.length_m ? `${(p.length_m / 1000).toFixed(1)} km` : '–';
+    const lenStr  = p.length_m   ? `${(p.length_m / 1000).toFixed(1)} km` : '–';
     let html = `<div class="popup-title">${p.name || 'NZ Transmission Line'}</div>`;
     html += `<div class="popup-grid">`;
     html += `<span class="popup-label">Voltage</span><span class="popup-value">${voltStr}</span>`;
@@ -1788,6 +1788,37 @@ function bindMapEvents() {
     html += `<span class="popup-label">Code</span><span class="popup-value">${p.code || '–'}</span>`;
     html += `<span class="popup-label">Operator</span><span class="popup-value">Transpower NZ</span>`;
     html += `</div>`;
+
+    // ── Thermal ratings & snapshot loading (from PSS/E Aug 2020) ──
+    if (p.rating_mva) {
+      const contR  = parseFloat(p.rating_mva);
+      const emergR = p.rating_emerg_mva ? parseFloat(p.rating_emerg_mva) : null;
+      const flow   = p.flow_mva_peak   ? parseFloat(p.flow_mva_peak)    : null;
+      const flowMW = p.flow_mw_peak    ? parseFloat(p.flow_mw_peak)     : null;
+      const loadPct= p.loading_pct_peak? parseFloat(p.loading_pct_peak) : null;
+      html += `<div class="popup-section"><div class="popup-section-title">Thermal ratings (Transpower PSS/E)</div>`;
+      html += `<div class="popup-grid">`;
+      html += `<span class="popup-label">Continuous</span><span class="popup-value">${contR.toLocaleString()} MVA</span>`;
+      if (emergR && emergR !== contR)
+        html += `<span class="popup-label">Emergency</span><span class="popup-value">${emergR.toLocaleString()} MVA</span>`;
+      if (flow !== null) {
+        const loadCol = loadPct >= 80 ? '#f85149' : loadPct >= 50 ? '#d29922' : '#3fb950';
+        const dirStr  = flowMW !== null ? (flowMW >= 0 ? ' ▶' : ' ◀') : '';
+        html += `<span class="popup-label">Aug-2020 peak flow</span><span class="popup-value">${Math.abs(flow).toLocaleString()} MVA${dirStr}</span>`;
+        if (loadPct !== null)
+          html += `<span class="popup-label">Loading</span><span class="popup-value" style="color:${loadCol};font-weight:700">${loadPct.toFixed(1)}%</span>`;
+      }
+      html += `</div>`;
+      if (flow !== null) {
+        const barPct = Math.min(loadPct || 0, 100);
+        const barCol = (loadPct || 0) >= 80 ? '#f85149' : (loadPct || 0) >= 50 ? '#d29922' : '#3fb950';
+        html += `<div style="margin:6px 0 2px;height:6px;background:#21262d;border-radius:3px">`;
+        html += `<div style="width:${barPct}%;height:100%;background:${barCol};border-radius:3px;transition:width .3s"></div></div>`;
+        html += `<div style="font-size:10px;color:#8b949e;margin-top:2px">Snapshot: Aug 2020 system peak (NI/SI separate models)</div>`;
+      }
+      html += `</div>`;
+    }
+
     popup.setLngLat(e.lngLat).setHTML(html).addTo(map);
   });
 
@@ -1801,6 +1832,24 @@ function bindMapEvents() {
     html += `<span class="popup-label">Code</span><span class="popup-value">${p.code || '–'}</span>`;
     html += `<span class="popup-label">Operator</span><span class="popup-value">Transpower NZ</span>`;
     html += `</div>`;
+
+    // ── PSS/E loadflow snapshot (Aug 2020) ──
+    if (p.psse_vm_pu_peak) {
+      const vmPeak  = parseFloat(p.psse_vm_pu_peak);
+      const vmLight = p.psse_vm_pu_light ? parseFloat(p.psse_vm_pu_light) : null;
+      const genMW   = p.psse_gen_mw_peak  ? parseFloat(p.psse_gen_mw_peak)  : 0;
+      const loadMW  = p.psse_load_mw_peak ? parseFloat(p.psse_load_mw_peak) : 0;
+      const vmCol   = vmPeak < 0.95 ? '#f85149' : vmPeak > 1.05 ? '#d29922' : '#3fb950';
+      html += `<div class="popup-section"><div class="popup-section-title">Loadflow snapshot (Aug 2020 PSS/E)</div>`;
+      html += `<div class="popup-grid">`;
+      const vmStr = vmLight !== null
+        ? `<span style="color:${vmCol}">${vmPeak.toFixed(3)}</span> pu (light: ${vmLight.toFixed(3)})`
+        : `<span style="color:${vmCol}">${vmPeak.toFixed(3)}</span> pu`;
+      html += `<span class="popup-label">Voltage (peak)</span><span class="popup-value">${vmStr}</span>`;
+      if (genMW > 0)  html += `<span class="popup-label">Generation</span><span class="popup-value" style="color:#3fb950">${genMW.toLocaleString()} MW</span>`;
+      if (loadMW > 0) html += `<span class="popup-label">Load</span><span class="popup-value">${loadMW.toLocaleString()} MW</span>`;
+      html += `</div></div>`;
+    }
 
     // ── TPM transmission charges (PY26/27) ──
     if (p.tpm_total_2627) {
