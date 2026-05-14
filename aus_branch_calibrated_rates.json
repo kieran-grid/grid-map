@@ -1,0 +1,164 @@
+{
+  "REECE-FARREL 220kV ckt1": {
+    "constraint_id": "T>T_X_FA_BUS_FASH_1",
+    "aemo_line_name": "farrell to que to waratah tee",
+    "calibrated_rate_mw": 170.7,
+    "psse_rate1_mw": 475.1,
+    "binding_pct": 36.52,
+    "avg_mv_binding": 469.4,
+    "match_score": 0.554
+  },
+  "MOLONG-ORANGN 132kV ckt1": {
+    "constraint_id": "N>94K2_94T_NIL",
+    "aemo_line_name": "on molong to orange north",
+    "calibrated_rate_mw": 97.8,
+    "psse_rate1_mw": 112.0,
+    "binding_pct": 0.44,
+    "avg_mv_binding": 417.4,
+    "match_score": 0.667
+  },
+  "BAYSWT-LIDDEL 330kV ckt1": {
+    "constraint_id": "N>>LDTM_33_34_OPEN",
+    "aemo_line_name": "bayswater to liddell (34 or 33)",
+    "calibrated_rate_mw": 698.3,
+    "psse_rate1_mw": 1257.0,
+    "binding_pct": 0.84,
+    "avg_mv_binding": 256.4,
+    "match_score": 0.588
+  },
+  "WELING-WELIGT 132kV ckt1": {
+    "constraint_id": "N>MPWW_945_71",
+    "aemo_line_name": "wellington to wellington town",
+    "calibrated_rate_mw": 103.7,
+    "psse_rate1_mw": 112.0,
+    "binding_pct": 7.25,
+    "avg_mv_binding": 2685.3,
+    "match_score": 0.661
+  },
+  "STUBBO-WELING 330kV ckt1": {
+    "constraint_id": "N>945_94K1",
+    "aemo_line_name": "suntop tee to wellington",
+    "calibrated_rate_mw": 193.9,
+    "psse_rate1_mw": 991.0,
+    "binding_pct": 1.37,
+    "avg_mv_binding": 26.2,
+    "match_score": 0.562
+  },
+  "TEMPLE-WATERL 132kV ckt1": {
+    "constraint_id": "S>>PARS_TPWTX_WTTP",
+    "aemo_line_name": "waterloo to templers",
+    "calibrated_rate_mw": 81.7,
+    "psse_rate1_mw": 137.0,
+    "binding_pct": 2.53,
+    "avg_mv_binding": 8190.8,
+    "match_score": 0.75
+  },
+  "DORIEN-TEMPLE 132kV ckt1": {
+    "constraint_id": "S>>NIL_TPWTX_TPDR",
+    "aemo_line_name": "templers to dorrien",
+    "calibrated_rate_mw": 103.5,
+    "psse_rate1_mw": 137.0,
+    "binding_pct": 2.22,
+    "avg_mv_binding": 332.9,
+    "match_score": 0.837
+  },
+  "TENTFD-CASN 132kV ckt1": {
+    "constraint_id": "N>89_96L_967",
+    "aemo_line_name": "tenterfield to casino",
+    "calibrated_rate_mw": 38.8,
+    "psse_rate1_mw": 126.0,
+    "binding_pct": 1.09,
+    "avg_mv_binding": 1.1,
+    "match_score": 0.753
+  },
+  "ROSEWY-TEMPLE 132kV ckt1": {
+    "constraint_id": "S>>PATX8_MOMA_TPRS",
+    "aemo_line_name": "templers to roseworthy",
+    "calibrated_rate_mw": 86.0,
+    "psse_rate1_mw": 137.0,
+    "binding_pct": 0.94,
+    "avg_mv_binding": 44.5,
+    "match_score": 0.75
+  },
+  "COWRA-FORBES 132kV ckt1": {
+    "constraint_id": "N>999_998_18",
+    "aemo_line_name": "cowra to forbes",
+    "calibrated_rate_mw": 41.5,
+    "psse_rate1_mw": 108.0,
+    "binding_pct": 0.28,
+    "avg_mv_binding": 2149.7,
+    "match_score": 1.0
+  },
+  "HEYWOD-SOUTEA 275kV ckt1": {
+    "constraint_id": "V>>NIL_HYSE_HYSE",
+    "aemo_line_name": "either heywood to south east",
+    "calibrated_rate_mw": 108.8,
+    "psse_rate1_mw": 617.0,
+    "binding_pct": 0.0,
+    "avg_mv_binding": 3.5,
+    "match_score": 0.675
+  },
+  "WAGGA1-WAGA 132kV ckt1": {
+    "constraint_id": "N>NIL_9R6_9R5_N",
+    "aemo_line_name": "wagga132 to wagga north",
+    "calibrated_rate_mw": 21.0,
+    "psse_rate1_mw": 133.0,
+    "binding_pct": 0.05,
+    "avg_mv_binding": 544991.9,
+    "match_score": 0.642
+  },
+  "CANBER-QUEANB 132kV ckt1": {
+    "constraint_id": "N>976_977_NIL_2",
+    "aemo_line_name": "queanbeyan to canberra",
+    "calibrated_rate_mw": 41.6,
+    "psse_rate1_mw": 128.0,
+    "binding_pct": 0.03,
+    "avg_mv_binding": 384.6,
+    "match_score": 0.675
+  },
+  "REDCLF-WEMNTS 220kV ckt1": {
+    "constraint_id": "V>>NIL_RCWE_HOMRKM",
+    "aemo_line_name": "red cliffs to wemen",
+    "calibrated_rate_mw": 244.1,
+    "psse_rate1_mw": 315.2,
+    "binding_pct": 0.24,
+    "avg_mv_binding": 163.9,
+    "match_score": 0.739
+  },
+  "CAMELA-EPARRA 132kV ckt1": {
+    "constraint_id": "V>>NIL_ARTSTL_ARCW",
+    "aemo_line_name": "ararat to stawell",
+    "calibrated_rate_mw": -51.4,
+    "psse_rate1_mw": 111.0,
+    "binding_pct": 0.02,
+    "avg_mv_binding": 262.7,
+    "match_score": 0.564
+  },
+  "BALRAT-BENDIG 220kV ckt1": {
+    "constraint_id": "V>>NIL_BABE_SHBE",
+    "aemo_line_name": "ballarat to bendigo",
+    "calibrated_rate_mw": -62.0,
+    "psse_rate1_mw": 331.1,
+    "binding_pct": 0.01,
+    "avg_mv_binding": 226130.5,
+    "match_score": 0.857
+  },
+  "GADARA-WAGGA 132kV ckt1": {
+    "constraint_id": "N>NIL_993",
+    "aemo_line_name": "wagga330 to gadara",
+    "calibrated_rate_mw": -14.7,
+    "psse_rate1_mw": 133.0,
+    "binding_pct": 0.02,
+    "avg_mv_binding": 7308000.0,
+    "match_score": 0.812
+  },
+  "JINDRA-WALLAW 330kV ckt1": {
+    "constraint_id": "N>>NIL_996_6Y",
+    "aemo_line_name": "on wagga to jindera",
+    "calibrated_rate_mw": 656.8,
+    "psse_rate1_mw": 960.0,
+    "binding_pct": 0.0,
+    "avg_mv_binding": 22.3,
+    "match_score": 0.676
+  }
+}

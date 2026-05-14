@@ -1363,6 +1363,15 @@ function bindMapEvents() {
         const pkColour = peakPct > 50 ? '#f85149' : peakPct > 20 ? '#f0883e' : peakPct > 5 ? '#d29922' : '#79c0ff';
         html += `<span class="popup-label">Contingency peak</span><span class="popup-value" style="color:${pkColour}">${peakPct.toFixed(1)}%</span>`;
       }
+      if (p.avg_mv_binding != null) {
+        const mv = Math.abs(parseFloat(p.avg_mv_binding));
+        const mvCol = mv > 300 ? '#f85149' : mv > 100 ? '#f0883e' : mv > 30 ? '#d29922' : '#8b949e';
+        html += `<span class="popup-label">Shadow price (avg)</span><span class="popup-value" style="color:${mvCol}">$${mv.toLocaleString()}/MWh</span>`;
+      }
+      if (p.constraint_limit_mw != null) {
+        const climit = parseFloat(p.constraint_limit_mw);
+        html += `<span class="popup-label">AEMO limit (median)</span><span class="popup-value">${climit.toLocaleString()} MW</span>`;
+      }
       html += `</div>`;
 
       // Weekly headroom chart — shows the primary (most-binding) constraint on this line.
@@ -1444,6 +1453,13 @@ function bindMapEvents() {
       html += `<div style="font-size:10px;color:#8b949e;margin-bottom:5px">50% tap along line · worst 8-case PSS/E · RATE1 · 2024 dispatch · DC linearised</div>`;
       html += `<div class="popup-grid">`;
       if (r1) html += `<span class="popup-label">Line rating</span><span class="popup-value">${r1.toLocaleString()} MVA</span>`;
+      if (p.n1_mid_loading_pct != null) {
+        const load = parseFloat(p.n1_mid_loading_pct);
+        const fb   = p.n1_mid_f_base_mw != null ? parseFloat(p.n1_mid_f_base_mw) : null;
+        const lCol = load > 90 ? '#f85149' : load > 75 ? '#f0883e' : load > 50 ? '#d29922' : '#8b949e';
+        const fbStr = fb != null ? ` (${fb >= 0 ? '+' : ''}${fb.toLocaleString()} MW)` : '';
+        html += `<span class="popup-label">Base loading (${p.n1_mid_export_case || '?'})</span><span class="popup-value" style="color:${lCol}">${load.toFixed(1)}%${fbStr}</span>`;
+      }
       html += `<span class="popup-label">Max export (gen)</span><span class="popup-value" style="color:${expCol};font-weight:700">${expLim}</span>`;
       html += `<span class="popup-label">Max import (battery)</span><span class="popup-value" style="color:${impCol};font-weight:700">${impLim}</span>`;
       html += `</div>`;
@@ -1460,6 +1476,21 @@ function bindMapEvents() {
         html += `Contingency: ${p.n1_mid_import_limit_contingency || '–'}<br>`;
         html += `Binding case: ${p.n1_mid_import_case || '–'}`;
         html += `</div>`;
+      }
+      const lineCases = p.n1_cases ? tryParse(p.n1_cases) : null;
+      if (lineCases && lineCases.length > 1) {
+        html += `<button onclick="var t=this.nextElementSibling;var open=t.style.display!=='none';t.style.display=open?'none':'block';this.textContent=open?'All cases ▾':'All cases ▴';" style="margin-top:6px;background:none;border:none;color:#58a6ff;cursor:pointer;font-size:10px;padding:0;text-align:left">All cases ▾</button>`;
+        html += `<div style="display:none;margin-top:4px"><table style="width:100%;border-collapse:collapse;font-size:10px">`;
+        html += `<tr style="color:#8b949e"><th style="text-align:left;padding:2px 4px">Case</th><th style="text-align:right;padding:2px 4px">Loading</th><th style="text-align:right;padding:2px 4px">Export</th><th style="text-align:right;padding:2px 4px">Import</th></tr>`;
+        lineCases.forEach(c => {
+          const eStr = c.e >= 4999 ? '–' : c.e.toLocaleString() + ' MW';
+          const iStr = c.i >= 4999 ? '–' : c.i.toLocaleString() + ' MW';
+          const eC = c.e < 50 ? '#f85149' : c.e < 200 ? '#d29922' : '#3fb950';
+          const lStr = c.l != null ? c.l.toFixed(0) + '%' : '–';
+          const lC = c.l != null && c.l > 90 ? '#f85149' : c.l != null && c.l > 75 ? '#f0883e' : c.l != null && c.l > 50 ? '#d29922' : '#8b949e';
+          html += `<tr><td style="padding:2px 4px;color:#e6edf3">${c.c}</td><td style="text-align:right;padding:2px 4px;color:${lC}">${lStr}</td><td style="text-align:right;padding:2px 4px;color:${eC};font-weight:600">${eStr}</td><td style="text-align:right;padding:2px 4px;color:#8b949e">${iStr}</td></tr>`;
+        });
+        html += `</table></div>`;
       }
       html += `</div>`;
     }
@@ -1672,6 +1703,19 @@ function bindMapEvents() {
         html += `Contingency: ${p.n1_import_limit_contingency || '–'}<br>`;
         html += `Binding case: ${p.n1_import_case || '–'}`;
         html += `</div>`;
+      }
+      const subCases = p.n1_sub_cases ? tryParse(p.n1_sub_cases) : null;
+      if (subCases && subCases.length > 1) {
+        html += `<button onclick="var t=this.nextElementSibling;var open=t.style.display!=='none';t.style.display=open?'none':'block';this.textContent=open?'All cases ▾':'All cases ▴';" style="margin-top:6px;background:none;border:none;color:#58a6ff;cursor:pointer;font-size:10px;padding:0;text-align:left">All cases ▾</button>`;
+        html += `<div style="display:none;margin-top:4px"><table style="width:100%;border-collapse:collapse;font-size:10px">`;
+        html += `<tr style="color:#8b949e"><th style="text-align:left;padding:2px 4px">Case</th><th style="text-align:right;padding:2px 4px">Export</th><th style="text-align:right;padding:2px 4px">Import</th></tr>`;
+        subCases.forEach(c => {
+          const eStr = c.e >= 4999 ? '–' : c.e.toLocaleString() + ' MW';
+          const iStr = c.i >= 4999 ? '–' : c.i.toLocaleString() + ' MW';
+          const eC = c.e < 50 ? '#f85149' : c.e < 200 ? '#d29922' : '#3fb950';
+          html += `<tr><td style="padding:2px 4px;color:#e6edf3">${c.c}</td><td style="text-align:right;padding:2px 4px;color:${eC};font-weight:600">${eStr}</td><td style="text-align:right;padding:2px 4px;color:#8b949e">${iStr}</td></tr>`;
+        });
+        html += `</table></div>`;
       }
       html += `</div>`;
     }
