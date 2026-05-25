@@ -1331,18 +1331,28 @@ function bindMapEvents() {
       const normMax = p.psse_norm_max_mva ? parseFloat(p.psse_norm_max_mva) : null;
       const emergMin = p.psse_emerg_min_mva ? parseFloat(p.psse_emerg_min_mva) : null;
       const emergMax = p.psse_emerg_max_mva ? parseFloat(p.psse_emerg_max_mva) : null;
-      html += `<div class="popup-section"><div class="popup-section-title">PSSE Ratings (${p.psse_seasons || 8} seasonal snapshots)</div>`;
+      const nCkt = p.psse_circuits || 1;
+      const ckts = Array.isArray(p.psse_per_ckt_norm_mva) ? p.psse_per_ckt_norm_mva : null;
+      const corridor = p.psse_corridor_norm_mva ? parseFloat(p.psse_corridor_norm_mva) : null;
+      const ckt_label = nCkt > 1 ? `${nCkt} parallel circuits` : `1 circuit`;
+      html += `<div class="popup-section"><div class="popup-section-title">PSSE Ratings · ${ckt_label}</div>`;
       html += `<div class="popup-grid">`;
       const normStr = (normMax && normMax !== normMin) ? `${normMin.toLocaleString()} – ${normMax.toLocaleString()} MVA` : `${normMin.toLocaleString()} MVA`;
-      html += `<span class="popup-label">Normal (N)</span><span class="popup-value">${normStr}</span>`;
+      html += `<span class="popup-label">${nCkt > 1 ? 'Per circuit (N)' : 'Normal (N)'}</span><span class="popup-value">${normStr}</span>`;
+      if (nCkt > 1 && corridor) {
+        html += `<span class="popup-label">Corridor total (N)</span><span class="popup-value">${corridor.toLocaleString()} MVA</span>`;
+      }
       if (emergMin) {
         const emergStr = (emergMax && emergMax !== emergMin) ? `${emergMin.toLocaleString()} – ${emergMax.toLocaleString()} MVA` : `${emergMin.toLocaleString()} MVA`;
-        html += `<span class="popup-label">Emergency (N-1)</span><span class="popup-value">${emergStr}</span>`;
+        html += `<span class="popup-label">${nCkt > 1 ? 'Per circuit (N-1)' : 'Emergency (N-1)'}</span><span class="popup-value">${emergStr}</span>`;
       }
       if (p.psse_short_mva) {
         html += `<span class="popup-label">Short-term (15 min)</span><span class="popup-value">${parseFloat(p.psse_short_mva).toLocaleString()} MVA</span>`;
       }
-      html += `</div><div style="font-size:11px;color:#8b949e;margin-top:4px">Range = min–max across 8 seasonal snapshots (2024-25)</div></div>`;
+      if (nCkt > 1 && ckts && ckts.length > 1) {
+        html += `<span class="popup-label">Each circuit</span><span class="popup-value">${ckts.map(v => parseFloat(v).toLocaleString()).join(' / ')} MVA</span>`;
+      }
+      html += `</div><div style="font-size:11px;color:#8b949e;margin-top:4px">Range = min–max across ${p.psse_seasons || 8} seasonal snapshots (AEMO 2024 PSSE cases)${nCkt > 1 ? '; corridor total = sum of parallel circuit ratings' : ''}</div></div>`;
     }
 
     // Constraint binding % + monthly headroom chart

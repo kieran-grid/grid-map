@@ -372,6 +372,9 @@ function buildNetwork(stateName, minKv = 132, regionId = null) {
         emergRating: p.psse_emerg_min_mva || null,
         normMax: p.psse_norm_max_mva || null,
         emergMax: p.psse_emerg_max_mva || null,
+        psseCircuits: p.psse_circuits || null,
+        psseCorridor: p.psse_corridor_norm_mva || null,
+        pssePerCkt: p.psse_per_ckt_norm_mva || null,
         lengthM: p.length_m || null,
         status: p.status || null,
         lineClass: p.line_class || null,
@@ -383,6 +386,9 @@ function buildNetwork(stateName, minKv = 132, regionId = null) {
     // Keep best (max) ratings across parallel circuits
     if (p.psse_norm_min_mva)  edge.normRating  = Math.max(edge.normRating  || 0, p.psse_norm_min_mva);
     if (p.psse_emerg_min_mva) edge.emergRating = Math.max(edge.emergRating || 0, p.psse_emerg_min_mva);
+    if (p.psse_circuits)         edge.psseCircuits = Math.max(edge.psseCircuits || 0, p.psse_circuits);
+    if (p.psse_corridor_norm_mva)edge.psseCorridor = Math.max(edge.psseCorridor || 0, p.psse_corridor_norm_mva);
+    if (p.psse_per_ckt_norm_mva) edge.pssePerCkt   = p.psse_per_ckt_norm_mva;
   }
 
   // Add 66kV buses to terminal stations already in the 132kV+ network (bus only, no edges)
@@ -1068,7 +1074,10 @@ function popupLine(edge, stateName) {
   h += `<span class="popup-label">State</span><span class="popup-value">${stateName}</span>`;
   if (edge.status)    h += `<span class="popup-label">Status</span><span class="popup-value">${edge.status}</span>`;
   if (edge.lineClass) h += `<span class="popup-label">Class</span><span class="popup-value">${edge.lineClass}</span>`;
-  h += `<span class="popup-label">Circuits</span><span class="popup-value">${edge.circuits}</span>`;
+  const ckt_disp = edge.psseCircuits && edge.psseCircuits !== edge.circuits
+    ? `${edge.circuits} drawn · ${edge.psseCircuits} in PSSE`
+    : `${edge.circuits}`;
+  h += `<span class="popup-label">Circuits</span><span class="popup-value">${ckt_disp}</span>`;
   if (edge.lengthM)   h += `<span class="popup-label">Length</span><span class="popup-value">${(edge.lengthM/1000).toFixed(1)} km</span>`;
   if (edge.lineId)    h += `<span class="popup-label">Line ID</span><span class="popup-value">${edge.lineId}</span>`;
   h += `<span class="popup-label">From</span><span class="popup-value">${edge.from}</span>`;
@@ -1077,21 +1086,28 @@ function popupLine(edge, stateName) {
   if (edge.normRating || edge.emergRating) {
     const normMin = edge.normRating, normMax = edge.normMax;
     const emergMin = edge.emergRating, emergMax = edge.emergMax;
-    h += `<div class="popup-section"><div class="popup-section-title">PSSE Ratings (seasonal snapshots)</div>`;
+    const nCkt = edge.psseCircuits || 1;
+    h += `<div class="popup-section"><div class="popup-section-title">PSSE Ratings · ${nCkt > 1 ? nCkt + ' parallel circuits' : '1 circuit'}</div>`;
     h += `<div class="popup-grid">`;
     if (normMin) {
       const normStr = (normMax && normMax !== normMin)
         ? `${Math.round(normMin).toLocaleString()} – ${Math.round(normMax).toLocaleString()} MVA`
         : `${Math.round(normMin).toLocaleString()} MVA`;
-      h += `<span class="popup-label">Normal (N)</span><span class="popup-value">${normStr}</span>`;
+      h += `<span class="popup-label">${nCkt > 1 ? 'Per circuit (N)' : 'Normal (N)'}</span><span class="popup-value">${normStr}</span>`;
+    }
+    if (nCkt > 1 && edge.psseCorridor) {
+      h += `<span class="popup-label">Corridor total (N)</span><span class="popup-value">${Math.round(edge.psseCorridor).toLocaleString()} MVA</span>`;
     }
     if (emergMin) {
       const emergStr = (emergMax && emergMax !== emergMin)
         ? `${Math.round(emergMin).toLocaleString()} – ${Math.round(emergMax).toLocaleString()} MVA`
         : `${Math.round(emergMin).toLocaleString()} MVA`;
-      h += `<span class="popup-label">Emergency (N-1)</span><span class="popup-value">${emergStr}</span>`;
+      h += `<span class="popup-label">${nCkt > 1 ? 'Per circuit (N-1)' : 'Emergency (N-1)'}</span><span class="popup-value">${emergStr}</span>`;
     }
-    h += `</div><div style="font-size:11px;color:#8b949e;margin-top:4px">Min–max across seasonal snapshots (2024-25)</div></div>`;
+    if (nCkt > 1 && edge.pssePerCkt && edge.pssePerCkt.length > 1) {
+      h += `<span class="popup-label">Each circuit</span><span class="popup-value">${edge.pssePerCkt.map(v => Math.round(v).toLocaleString()).join(' / ')} MVA</span>`;
+    }
+    h += `</div><div style="font-size:11px;color:#8b949e;margin-top:4px">Min–max across seasonal snapshots${nCkt > 1 ? '; corridor total = sum of parallel circuits' : ''}</div></div>`;
   }
   return h;
 }
