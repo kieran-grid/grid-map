@@ -335,7 +335,7 @@
       <div class="legend-item"><div class="legend-line" style="background:#d29922;height:4px"></div>5 – 20%</div>
       <div class="legend-item"><div class="legend-line" style="background:#79c0ff;height:4px"></div>1 – 5%</div>
       <div class="legend-item"><div class="legend-line" style="background:#30363d;height:4px"></div>&lt; 1% or no data</div>
-      <div style="font-size:11px;color:#8b949e;margin-top:3px">Jan 2025 – Feb 2026 — % of 5-min dispatch<br>intervals constraint was binding</div>
+      <div style="font-size:11px;color:#8b949e;margin-top:3px">Jan 2024 – Apr 2026 — % of 5-min dispatch<br>intervals constraint was binding</div>
     </div>
 
     <div id="subs-voltage-legend" style="display:none"></div>
@@ -1359,14 +1359,14 @@ function bindMapEvents() {
     if (p.binding_pct == null) {
       const volt = parseFloat(p.voltage_kv || 0);
       if (volt >= 132) {
-        html += `<div class="popup-section" style="color:#8b949e;font-size:12px">No binding constraint data for this line (Jan 2025 – Feb 2026)</div>`;
+        html += `<div class="popup-section" style="color:#8b949e;font-size:12px">No binding constraint data for this line (Jan 2024 – Apr 2026)</div>`;
       }
     }
     if (p.binding_pct != null) {
       const bpct = parseFloat(p.binding_pct);
       const peakPct = p.peak_contingency_pct != null ? parseFloat(p.peak_contingency_pct) : null;
       const bColour = bpct > 50 ? '#f85149' : bpct > 20 ? '#f0883e' : bpct > 5 ? '#d29922' : bpct > 1 ? '#79c0ff' : '#8b949e';
-      html += `<div class="popup-section"><div class="popup-section-title">Congestion (Jan 2025 – Feb 2026)</div>`;
+      html += `<div class="popup-section"><div class="popup-section-title">Congestion (Jan 2024 – Apr 2026)</div>`;
       html += `<div class="popup-grid">`;
       html += `<span class="popup-label">Normal ops</span><span class="popup-value" style="color:${bColour};font-weight:700">${bpct.toFixed(1)}% of intervals</span>`;
       if (peakPct != null && peakPct > bpct + 0.5) {
@@ -2855,7 +2855,7 @@ function openConstraintModal(cid, cpct, desc, weeklyData, lineName, allConstrs, 
         RHS is the pre-calculated constraint limit (line rating after fixed loading/contingency adjustments).
         LHS is the sum of dispatchable contributions (∑ factor × DUID/interconnector MW).
         <strong>Headroom ≤ 0 = constraint binding</strong> (the protected element is at its limit).
-        Jan 2025 – Feb 2026.
+        Jan 2024 – Apr 2026.
       </div>`;
   } else if (allConstrs && allConstrs.length > 1) {
     // Fallback: bar chart comparing all constraints on this line by binding %
@@ -2922,7 +2922,7 @@ function buildConstraintBarChart(selectedCid, constrs, lineBpct) {
 
   // Title row
   svg += `<text x="0" y="14" fill="#8b949e" font-size="10" font-weight="600" text-transform="uppercase">Constraint</text>`;
-  svg += `<text x="${LABEL_W}" y="14" fill="#8b949e" font-size="10">% binding (Jan 2025 – Feb 2026)</text>`;
+  svg += `<text x="${LABEL_W}" y="14" fill="#8b949e" font-size="10">% binding (Jan 2024 – Apr 2026)</text>`;
 
   sorted.forEach((c, i) => {
     const y = 24 + i * ROW_H;
@@ -2964,7 +2964,7 @@ function buildConstraintBarChart(selectedCid, constrs, lineBpct) {
       Each bar shows how often that constraint set the active limit during the analysis period.
     </div>
     <div style="overflow-x:auto">${svg}</div>
-    <div style="font-size:10px;color:#8b949e;margin-top:8px">Weekly headroom time series not available for this line. Showing aggregate binding frequency per constraint (Jan 2025 – Feb 2026).</div>`;
+    <div style="font-size:10px;color:#8b949e;margin-top:8px">Weekly headroom time series not available for this line. Showing aggregate binding frequency per constraint (Jan 2024 – Apr 2026).</div>`;
 }
 
 // ─────────────────────────────────────────
