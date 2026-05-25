@@ -1412,16 +1412,18 @@ function bindMapEvents() {
           const cpctNum = c.binding_pct != null ? parseFloat(c.binding_pct) : 0;
           const cpctStr = c.binding_pct != null ? cpctNum.toFixed(1) + '%' : '–';
           const barCol  = cpctNum > 50 ? '#f85149' : cpctNum > 20 ? '#f0883e' : cpctNum > 5 ? '#d29922' : '#79c0ff';
-          const desc = (c.desc || '')
+          // Full (cleaned) description goes to the modal via data-desc.
+          // Row preview (rowDesc) is a short slice that fits the single visible line.
+          const descFull = (c.desc || '')
             .replace(/^Out\s*=\s*[^,]+,\s*/i, '')
             .replace(/,?\s*Feedback$/i, '')
-            .replace(/,?\s*\(Wt\s*=.*$/i, '')
-            .slice(0, 90);
+            .replace(/,?\s*\(Wt\s*=.*$/i, '');
+          const rowDesc = descFull.slice(0, 90);
           // data-* attrs carry all info needed by delegated click handler — no closures needed
           html += `<div class="constr-row"
               data-cid="${c.id}"
               data-cpct="${cpctStr}"
-              data-desc="${desc.replace(/"/g, '&quot;')}"
+              data-desc="${descFull.replace(/"/g, '&quot;')}"
               style="display:flex;align-items:center;gap:8px;padding:5px 4px;border-bottom:1px solid #21262d;cursor:pointer">
             <div style="flex:1;min-width:0">
               <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:2px">
@@ -1431,7 +1433,7 @@ function bindMapEvents() {
               <div style="background:#21262d;border-radius:2px;height:3px;margin-bottom:2px">
                 <div style="width:${Math.min(100,cpctNum)}%;height:100%;background:${barCol};border-radius:2px"></div>
               </div>
-              <div style="color:#8b949e;font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${desc}</div>
+              <div style="color:#8b949e;font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${rowDesc}</div>
             </div>
             <span style="color:#58a6ff;font-size:16px;flex-shrink:0;opacity:0.6">›</span>
           </div>`;
