@@ -1556,16 +1556,19 @@ function bindMapEvents() {
       const ratings = tryParse(p.xfmr_ratings) || [];
       html += `<div class="popup-section"><div class="popup-section-title">Transformers (PSSE)</div>`;
       if (ratings.length) {
-        // Group by (kv, norm) and count
+        // Format a kV value as int when whole (220 not 220.0).
+        const fmtKv = v => { v = parseFloat(v || 0); return Math.abs(v - Math.round(v)) < 0.05 ? String(Math.round(v)) : v.toFixed(1); };
+        // Group by (HV kV, LV kV, norm) so 220/66 kV and 220/22 kV are separate.
         const grouped = {};
         ratings.forEach(r => {
-          const key = `${r.kv}_${r.norm}`;
-          if (!grouped[key]) grouped[key] = { kv: r.kv, norm: r.norm, emerg: r.emerg, count: 0 };
+          const ratio = r.ratio || (r.kv_lo ? `${fmtKv(r.kv)}/${fmtKv(r.kv_lo)} kV` : `${fmtKv(r.kv)} kV`);
+          const key = `${r.kv}_${r.kv_lo}_${r.norm}`;
+          if (!grouped[key]) grouped[key] = { ratio, kv: r.kv, norm: r.norm, emerg: r.emerg, count: 0 };
           grouped[key].count++;
         });
-        Object.values(grouped).sort((a, b) => b.norm - a.norm).forEach(g => {
+        Object.values(grouped).sort((a, b) => (b.kv - a.kv) || (b.norm - a.norm)).forEach(g => {
           const emergStr = g.emerg && g.emerg !== g.norm ? ` / ${g.emerg} emerg` : '';
-          html += `<div class="mlf-row"><span>${g.count} × ${g.norm} MVA${emergStr}</span><span style="color:#8b949e">${g.kv} kV side</span></div>`;
+          html += `<div class="mlf-row"><span>${g.count} × ${g.ratio}</span><span style="color:#8b949e">${g.norm} MVA${emergStr}</span></div>`;
         });
       }
       html += `<div style="font-size:11px;color:#8b949e;margin-top:3px">Min normal rating across PSSE seasonal snapshots</div>`;

@@ -143,6 +143,114 @@ const GEN_STEP    = 26;   // horizontal spacing between gen symbols
 const SIM_TICKS   = 1200;
 const GAP_PX      = 8;    // pixels either side of a crossing gap
 
+// Format a kV value as an int when whole (220.0 -> '220'), else 1 dp.
+function fmtKv(v) { v = parseFloat(v || 0); return Math.abs(v - Math.round(v)) < 0.05 ? String(Math.round(v)) : v.toFixed(1); }
+
+// Group PSSE transformer ratings by HV/LV voltage ratio + MVA, with a count.
+// Returns [{hi, lo, norm, count, ratio}] sorted by HV desc then MVA desc, so the
+// SLD can draw e.g. Bendigo as 2×220/66 kV and 2×220/22 kV rather than 4×220/66.
+function buildXfmrGroups(ratings) {
+  if (!ratings || !ratings.length) return [];
+  const g = {};
+  ratings.forEach(r => {
+    const hi = parseFloat(r.kv || 0), lo = parseFloat(r.kv_lo || 0);
+    const ratio = r.ratio || (lo ? `${fmtKv(hi)}/${fmtKv(lo)} kV` : `${fmtKv(hi)} kV`);
+    const key = `${hi}_${lo}_${r.norm}`;
+    if (!g[key]) g[key] = { hi, lo, norm: r.norm, ratio, count: 0 };
+    g[key].count++;
+  });
+  return Object.values(g).sort((a, b) => (b.hi - a.hi) || (b.norm - a.norm));
+}
+
+// Flatten transformer groups into individual symbols (capped for readability).
+function flattenXfmrs(groups, cap) {
+  const flat = [];
+  (groups || []).forEach(g => { for (let k = 0; k < g.count && flat.length < cap; k++) flat.push(g); });
+  return flat;
+}
+
+// V-oriented sub: bus bars run along X (index*BUS_SPACING), transformers stacked
+// vertically. Each transformer is drawn between its true HV bus bar and its LV
+// bus bar — or a labelled stub when the LV level (e.g. 22 kV) has no bus bar —
+// and labelled with its real ratio. Falls back to the old count-only drawing
+// when per-transformer ratings are unavailable.
+function drawXfmrsV(sg, sub, volts) {
+  const sep = XFMR_R * 0.65;
+  const groups = sub.xfmrGroups || [];
+  const circ = (g0, cx, cy) => g0.append('circle').attr('cx', cx).attr('cy', cy)
+    .attr('r', XFMR_R).attr('stroke', '#2a2a3a').attr('fill', 'rgba(250,250,248,1.0)').attr('stroke-width', 1.5);
+  if (!groups.length) {
+    const nY = Math.min(Math.max(sub.xfmrCount || 2, 1), 4);
+    for (let i = 0; i < volts.length - 1; i++) {
+      const x1 = i * BUS_SPACING, x2 = (i + 1) * BUS_SPACING, midX = (x1 + x2) / 2, totH = (nY - 1) * 24;
+      for (let t = 0; t < nY; t++) {
+        const cy = -totH / 2 + t * 24, lCX = midX - sep, rCX = midX + sep;
+        sg.append('line').attr('x1', x1).attr('y1', cy).attr('x2', lCX - XFMR_R).attr('y2', cy).attr('stroke', '#2a2a3a').attr('stroke-width', 1.5);
+        sg.append('line').attr('x1', x2).attr('y1', cy).attr('x2', rCX + XFMR_R).attr('y2', cy).attr('stroke', '#2a2a3a').attr('stroke-width', 1.5);
+        const xfg = sg.append('g').style('cursor', 'pointer').on('click', (ev) => { ev.stopPropagation(); showPopup(popupTransformer(sub, volts[i], volts[i + 1]), sub.x + midX, sub.y + cy); });
+        circ(xfg, lCX, cy); circ(xfg, rCX, cy);
+      }
+    }
+    return;
+  }
+  const flat = flattenXfmrs(groups, 6), totH = (flat.length - 1) * 24;
+  const stubX = (volts.length - 1) * BUS_SPACING + 50;
+  [...new Set(groups.map(g => g.lo).filter(lo => lo && volts.indexOf(lo) < 0))].forEach(lo => {
+    sg.append('line').attr('x1', stubX).attr('y1', -16).attr('x2', stubX).attr('y2', 16).attr('stroke', VC[lo] || '#888').attr('stroke-width', 3);
+    sg.append('text').attr('x', stubX + 6).attr('y', -18).attr('font-size', 11).attr('fill', VC[lo] || '#888').text(`${fmtKv(lo)}kV`);
+  });
+  flat.forEach((g, t) => {
+    const cy = -totH / 2 + t * 24;
+    const hiIdx = volts.indexOf(g.hi), hiX = (hiIdx >= 0 ? hiIdx : 0) * BUS_SPACING;
+    const loIdx = volts.indexOf(g.lo), tgtX = loIdx >= 0 ? loIdx * BUS_SPACING : stubX;
+    const midX = (hiX + tgtX) / 2, lCX = midX - sep, rCX = midX + sep;
+    sg.append('line').attr('x1', hiX).attr('y1', cy).attr('x2', lCX - XFMR_R).attr('y2', cy).attr('stroke', '#2a2a3a').attr('stroke-width', 1.5);
+    sg.append('line').attr('x1', tgtX).attr('y1', cy).attr('x2', rCX + XFMR_R).attr('y2', cy).attr('stroke', '#2a2a3a').attr('stroke-width', 1.5);
+    const xfg = sg.append('g').style('cursor', 'pointer').on('click', (ev) => { ev.stopPropagation(); showPopup(popupTransformer(sub, g.hi, g.lo), sub.x + midX, sub.y + cy); });
+    circ(xfg, lCX, cy); circ(xfg, rCX, cy);
+    sg.append('text').attr('x', rCX + XFMR_R + 3).attr('y', cy + 3).attr('font-size', 8).attr('fill', '#666').text(g.ratio.replace(' kV', ''));
+  });
+}
+
+// H-oriented sub: bus bars run along Y, transformers stacked horizontally.
+function drawXfmrsH(sg, sub, volts) {
+  const sep = XFMR_R * 0.65;
+  const groups = sub.xfmrGroups || [];
+  const circ = (g0, cx, cy) => g0.append('circle').attr('cx', cx).attr('cy', cy)
+    .attr('r', XFMR_R).attr('stroke', '#2a2a3a').attr('fill', 'rgba(250,250,248,1.0)').attr('stroke-width', 1.5);
+  if (!groups.length) {
+    const nX = Math.min(Math.max(sub.xfmrCount || 2, 1), 4);
+    for (let i = 0; i < volts.length - 1; i++) {
+      const y1 = i * BUS_SPACING, y2 = (i + 1) * BUS_SPACING, totW = (nX - 1) * 24;
+      for (let t = 0; t < nX; t++) {
+        const cx = -totW / 2 + t * 24, midY = (y1 + y2) / 2, topCY = midY - sep, botCY = midY + sep;
+        sg.append('line').attr('x1', cx).attr('y1', y1).attr('x2', cx).attr('y2', topCY - XFMR_R).attr('stroke', '#2a2a3a').attr('stroke-width', 1.5);
+        sg.append('line').attr('x1', cx).attr('y1', y2).attr('x2', cx).attr('y2', botCY + XFMR_R).attr('stroke', '#2a2a3a').attr('stroke-width', 1.5);
+        const xfg = sg.append('g').style('cursor', 'pointer').on('click', (ev) => { ev.stopPropagation(); showPopup(popupTransformer(sub, volts[i], volts[i + 1]), sub.x + cx, sub.y + midY); });
+        circ(xfg, cx, topCY); circ(xfg, cx, botCY);
+      }
+    }
+    return;
+  }
+  const flat = flattenXfmrs(groups, 6), totW = (flat.length - 1) * 24;
+  const stubY = (volts.length - 1) * BUS_SPACING + 50;
+  [...new Set(groups.map(g => g.lo).filter(lo => lo && volts.indexOf(lo) < 0))].forEach(lo => {
+    sg.append('line').attr('x1', -16).attr('y1', stubY).attr('x2', 16).attr('y2', stubY).attr('stroke', VC[lo] || '#888').attr('stroke-width', 3);
+    sg.append('text').attr('x', 0).attr('y', stubY + 18).attr('text-anchor', 'middle').attr('font-size', 11).attr('fill', VC[lo] || '#888').text(`${fmtKv(lo)}kV`);
+  });
+  flat.forEach((g, t) => {
+    const cx = -totW / 2 + t * 24;
+    const hiIdx = volts.indexOf(g.hi), hiY = (hiIdx >= 0 ? hiIdx : 0) * BUS_SPACING;
+    const loIdx = volts.indexOf(g.lo), tgtY = loIdx >= 0 ? loIdx * BUS_SPACING : stubY;
+    const midY = (hiY + tgtY) / 2, topCY = midY - sep, botCY = midY + sep;
+    sg.append('line').attr('x1', cx).attr('y1', hiY).attr('x2', cx).attr('y2', topCY - XFMR_R).attr('stroke', '#2a2a3a').attr('stroke-width', 1.5);
+    sg.append('line').attr('x1', cx).attr('y1', tgtY).attr('x2', cx).attr('y2', botCY + XFMR_R).attr('stroke', '#2a2a3a').attr('stroke-width', 1.5);
+    const xfg = sg.append('g').style('cursor', 'pointer').on('click', (ev) => { ev.stopPropagation(); showPopup(popupTransformer(sub, g.hi, g.lo), sub.x + cx, sub.y + midY); });
+    circ(xfg, cx, topCY); circ(xfg, cx, botCY);
+    sg.append('text').attr('x', cx + XFMR_R + 3).attr('y', midY + 2).attr('font-size', 8).attr('fill', '#666').text(g.ratio.replace(' kV', ''));
+  });
+}
+
 // ══════════════════════════════════════════════════════════════════════════════
 //  METRO REGIONS — geographic bounding boxes collapsed to single box nodes
 //  latMin/Max, lngMin/Max in decimal degrees
@@ -436,6 +544,7 @@ function buildNetwork(stateName, minKv = 132, regionId = null) {
       sub.currentRatingMva = mp.current_rating_mva || null;
       sub.faultLevels      = tryParse(mp.fault_levels);
       sub.xfmrRatings      = tryParse(mp.xfmr_ratings);
+      sub.xfmrGroups       = buildXfmrGroups(sub.xfmrRatings);
       sub.mlfGen           = mp.mlf_gen_2026_27 != null ? parseFloat(mp.mlf_gen_2026_27) : null;
       sub.mlfGenImport     = mp.mlf_gen_import_2026_27 != null ? parseFloat(mp.mlf_gen_import_2026_27) : null;
       sub.mlfGenExport     = mp.mlf_gen_export_2026_27 != null ? parseFloat(mp.mlf_gen_export_2026_27) : null;
@@ -1004,15 +1113,17 @@ function popupSubstation(sub, stateName) {
     const ratings = sub.xfmrRatings;
     h += `<div class="popup-section"><div class="popup-section-title">Transformers (PSSE)</div>`;
     if (ratings && ratings.length) {
+      const fmtKv = v => { v = parseFloat(v || 0); return Math.abs(v - Math.round(v)) < 0.05 ? String(Math.round(v)) : v.toFixed(1); };
       const grouped = {};
       ratings.forEach(r => {
-        const key = `${r.kv}_${r.norm}`;
-        if (!grouped[key]) grouped[key] = { kv: r.kv, norm: r.norm, emerg: r.emerg, count: 0 };
+        const ratio = r.ratio || (r.kv_lo ? `${fmtKv(r.kv)}/${fmtKv(r.kv_lo)} kV` : `${fmtKv(r.kv)} kV`);
+        const key = `${r.kv}_${r.kv_lo}_${r.norm}`;
+        if (!grouped[key]) grouped[key] = { ratio, kv: r.kv, norm: r.norm, emerg: r.emerg, count: 0 };
         grouped[key].count++;
       });
-      Object.values(grouped).sort((a, b) => b.norm - a.norm).forEach(g => {
+      Object.values(grouped).sort((a, b) => (b.kv - a.kv) || (b.norm - a.norm)).forEach(g => {
         const emergStr = g.emerg && g.emerg !== g.norm ? ` / ${g.emerg} emerg` : '';
-        h += `<div class="mlf-row"><span>${g.count} × ${g.norm} MVA${emergStr}</span><span style="color:#8b949e">${g.kv} kV side</span></div>`;
+        h += `<div class="mlf-row"><span>${g.count} × ${g.ratio}</span><span style="color:#8b949e">${g.norm} MVA${emergStr}</span></div>`;
       });
       h += `<div style="font-size:11px;color:#8b949e;margin-top:3px">Min normal rating across PSSE seasonal snapshots</div>`;
     } else {
@@ -1146,25 +1257,29 @@ function popupTransformer(sub, fromKv, toKv) {
   let h = `<div class="popup-title">Transformer</div>`;
   h += `<div class="popup-grid">`;
   h += `<span class="popup-label">Substation</span><span class="popup-value">${sub.label}</span>`;
-  h += `<span class="popup-label">Primary</span><span class="popup-value" style="color:${VC[fromKv]||'#888'}">${fromKv} kV</span>`;
-  h += `<span class="popup-label">Secondary</span><span class="popup-value" style="color:${VC[toKv]||'#888'}">${toKv} kV</span>`;
-  h += `<span class="popup-label">Count</span><span class="popup-value">${sub.xfmrCount}</span>`;
+  h += `<span class="popup-label">Primary</span><span class="popup-value" style="color:${VC[fromKv]||'#888'}">${fmtKv(fromKv)} kV</span>`;
+  h += `<span class="popup-label">Secondary</span><span class="popup-value" style="color:${VC[toKv]||'#888'}">${fmtKv(toKv)} kV</span>`;
+  // Count transformers matching this specific HV/LV pair (fall back to total).
+  const ratings = sub.xfmrRatings || [];
+  const pairMatch = r => Math.abs(parseFloat(r.kv) - fromKv) < 0.5 && Math.abs(parseFloat(r.kv_lo || 0) - toKv) < 0.5;
+  const pairCount = ratings.filter(pairMatch).length;
+  h += `<span class="popup-label">Count</span><span class="popup-value">${pairCount || sub.xfmrCount}</span>`;
   h += `</div>`;
-  const ratings = sub.xfmrRatings;
-  if (ratings && ratings.length) {
-    h += `<div class="popup-section"><div class="popup-section-title">Ratings (PSSE)</div>`;
+  if (ratings.length) {
+    // Show this pair's ratings first; list the site's other windings below.
     const grouped = {};
     ratings.forEach(r => {
-      const key = `${r.kv}_${r.norm}`;
-      if (!grouped[key]) grouped[key] = { kv: r.kv, norm: r.norm, emerg: r.emerg, count: 0 };
+      const ratio = r.ratio || (r.kv_lo ? `${fmtKv(r.kv)}/${fmtKv(r.kv_lo)} kV` : `${fmtKv(r.kv)} kV`);
+      const key = `${r.kv}_${r.kv_lo}_${r.norm}`;
+      if (!grouped[key]) grouped[key] = { ratio, kv: r.kv, norm: r.norm, emerg: r.emerg, count: 0, here: pairMatch(r) };
       grouped[key].count++;
     });
-    Object.values(grouped).sort((a, b) => b.norm - a.norm).forEach(g => {
-      const emergStr = g.emerg && g.emerg !== g.norm ? ` / ${g.emerg} emerg` : '';
-      h += `<div class="mlf-row"><span>${g.count} × ${g.norm} MVA${emergStr}</span><span style="color:#8b949e">${g.kv} kV side</span></div>`;
-    });
+    const rows = Object.values(grouped).sort((a, b) => (b.here - a.here) || (b.kv - a.kv) || (b.norm - a.norm));
+    const here = rows.filter(g => g.here), other = rows.filter(g => !g.here);
+    const fmtRow = g => { const e = g.emerg && g.emerg !== g.norm ? ` / ${g.emerg} emerg` : ''; return `<div class="mlf-row"><span>${g.count} × ${g.ratio}</span><span style="color:#8b949e">${g.norm} MVA${e}</span></div>`; };
+    if (here.length) { h += `<div class="popup-section"><div class="popup-section-title">This winding (PSSE)</div>`; here.forEach(g => h += fmtRow(g)); h += `</div>`; }
+    if (other.length) { h += `<div class="popup-section"><div class="popup-section-title">Other windings at site</div>`; other.forEach(g => h += fmtRow(g)); h += `</div>`; }
     h += `<div style="font-size:11px;color:#8b949e;margin-top:3px">Min normal rating across PSSE seasonal snapshots</div>`;
-    h += `</div>`;
   }
   return h;
 }
@@ -1338,37 +1453,7 @@ function drawSLD({ substations, edges }, conOff, gapTs, geom, stateName) {
         .text(sub.label);
 
       // Transformer symbols — horizontal overlapping circles between adjacent vertical bus bars
-      for (let i = 0; i < volts.length - 1; i++) {
-        const x1  = i * BUS_SPACING;
-        const x2  = (i + 1) * BUS_SPACING;
-        const midX = (x1 + x2) / 2;
-        const sep  = XFMR_R * 0.65;
-        const nY   = Math.min(Math.max(sub.xfmrCount || 2, 1), 4);
-        const totH = (nY - 1) * 24;
-
-        for (let t = 0; t < nY; t++) {
-          const cy  = -totH / 2 + t * 24;
-          const lCX = midX - sep;
-          const rCX = midX + sep;
-          sg.append('line')
-            .attr('x1',x1).attr('y1',cy).attr('x2',lCX - XFMR_R).attr('y2',cy)
-            .attr('stroke','#2a2a3a').attr('stroke-width',1.5);
-          sg.append('line')
-            .attr('x1',x2).attr('y1',cy).attr('x2',rCX + XFMR_R).attr('y2',cy)
-            .attr('stroke','#2a2a3a').attr('stroke-width',1.5);
-          const xfGroup = sg.append('g').style('cursor','pointer')
-            .on('click', (ev) => {
-              ev.stopPropagation();
-              showPopup(popupTransformer(sub, volts[i], volts[i+1]), sub.x + midX, sub.y + cy);
-            });
-          xfGroup.append('circle')
-            .attr('cx',lCX).attr('cy',cy).attr('r',XFMR_R)
-            .attr('stroke','#2a2a3a').attr('fill','rgba(250,250,248,1.0)').attr('stroke-width',1.5);
-          xfGroup.append('circle')
-            .attr('cx',rCX).attr('cy',cy).attr('r',XFMR_R)
-            .attr('stroke','#2a2a3a').attr('fill','rgba(250,250,248,1.0)').attr('stroke-width',1.5);
-        }
-      }
+      drawXfmrsV(sg, sub, volts);
 
       if (genBelow) {
         // V-oriented: generators attach to the rightmost (lowest-kV) bus bar,
@@ -1450,36 +1535,7 @@ function drawSLD({ substations, edges }, conOff, gapTs, geom, stateName) {
         .attr('font-weight','bold').attr('font-size',20).attr('fill','#1a1a2e')
         .text(sub.label);
 
-      for (let i = 0; i < volts.length - 1; i++) {
-        const y1   = i * BUS_SPACING;
-        const y2   = (i + 1) * BUS_SPACING;
-        const nX   = Math.min(Math.max(sub.xfmrCount || 2, 1), 4);
-        const totW = (nX - 1) * 24;
-        for (let t = 0; t < nX; t++) {
-          const cx   = -totW / 2 + t * 24;
-          const midY  = (y1 + y2) / 2;
-          const sep   = XFMR_R * 0.65;
-          const topCY = midY - sep;
-          const botCY = midY + sep;
-          sg.append('line')
-            .attr('x1',cx).attr('y1',y1).attr('x2',cx).attr('y2',topCY - XFMR_R)
-            .attr('stroke','#2a2a3a').attr('stroke-width',1.5);
-          sg.append('line')
-            .attr('x1',cx).attr('y1',y2).attr('x2',cx).attr('y2',botCY + XFMR_R)
-            .attr('stroke','#2a2a3a').attr('stroke-width',1.5);
-          const xfGroup = sg.append('g').style('cursor','pointer')
-            .on('click', (ev) => {
-              ev.stopPropagation();
-              showPopup(popupTransformer(sub, volts[i], volts[i+1]), sub.x + cx, sub.y + midY);
-            });
-          xfGroup.append('circle')
-            .attr('cx',cx).attr('cy',topCY).attr('r',XFMR_R)
-            .attr('stroke','#2a2a3a').attr('fill','rgba(250,250,248,1.0)').attr('stroke-width',1.5);
-          xfGroup.append('circle')
-            .attr('cx',cx).attr('cy',botCY).attr('r',XFMR_R)
-            .attr('stroke','#2a2a3a').attr('fill','rgba(250,250,248,1.0)').attr('stroke-width',1.5);
-        }
-      }
+      drawXfmrsH(sg, sub, volts);
 
       if (sub.generators.length > 0) {
         const lastY = (volts.length - 1) * BUS_SPACING;
