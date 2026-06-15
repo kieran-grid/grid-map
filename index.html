@@ -1768,6 +1768,8 @@ function bindMapEvents() {
       html += `</div>`;
     }
 
+    html += buildGenProvenanceHtml(p);
+
     popup.setLngLat(e.lngLat).setHTML(html).addTo(map);
   });
 
@@ -2678,6 +2680,45 @@ function tryParse(val) {
   if (!val || val === 'null' || val === '[]') return null;
   if (typeof val === 'object') return val;
   try { return JSON.parse(val.replace(/'/g, '"')); } catch { return null; }
+}
+
+// Generation-provenance popup section: what generation the hosting-capacity
+// model actually assumed at this node, so the user can see which connection-
+// queue projects were and were not considered. Parsed with JSON.parse (NOT
+// tryParse — project names may contain apostrophes).
+function buildGenProvenanceHtml(p) {
+  if (!p.gen_provenance) return '';
+  let gp; try { gp = JSON.parse(p.gen_provenance); } catch { return ''; }
+  const projs = gp.projects || [];
+  const TREAT = {
+    in_base_psse:   { label: 'in base case', col: '#3fb950' },
+    relief_pool:    { label: 'relief only',  col: '#58a6ff' },
+    not_considered: { label: 'not considered', col: '#d29922' },
+    unmatched:      { label: 'unmatched',    col: '#f85149' },
+  };
+  const order = ['in_base_psse', 'relief_pool', 'not_considered', 'unmatched'];
+  let html = `<div class="popup-section"><div class="popup-section-title">Generation modelled here</div>`;
+  html += `<div style="font-size:10px;color:#8b949e;margin-bottom:4px">What the hosting-capacity model assumed at this node. PSS/E base case: ${Math.round(gp.psse_disp || 0).toLocaleString()} MW dispatched (${gp.case || '–'}). Large plants on separate generator buses can read 0 here — see list.</div>`;
+  const sum = gp.summary || {};
+  const sline = order.filter(k => sum[k]).map(k =>
+    `<span style="color:${TREAT[k].col}">${Math.round(sum[k]).toLocaleString()} MW ${TREAT[k].label}</span>`).join(' · ');
+  if (sline) html += `<div style="font-size:10px;margin-bottom:5px">${sline}</div>`;
+  if (projs.length) {
+    const rows = projs.map(pr => {
+      const t = TREAT[pr.t] || { col: '#8b949e', label: pr.t };
+      return `<div style="font-size:10px;display:flex;justify-content:space-between;gap:6px;padding:1px 0">`
+           + `<span style="color:#e6edf3">${pr.n}</span>`
+           + `<span style="white-space:nowrap;color:${t.col}">${(pr.mw || 0).toLocaleString()} MW · ${pr.s}</span></div>`;
+    });
+    html += rows.slice(0, 6).join('');
+    if (rows.length > 6) {
+      html += `<button onclick="var t=this.nextElementSibling;var o=t.style.display!=='none';t.style.display=o?'none':'block';this.textContent=o?'+${rows.length - 6} more ▾':'fewer ▴';" style="margin-top:3px;background:none;border:none;color:#58a6ff;cursor:pointer;font-size:10px;padding:0">+${rows.length - 6} more ▾</button>`;
+      html += `<div style="display:none">${rows.slice(6).join('')}</div>`;
+    }
+  }
+  html += `<div style="font-size:9px;color:#6e7681;margin-top:4px;font-style:italic">in base = real gen loading the network · relief only = curtailable but not modelled as load · not considered = queued project the model ignores.</div>`;
+  html += `</div>`;
+  return html;
 }
 
 function bindingColour(pct) {
