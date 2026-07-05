@@ -1,11 +1,20 @@
 {
-  "WAGGA1-WAGGA 132kV ckt1": {
-    "constraint_id": "N>9R5_9R6_991",
-    "aemo_line_name": "wagga north to wagga",
-    "calibrated_rate_mw": 164.9,
-    "psse_rate1_mw": 176.0,
-    "binding_pct": 5.65,
-    "avg_mv_binding": 3.5,
-    "match_score": 0.794
+  "MOLONG-ORANGN 132kV ckt1": {
+    "constraint_id": "N>947+949_94T",
+    "aemo_line_name": "molong to orange north",
+    "calibrated_rate_mw": 93.8,
+    "psse_rate1_mw": 112.0,
+    "binding_pct": 10.92,
+    "avg_mv_binding": 1540.7,
+    "match_score": 0.833
+  },
+  "WELING-WELIGT 132kV ckt1": {
+    "constraint_id": "N>MPWW_945_71",
+    "aemo_line_name": "wellington to wellington town",
+    "calibrated_rate_mw": 103.7,
+    "psse_rate1_mw": 112.0,
+    "binding_pct": 7.01,
+    "avg_mv_binding": 2685.3,
+    "match_score": 0.661
   }
 }

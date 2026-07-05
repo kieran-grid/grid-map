@@ -1464,17 +1464,19 @@ function bindMapEvents() {
     }
 
     // ── N-1 midpoint hosting capacity (AUS) ──
-    if (p.n1_mid_max_export_mw != null) {
-      const exp    = parseFloat(p.n1_mid_max_export_mw);
-      const imp    = parseFloat(p.n1_mid_max_import_mw);
+    // Either direction may be absent (per-direction geo guard drops the
+    // untrusted side) — render whichever survives.
+    if (p.n1_mid_max_export_mw != null || p.n1_mid_max_import_mw != null) {
+      const exp    = p.n1_mid_max_export_mw != null ? parseFloat(p.n1_mid_max_export_mw) : null;
+      const imp    = p.n1_mid_max_import_mw != null ? parseFloat(p.n1_mid_max_import_mw) : null;
       const r1     = p.n1_mid_rate1_mw ? parseFloat(p.n1_mid_rate1_mw) : null;
-      const expLim = (exp >= 4999) ? 'Unconstrained' : `${exp.toLocaleString()} MW`;
-      const impLim = (imp >= 4999) ? 'Unconstrained' : `${imp.toLocaleString()} MW`;
-      const expCol = exp < 50 ? '#f85149' : exp < 200 ? '#d29922' : '#3fb950';
-      const impCol = imp < 50 ? '#f85149' : imp < 200 ? '#d29922' : '#3fb950';
+      const expLim = exp == null ? '–' : (exp >= 4999) ? 'Unconstrained' : `${exp.toLocaleString()} MW`;
+      const impLim = imp == null ? '–' : (imp >= 4999) ? 'Unconstrained' : `${imp.toLocaleString()} MW`;
+      const expCol = exp == null ? '#8b949e' : exp < 50 ? '#f85149' : exp < 200 ? '#d29922' : '#3fb950';
+      const impCol = imp == null ? '#8b949e' : imp < 50 ? '#f85149' : imp < 200 ? '#d29922' : '#3fb950';
       html += `<div class="popup-section"><div class="popup-section-title">N-1 Midpoint Hosting Capacity</div>`;
       html += `<div style="font-size:10px;color:#8b949e;margin-bottom:3px">50% tap along line · worst 8-case PSS/E · RATE1 · 2024 dispatch · DC linearised</div>`;
-      html += `<div style="font-size:10px;color:#6e7681;margin-bottom:5px;font-style:italic">Marginal single-project capacity assuming full NEMDE redispatch — competing connections share this headroom; system-strength must-run not modelled.</div>`;
+      html += `<div style="font-size:10px;color:#6e7681;margin-bottom:5px;font-style:italic">Marginal single-project capacity assuming full NEMDE redispatch — competing connections share this headroom; system-strength must-run not modelled. Per-constraint relief; simultaneous feasibility not enforced — treat multi-GW figures as ceilings.</div>`;
       html += `<div class="popup-grid">`;
       if (r1) html += `<span class="popup-label">Line rating</span><span class="popup-value">${r1.toLocaleString()} MVA</span>`;
       if (p.n1_mid_loading_pct != null) {
@@ -1486,15 +1488,22 @@ function bindMapEvents() {
       }
       html += `<span class="popup-label">Max export (gen)</span><span class="popup-value" style="color:${expCol};font-weight:700">${expLim}</span>`;
       html += `<span class="popup-label">Max import (battery)</span><span class="popup-value" style="color:${impCol};font-weight:700">${impLim}</span>`;
+      if (p.n1_mid_max_import_hi_mw != null) {
+        // Worst HIGH-DEMAND case — the right basis for load (DC) screening;
+        // light-load cases carry demand-side headroom and can't bind a load.
+        const impHi  = parseFloat(p.n1_mid_max_import_hi_mw);
+        const hiCol  = impHi < 50 ? '#f85149' : impHi < 200 ? '#d29922' : '#3fb950';
+        html += `<span class="popup-label">Import (high-demand)</span><span class="popup-value" style="color:${hiCol}">${impHi.toLocaleString()} MW <span style="color:#8b949e;font-weight:400;font-size:10px">(${p.n1_mid_import_hi_case || '–'})</span></span>`;
+      }
       html += `</div>`;
-      if (exp < 4999 && p.n1_mid_export_limit_branch) {
+      if (exp != null && exp < 4999 && p.n1_mid_export_limit_branch) {
         html += `<div style="font-size:10px;color:#8b949e;margin-top:4px">`;
         html += `Export limit: ${p.n1_mid_export_limit_branch}<br>`;
         html += `Contingency: ${p.n1_mid_export_limit_contingency || '–'}<br>`;
         html += `Binding case: ${p.n1_mid_export_case || '–'}`;
         html += `</div>`;
       }
-      if (imp < 4999 && p.n1_mid_import_limit_branch && p.n1_mid_import_limit_branch !== p.n1_mid_export_limit_branch) {
+      if (imp != null && imp < 4999 && p.n1_mid_import_limit_branch && p.n1_mid_import_limit_branch !== p.n1_mid_export_limit_branch) {
         html += `<div style="font-size:10px;color:#8b949e;margin-top:4px">`;
         html += `Import limit: ${p.n1_mid_import_limit_branch}<br>`;
         html += `Contingency: ${p.n1_mid_import_limit_contingency || '–'}<br>`;
@@ -1719,33 +1728,42 @@ function bindMapEvents() {
     }
 
     // ── N-1 hosting capacity (bus, AUS) ──
-    if (p.n1_max_export_mw != null) {
-      const exp    = parseFloat(p.n1_max_export_mw);
-      const imp    = parseFloat(p.n1_max_import_mw);
-      const expLim = (exp >= 4999) ? 'Unconstrained' : `${exp.toLocaleString()} MW`;
-      const impLim = (imp >= 4999) ? 'Unconstrained' : `${imp.toLocaleString()} MW`;
-      const expCol = exp < 50 ? '#f85149' : exp < 200 ? '#d29922' : '#3fb950';
-      const impCol = imp < 50 ? '#f85149' : imp < 200 ? '#d29922' : '#3fb950';
-      const expBar = Math.min(exp >= 4999 ? 100 : exp / 10, 100);
+    // Either direction may be absent (per-direction geo guard drops the
+    // untrusted side) — render whichever survives.
+    if (p.n1_max_export_mw != null || p.n1_max_import_mw != null) {
+      const exp    = p.n1_max_export_mw != null ? parseFloat(p.n1_max_export_mw) : null;
+      const imp    = p.n1_max_import_mw != null ? parseFloat(p.n1_max_import_mw) : null;
+      const expLim = exp == null ? '–' : (exp >= 4999) ? 'Unconstrained' : `${exp.toLocaleString()} MW`;
+      const impLim = imp == null ? '–' : (imp >= 4999) ? 'Unconstrained' : `${imp.toLocaleString()} MW`;
+      const expCol = exp == null ? '#8b949e' : exp < 50 ? '#f85149' : exp < 200 ? '#d29922' : '#3fb950';
+      const impCol = imp == null ? '#8b949e' : imp < 50 ? '#f85149' : imp < 200 ? '#d29922' : '#3fb950';
+      const expBar = exp == null ? 0 : Math.min(exp >= 4999 ? 100 : exp / 10, 100);
       html += `<div class="popup-section"><div class="popup-section-title">N-1 Hosting Capacity (bus)</div>`;
       html += `<div style="font-size:10px;color:#8b949e;margin-bottom:3px">Worst 8-case PSS/E · RATE1 · 2024 dispatch · DC linearised model (±10–20%)</div>`;
-      html += `<div style="font-size:10px;color:#6e7681;margin-bottom:5px;font-style:italic">Marginal single-project net-new MW (existing dispatched gen at this bus excluded from relief pool). Competing connections share this headroom; system-strength must-run not modelled.</div>`;
+      html += `<div style="font-size:10px;color:#6e7681;margin-bottom:5px;font-style:italic">Marginal single-project net-new MW (existing dispatched gen at this bus excluded from relief pool). Competing connections share this headroom; system-strength must-run not modelled. Per-constraint relief; simultaneous feasibility not enforced — treat multi-GW figures as ceilings.</div>`;
       html += `<div class="popup-grid">`;
       html += `<span class="popup-label">Max export (gen)</span><span class="popup-value" style="color:${expCol};font-weight:700">${expLim}</span>`;
       html += `<span class="popup-label">Max import (battery)</span><span class="popup-value" style="color:${impCol};font-weight:700">${impLim}</span>`;
+      if (p.n1_max_import_hi_mw != null) {
+        // Worst HIGH-DEMAND case — the right basis for load (DC) screening;
+        // light-load cases carry demand-side headroom and can't bind a load.
+        const impHi  = parseFloat(p.n1_max_import_hi_mw);
+        const hiCol  = impHi < 50 ? '#f85149' : impHi < 200 ? '#d29922' : '#3fb950';
+        html += `<span class="popup-label">Import (high-demand)</span><span class="popup-value" style="color:${hiCol}">${impHi.toLocaleString()} MW <span style="color:#8b949e;font-weight:400;font-size:10px">(${p.n1_import_hi_case || '–'})</span></span>`;
+      }
       html += `</div>`;
-      if (exp < 4999) {
+      if (exp != null && exp < 4999) {
         html += `<div style="margin:4px 0 1px;height:5px;background:#21262d;border-radius:2px">`;
         html += `<div style="width:${expBar}%;height:100%;background:${expCol};border-radius:2px"></div></div>`;
       }
-      if (exp < 4999 && p.n1_export_limit_branch) {
+      if (exp != null && exp < 4999 && p.n1_export_limit_branch) {
         html += `<div style="font-size:10px;color:#8b949e;margin-top:4px">`;
         html += `Export limit: ${p.n1_export_limit_branch}<br>`;
         html += `Contingency: ${p.n1_export_limit_contingency || '–'}<br>`;
         html += `Binding case: ${p.n1_export_case || '–'}`;
         html += `</div>`;
       }
-      if (imp < 4999 && p.n1_import_limit_branch && p.n1_import_limit_branch !== p.n1_export_limit_branch) {
+      if (imp != null && imp < 4999 && p.n1_import_limit_branch && p.n1_import_limit_branch !== p.n1_export_limit_branch) {
         html += `<div style="font-size:10px;color:#8b949e;margin-top:4px">`;
         html += `Import limit: ${p.n1_import_limit_branch}<br>`;
         html += `Contingency: ${p.n1_import_limit_contingency || '–'}<br>`;

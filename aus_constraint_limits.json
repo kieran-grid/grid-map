@@ -182,19 +182,6 @@
     "total_binding_intervals": 102
   },
   {
-    "constraint_id": "N>94T_947_72",
-    "description": "Out= Molong to Orange North (94T) 132kV line, avoid O/L Wellington to Orange North (947) 132kV line on trip of Wellington to Mt Piper (72) 330kV line, Feedback",
-    "line_name": "wellington to orange north",
-    "geojson_names": [
-      "Wellington to Dubbo (North East)"
-    ],
-    "binding_pct": 27.65,
-    "avg_mv_binding": 1602.9,
-    "median_rhs_binding": 403.3,
-    "p10_rhs_binding": 340.7,
-    "total_binding_intervals": 3284
-  },
-  {
     "constraint_id": "N>89_96R_967",
     "description": "Out= Coffs Harbour to Lismore (89), avoid O/L Glen Innes to Tenterfield (96R) on trip of Koolkhan to Lismore (967), (NOTE: swamp out when all 3 directlink O/S)",
     "line_name": "glen innes to tenterfield",
@@ -247,6 +234,32 @@
     "total_binding_intervals": 23
   },
   {
+    "constraint_id": "N>94T_947_72",
+    "description": "Out= Molong to Orange North (94T) 132kV line, avoid O/L Wellington to Orange North (947) 132kV line on trip of Wellington to Mt Piper (72) 330kV line, Feedback",
+    "line_name": "wellington to orange north",
+    "geojson_names": [
+      "Wellington to Dubbo (North East)"
+    ],
+    "binding_pct": 24.18,
+    "avg_mv_binding": 1612.2,
+    "median_rhs_binding": 411.7,
+    "p10_rhs_binding": 344.5,
+    "total_binding_intervals": 4175
+  },
+  {
+    "constraint_id": "N>96L_96R_967_89",
+    "description": "Out= Lismore to Tenterfield (96L) or Glen Innes to Tenterfield (96R) 132kV line, avoid O/L Koolkhan to Lismore (967) on trip of Coffs Harbour to Lismore (89),(Noted: Swamped out when  967 O/S)",
+    "line_name": "koolkhan to lismore",
+    "geojson_names": [
+      "Lismore to Koolkhan"
+    ],
+    "binding_pct": 23.94,
+    "avg_mv_binding": 384.6,
+    "median_rhs_binding": -18.6,
+    "p10_rhs_binding": -60.4,
+    "total_binding_intervals": 2024
+  },
+  {
     "constraint_id": "Q>>RGLC_CLWU_BCCP",
     "description": "Out=  Raglan to Larcom Creek (8875), avoid O/L Bouldercombe to Calliope River (812) on trip of Calvale to Wurdong (871) line, Feedback",
     "line_name": "bouldercombe to calliope river",
@@ -260,30 +273,30 @@
     "total_binding_intervals": 360
   },
   {
-    "constraint_id": "S>>RBTU_RBTU_WTTP",
-    "description": "Out= Robertstown-Tungkillo 275kV line 1 or 2, avoid O/L Waterloo to Templers 132kV line on trip of Robertstown to Tungkillo 275kV line 1 or 2, Feedback",
-    "line_name": "waterloo to templers",
-    "geojson_names": [
-      "Waterloo to Templers"
-    ],
-    "binding_pct": 22.35,
-    "avg_mv_binding": 331.8,
-    "median_rhs_binding": 629.6,
-    "p10_rhs_binding": 549.1,
-    "total_binding_intervals": 783
-  },
-  {
     "constraint_id": "S>>X_BRMN_RBTU_04",
     "description": "Out= Brinkworth - Mintaro (or any line section between Brinkworth and Mintaro) 132kV line + Robertstown-Tungkillo 275kV line 1 or 2, avoid O/L Waterloo-Templers 132kV line on trip of Robertstown-Tungkillo 275kV line, Feedback",
     "line_name": "waterloo-templers",
     "geojson_names": [
       "Waterloo to Templers"
     ],
-    "binding_pct": 20.76,
-    "avg_mv_binding": 166.1,
-    "median_rhs_binding": 466.2,
-    "p10_rhs_binding": 350.9,
-    "total_binding_intervals": 364
+    "binding_pct": 23.36,
+    "avg_mv_binding": 149.7,
+    "median_rhs_binding": 461.1,
+    "p10_rhs_binding": 345.7,
+    "total_binding_intervals": 427
+  },
+  {
+    "constraint_id": "S>>RBTU_RBTU_WTTP",
+    "description": "Out= Robertstown-Tungkillo 275kV line 1 or 2, avoid O/L Waterloo to Templers 132kV line on trip of Robertstown to Tungkillo 275kV line 1 or 2, Feedback",
+    "line_name": "waterloo to templers",
+    "geojson_names": [
+      "Waterloo to Templers"
+    ],
+    "binding_pct": 20.59,
+    "avg_mv_binding": 331.8,
+    "median_rhs_binding": 629.6,
+    "p10_rhs_binding": 549.1,
+    "total_binding_intervals": 783
   },
   {
     "constraint_id": "S>NIL_MHNW1_MHNW2",
@@ -292,24 +305,11 @@
     "geojson_names": [
       "Monash to North West Bend"
     ],
-    "binding_pct": 20.07,
-    "avg_mv_binding": 498.8,
-    "median_rhs_binding": 164.5,
-    "p10_rhs_binding": 147.2,
-    "total_binding_intervals": 49186
-  },
-  {
-    "constraint_id": "N>96L_96R_967_89",
-    "description": "Out= Lismore to Tenterfield (96L) or Glen Innes to Tenterfield (96R) 132kV line, avoid O/L Koolkhan to Lismore (967) on trip of Coffs Harbour to Lismore (89),(Noted: Swamped out when  967 O/S)",
-    "line_name": "koolkhan to lismore",
-    "geojson_names": [
-      "Lismore to Koolkhan"
-    ],
-    "binding_pct": 19.58,
-    "avg_mv_binding": 602.3,
-    "median_rhs_binding": -8.8,
-    "p10_rhs_binding": -59.2,
-    "total_binding_intervals": 1281
+    "binding_pct": 19.88,
+    "avg_mv_binding": 493.0,
+    "median_rhs_binding": 164.4,
+    "p10_rhs_binding": 147.0,
+    "total_binding_intervals": 50492
   },
   {
     "constraint_id": "N>>970_990_051",
@@ -351,19 +351,6 @@
     "total_binding_intervals": 176
   },
   {
-    "constraint_id": "N>NIL_94T",
-    "description": "Out= Nil, avoid O/L Molong to Orange North (94T) on trip of Nil, Feedback",
-    "line_name": "molong to orange north",
-    "geojson_names": [
-      "Molong to Orange North"
-    ],
-    "binding_pct": 18.02,
-    "avg_mv_binding": 1926.2,
-    "median_rhs_binding": 130.8,
-    "p10_rhs_binding": 84.9,
-    "total_binding_intervals": 44176
-  },
-  {
     "constraint_id": "V>>MLSY_N-2_GTKT",
     "description": "Out= Nil, Loss of both Moorabool to Sydenham 500kV lines declared credible, avoid O/L Geelong to Keilor No.1 or No.3 220kV line on trip of both Moorabool to Sydenham 500kV lines, Feedback",
     "line_name": "geelong to keilor no.1 or",
@@ -388,6 +375,32 @@
     "median_rhs_binding": 381.6,
     "p10_rhs_binding": 280.6,
     "total_binding_intervals": 114
+  },
+  {
+    "constraint_id": "N>NIL_94T",
+    "description": "Out= Nil, avoid O/L Molong to Orange North (94T) on trip of Nil, Feedback",
+    "line_name": "molong to orange north",
+    "geojson_names": [
+      "Molong to Orange North"
+    ],
+    "binding_pct": 17.43,
+    "avg_mv_binding": 1923.8,
+    "median_rhs_binding": 130.8,
+    "p10_rhs_binding": 84.9,
+    "total_binding_intervals": 44282
+  },
+  {
+    "constraint_id": "S>>X_DVLK+LKCN_16",
+    "description": "Out= Davenport-Mt Lock-Canowie 275kV line (this offloads Hornsdale #1 & #2  &#3 WF & battery) OR Davenport-Mt Lock 275kV line O/S, avoid O/L either Robertstown to Tungkillo 275kV lines on trip of other Robertstown to Tungkillo 275kV line, Feedback",
+    "line_name": "either robertstown to tungkillo",
+    "geojson_names": [
+      "Robertstown to Tungkillo"
+    ],
+    "binding_pct": 17.28,
+    "avg_mv_binding": 200.6,
+    "median_rhs_binding": 1063.6,
+    "p10_rhs_binding": 999.2,
+    "total_binding_intervals": 42
   },
   {
     "constraint_id": "S>VMLMHNW2",
@@ -448,11 +461,11 @@
     "geojson_names": [
       "Gunnedah to Tamworth"
     ],
-    "binding_pct": 14.81,
-    "avg_mv_binding": 962.7,
-    "median_rhs_binding": 94.3,
+    "binding_pct": 14.51,
+    "avg_mv_binding": 963.0,
+    "median_rhs_binding": 94.1,
     "p10_rhs_binding": 82.0,
-    "total_binding_intervals": 36304
+    "total_binding_intervals": 36850
   },
   {
     "constraint_id": "Q>>CLWU_BCRG_BCCP",
@@ -507,19 +520,6 @@
     "total_binding_intervals": 6
   },
   {
-    "constraint_id": "V>>BAML1_ELML_BAML2",
-    "description": "Out= Ballarat to Moorabool No.1 220kV line, avoid O/L Elaine to Moorabool 220kV line on trip of Ballarat to Moorabool No.2 220kV line, Feedback",
-    "line_name": "elaine to moorabool",
-    "geojson_names": [
-      "Moorabool Terminal to Elaine Terminal"
-    ],
-    "binding_pct": 13.61,
-    "avg_mv_binding": 57.7,
-    "median_rhs_binding": 912.6,
-    "p10_rhs_binding": 822.3,
-    "total_binding_intervals": 89
-  },
-  {
     "constraint_id": "V>>X_MLSY_MLGT_MLGT",
     "description": "Out = Both Moorabool - Sydenham 500kV lines, avoid O/L Moorabool to Geelong #1 or #2 on trip of other Moorabool to Geelong line, Feedback",
     "line_name": "moorabool to geelong #1 or",
@@ -572,18 +572,17 @@
     "total_binding_intervals": 542
   },
   {
-    "constraint_id": "N>NIL_9R6_991",
-    "description": "Out= Nil, avoid O/L Wagga North to Wagga (9R6) 132kV line on trip of Wagga North to Murrumburrah (991) 132kV line, Feedback",
-    "line_name": "wagga north to wagga",
+    "constraint_id": "V>>BAML1_ELML_BAML2",
+    "description": "Out= Ballarat to Moorabool No.1 220kV line, avoid O/L Elaine to Moorabool 220kV line on trip of Ballarat to Moorabool No.2 220kV line, Feedback",
+    "line_name": "elaine to moorabool",
     "geojson_names": [
-      "Wagga 330 to Wagga North",
-      "Wagga 132 to Wagga North"
+      "Moorabool Terminal to Elaine Terminal"
     ],
-    "binding_pct": 11.18,
-    "avg_mv_binding": 701.2,
-    "median_rhs_binding": 281.0,
-    "p10_rhs_binding": 263.0,
-    "total_binding_intervals": 27412
+    "binding_pct": 11.35,
+    "avg_mv_binding": 57.7,
+    "median_rhs_binding": 912.6,
+    "p10_rhs_binding": 822.3,
+    "total_binding_intervals": 89
   },
   {
     "constraint_id": "S>>RBTU_N-2_WEWT",
@@ -599,19 +598,6 @@
     "total_binding_intervals": 32
   },
   {
-    "constraint_id": "N>>NIL_060_051",
-    "description": "Out= Nil, avoid O/L Jindera to Wodonga (60) 330kV line on trip of Wagga to Lower Tumut (051) 330kV line, Feedback",
-    "line_name": "jindera to wodonga",
-    "geojson_names": [
-      "Wodonga Terminal to Jindera"
-    ],
-    "binding_pct": 10.99,
-    "avg_mv_binding": 832.6,
-    "median_rhs_binding": 1206.4,
-    "p10_rhs_binding": 1102.4,
-    "total_binding_intervals": 15101
-  },
-  {
     "constraint_id": "N>947+949_94T",
     "description": "Out= Wellington to Orange North (947) 132kV line + Orange North to Mt Piper (949) 132kV line, avoid O/L Molong to Orange North (94T) 132kV line, Feedback",
     "line_name": "molong to orange north",
@@ -625,17 +611,31 @@
     "total_binding_intervals": 13
   },
   {
-    "constraint_id": "N>>994_99F_63",
-    "description": "Out= Narrandera to Wagga (994) 132kV line, avoid O/L Yanco to Uranquinty (99F) 132kV line on trip of Darlington Point to Wagga (63) 330kV line,(Note: Option C on OM521)",
-    "line_name": "yanco to uranquinty",
+    "constraint_id": "N>NIL_9R6_991",
+    "description": "Out= Nil, avoid O/L Wagga North to Wagga (9R6) 132kV line on trip of Wagga North to Murrumburrah (991) 132kV line, Feedback",
+    "line_name": "wagga north to wagga",
     "geojson_names": [
-      "Yanco to Uranquinty"
+      "Wagga 330 to Wagga North",
+      "Wagga 132 to Wagga North"
     ],
-    "binding_pct": 10.29,
-    "avg_mv_binding": 600.5,
-    "median_rhs_binding": 201.5,
-    "p10_rhs_binding": 185.8,
-    "total_binding_intervals": 32
+    "binding_pct": 10.9,
+    "avg_mv_binding": 695.4,
+    "median_rhs_binding": 281.0,
+    "p10_rhs_binding": 263.2,
+    "total_binding_intervals": 27681
+  },
+  {
+    "constraint_id": "N>>NIL_060_051",
+    "description": "Out= Nil, avoid O/L Jindera to Wodonga (60) 330kV line on trip of Wagga to Lower Tumut (051) 330kV line, Feedback",
+    "line_name": "jindera to wodonga",
+    "geojson_names": [
+      "Wodonga Terminal to Jindera"
+    ],
+    "binding_pct": 10.58,
+    "avg_mv_binding": 833.1,
+    "median_rhs_binding": 1205.9,
+    "p10_rhs_binding": 1103.2,
+    "total_binding_intervals": 15486
   },
   {
     "constraint_id": "Q>>RGLC_BCCP_CLWU",
@@ -651,19 +651,6 @@
     "total_binding_intervals": 155
   },
   {
-    "constraint_id": "N>>964_86_85_S",
-    "description": "Out= Taree to Port Macquarie (964) 132kV line, avoid O/L Armidale to Tamworth (86) on trip of Uralla to Tamworth (85) line, Feedback",
-    "line_name": "armidale to tamworth",
-    "geojson_names": [
-      "Armidale to Tamworth"
-    ],
-    "binding_pct": 10.1,
-    "avg_mv_binding": 79.7,
-    "median_rhs_binding": 1347.3,
-    "p10_rhs_binding": 1271.8,
-    "total_binding_intervals": 74
-  },
-  {
     "constraint_id": "Q>>MRGB2_MRTR_BRTX1",
     "description": "Out= 8848+8849 (H14 Middle Ridge - S3 Greenbank), avoid O/L Middle Ridge to Tarong (831) 275kV line on trip of R2 Braemar 330/275kV transformer No.1, Feedback",
     "line_name": "middle ridge to tarong",
@@ -675,6 +662,19 @@
     "median_rhs_binding": 1694.5,
     "p10_rhs_binding": 1694.5,
     "total_binding_intervals": 1
+  },
+  {
+    "constraint_id": "N>>32_34_33",
+    "description": "Out = Bayswater to Sydney West (32), avoid O/L Bayswater to Liddell (34) on trip of Bayswater to Liddell (33) line, Feedback",
+    "line_name": "bayswater to liddell",
+    "geojson_names": [
+      "Liddell to Bayswater"
+    ],
+    "binding_pct": 9.65,
+    "avg_mv_binding": 46.6,
+    "median_rhs_binding": 1528.9,
+    "p10_rhs_binding": 1212.8,
+    "total_binding_intervals": 61
   },
   {
     "constraint_id": "Q>>LCCP_CLWU_BCCP",
@@ -690,17 +690,43 @@
     "total_binding_intervals": 34
   },
   {
-    "constraint_id": "S>>RBTU_RBTU_WEWT",
-    "description": "Out= Robertstown-Tungkillo 275kV line 1 or 2, avoid O/L Waterloo East to Waterloo #1 132kV line on trip of Robertstown to Tungkillo 275kV line 1 or 2, Feedback",
-    "line_name": "waterloo east to waterloo",
+    "constraint_id": "S>>X_DVLK+LKCN_15",
+    "description": "Out= Davenport-Mt Lock-Canowie 275kV line (this offloads Hornsdale #1 & #2  &#3 WF & battery) OR Davenport-Mt Lock 275kV line O/S, avoid O/L Waterloo-Templers 132kV on trip of Robertstown-Tungkillo 275kV line, Feedback",
+    "line_name": "waterloo-templers",
     "geojson_names": [
-      "Waterloo to Waterloo East"
+      "Waterloo to Templers"
     ],
-    "binding_pct": 7.71,
-    "avg_mv_binding": 439.9,
-    "median_rhs_binding": 344.6,
-    "p10_rhs_binding": 329.9,
-    "total_binding_intervals": 270
+    "binding_pct": 9.05,
+    "avg_mv_binding": 224.2,
+    "median_rhs_binding": 601.9,
+    "p10_rhs_binding": 555.4,
+    "total_binding_intervals": 22
+  },
+  {
+    "constraint_id": "N>>964_86_85_S",
+    "description": "Out= Taree to Port Macquarie (964) 132kV line, avoid O/L Armidale to Tamworth (86) on trip of Uralla to Tamworth (85) line, Feedback",
+    "line_name": "armidale to tamworth",
+    "geojson_names": [
+      "Armidale to Tamworth"
+    ],
+    "binding_pct": 9.02,
+    "avg_mv_binding": 79.7,
+    "median_rhs_binding": 1347.3,
+    "p10_rhs_binding": 1271.8,
+    "total_binding_intervals": 74
+  },
+  {
+    "constraint_id": "N>>994_99F_63",
+    "description": "Out= Narrandera to Wagga (994) 132kV line, avoid O/L Yanco to Uranquinty (99F) 132kV line on trip of Darlington Point to Wagga (63) 330kV line,(Note: Option C on OM521)",
+    "line_name": "yanco to uranquinty",
+    "geojson_names": [
+      "Yanco to Uranquinty"
+    ],
+    "binding_pct": 8.84,
+    "avg_mv_binding": 600.5,
+    "median_rhs_binding": 201.5,
+    "p10_rhs_binding": 185.8,
+    "total_binding_intervals": 32
   },
   {
     "constraint_id": "Q>>BCCP_LCCP_CLWU",
@@ -714,6 +740,19 @@
     "median_rhs_binding": 2420.7,
     "p10_rhs_binding": 2365.5,
     "total_binding_intervals": 13
+  },
+  {
+    "constraint_id": "S>>RBTU_RBTU_WEWT",
+    "description": "Out= Robertstown-Tungkillo 275kV line 1 or 2, avoid O/L Waterloo East to Waterloo #1 132kV line on trip of Robertstown to Tungkillo 275kV line 1 or 2, Feedback",
+    "line_name": "waterloo east to waterloo",
+    "geojson_names": [
+      "Waterloo to Waterloo East"
+    ],
+    "binding_pct": 7.18,
+    "avg_mv_binding": 436.0,
+    "median_rhs_binding": 344.5,
+    "p10_rhs_binding": 329.7,
+    "total_binding_intervals": 273
   },
   {
     "constraint_id": "N>94T+PKBUS_998_945",
@@ -794,32 +833,6 @@
     "total_binding_intervals": 54
   },
   {
-    "constraint_id": "N>>32_34_33",
-    "description": "Out = Bayswater to Sydney West (32), avoid O/L Bayswater to Liddell (34) on trip of Bayswater to Liddell (33) line, Feedback",
-    "line_name": "bayswater to liddell",
-    "geojson_names": [
-      "Liddell to Bayswater"
-    ],
-    "binding_pct": 6.1,
-    "avg_mv_binding": 64.6,
-    "median_rhs_binding": 1554.1,
-    "p10_rhs_binding": 1528.9,
-    "total_binding_intervals": 34
-  },
-  {
-    "constraint_id": "N>NIL_901",
-    "description": "Out= Nil, avoid O/L West Wyalong to Temora 132kV (901) line on trip of Nil, Feedback",
-    "line_name": "west wyalong to temora",
-    "geojson_names": [
-      "Temora to West Wyalong"
-    ],
-    "binding_pct": 6.03,
-    "avg_mv_binding": 521.6,
-    "median_rhs_binding": 121.7,
-    "p10_rhs_binding": 94.3,
-    "total_binding_intervals": 14788
-  },
-  {
     "constraint_id": "V>>V_BURC_5",
     "description": "Out= Buronga to Redcliffs (0X1) 220kV line, avoid O/L Waubra to Ballarat 220kV line on trip of Kerang to Bendigo 220kV line, Feedback",
     "line_name": "waubra to ballarat",
@@ -833,17 +846,17 @@
     "total_binding_intervals": 188
   },
   {
-    "constraint_id": "N>NIL_9R6_9R5",
-    "description": "Out= Nil, avoid O/L  Wagga North  to Wagga132  (9R6) on trip of  Wagga North to Wagga330  (9R5) line, Feedback",
-    "line_name": "wagga north  to wagga132",
+    "constraint_id": "N>NIL_901",
+    "description": "Out= Nil, avoid O/L West Wyalong to Temora 132kV (901) line on trip of Nil, Feedback",
+    "line_name": "west wyalong to temora",
     "geojson_names": [
-      "Wagga 132 to Wagga North"
+      "Temora to West Wyalong"
     ],
-    "binding_pct": 5.73,
-    "avg_mv_binding": 505.6,
-    "median_rhs_binding": 209.2,
-    "p10_rhs_binding": 182.5,
-    "total_binding_intervals": 14037
+    "binding_pct": 5.84,
+    "avg_mv_binding": 520.9,
+    "median_rhs_binding": 121.7,
+    "p10_rhs_binding": 94.3,
+    "total_binding_intervals": 14845
   },
   {
     "constraint_id": "V^^S_TB35_SETB_2",
@@ -873,6 +886,19 @@
     "total_binding_intervals": 10
   },
   {
+    "constraint_id": "N>NIL_9R6_9R5",
+    "description": "Out= Nil, avoid O/L  Wagga North  to Wagga132  (9R6) on trip of  Wagga North to Wagga330  (9R5) line, Feedback",
+    "line_name": "wagga north  to wagga132",
+    "geojson_names": [
+      "Wagga 132 to Wagga North"
+    ],
+    "binding_pct": 5.64,
+    "avg_mv_binding": 504.5,
+    "median_rhs_binding": 209.2,
+    "p10_rhs_binding": 182.9,
+    "total_binding_intervals": 14334
+  },
+  {
     "constraint_id": "S>>MOTB_TBTU_TBTU",
     "description": "Out= Mobilong-Tailem Bend 132kV line O/S, avoid O/L of One Tailembend-Tungkillo 275 kV line on trip of remaining Tailem Bend-Tungkillo 275 kV line, Feedback",
     "line_name": "tailembend-tungkillo",
@@ -884,19 +910,6 @@
     "median_rhs_binding": 693.5,
     "p10_rhs_binding": 612.5,
     "total_binding_intervals": 66
-  },
-  {
-    "constraint_id": "N>>V_DDMS_051_67_N",
-    "description": "Out= one Dederang to Murray (67 or 68) 330 kV line, avoid O/L Wagga to Lower Tumut (051) 330kV line on trip of Dederang to Murray #2 330kV line, Feedback",
-    "line_name": "wagga to lower tumut",
-    "geojson_names": [
-      "Wagga 330 to Lower Tumut"
-    ],
-    "binding_pct": 5.46,
-    "avg_mv_binding": 64.2,
-    "median_rhs_binding": 1383.1,
-    "p10_rhs_binding": 1253.2,
-    "total_binding_intervals": 34
   },
   {
     "constraint_id": "S>>X_DVBR+BRTW_16",
@@ -923,6 +936,19 @@
     "median_rhs_binding": 2486.9,
     "p10_rhs_binding": 2303.7,
     "total_binding_intervals": 501
+  },
+  {
+    "constraint_id": "N>>BDBU_060_051",
+    "description": "Out= Bundey to Buronga (6F) 330kV Line, avoid O/L Jindera to Wodonga (60) 330kV line on trip of Wagga to Lower Tumut (051) 330kV line, Feedback",
+    "line_name": "jindera to wodonga",
+    "geojson_names": [
+      "Wodonga Terminal to Jindera"
+    ],
+    "binding_pct": 5.27,
+    "avg_mv_binding": 806.8,
+    "median_rhs_binding": 1196.0,
+    "p10_rhs_binding": 1142.0,
+    "total_binding_intervals": 577
   },
   {
     "constraint_id": "S>>X_RBTX+MNWT_18",
@@ -965,30 +991,17 @@
     "total_binding_intervals": 10
   },
   {
-    "constraint_id": "S>>X_BRMN_RBTU_06",
-    "description": "Out= Brinkworth - Mintaro (or any line section between Brinkworth and Mintaro) 132kV line + Robertstown-Tungkillo 275kV line 1 or 2, avoid O/L Waterloo East to Waterloo #1 132kV line on trip of Robertstown to Tungkillo 275kV line 1 or 2, Feedback",
-    "line_name": "waterloo east to waterloo",
+    "constraint_id": "N>>V_DDMS_051_67_N",
+    "description": "Out= one Dederang to Murray (67 or 68) 330 kV line, avoid O/L Wagga to Lower Tumut (051) 330kV line on trip of Dederang to Murray #2 330kV line, Feedback",
+    "line_name": "wagga to lower tumut",
     "geojson_names": [
-      "Waterloo to Waterloo East"
+      "Wagga 330 to Lower Tumut"
     ],
-    "binding_pct": 4.85,
-    "avg_mv_binding": 348.7,
-    "median_rhs_binding": 372.4,
-    "p10_rhs_binding": 344.5,
-    "total_binding_intervals": 85
-  },
-  {
-    "constraint_id": "N>NIL_945_947",
-    "description": "Out= Nil, avoid O/L Wellington to Wellington Town (945/2) 132kV line on trip of Wellington to Orange North (947) 132kV line, Feedback",
-    "line_name": "wellington to wellington town",
-    "geojson_names": [
-      "Wellington to Wellington Town"
-    ],
-    "binding_pct": 4.83,
-    "avg_mv_binding": 1673.8,
-    "median_rhs_binding": 151.9,
-    "p10_rhs_binding": 125.8,
-    "total_binding_intervals": 1272
+    "binding_pct": 4.96,
+    "avg_mv_binding": 64.2,
+    "median_rhs_binding": 1383.1,
+    "p10_rhs_binding": 1253.2,
+    "total_binding_intervals": 34
   },
   {
     "constraint_id": "Q>HACL2_RGLC_CLWU",
@@ -1004,17 +1017,30 @@
     "total_binding_intervals": 26
   },
   {
+    "constraint_id": "S>>X_BRMN_RBTU_06",
+    "description": "Out= Brinkworth - Mintaro (or any line section between Brinkworth and Mintaro) 132kV line + Robertstown-Tungkillo 275kV line 1 or 2, avoid O/L Waterloo East to Waterloo #1 132kV line on trip of Robertstown to Tungkillo 275kV line 1 or 2, Feedback",
+    "line_name": "waterloo east to waterloo",
+    "geojson_names": [
+      "Waterloo to Waterloo East"
+    ],
+    "binding_pct": 4.76,
+    "avg_mv_binding": 341.6,
+    "median_rhs_binding": 372.4,
+    "p10_rhs_binding": 344.5,
+    "total_binding_intervals": 87
+  },
+  {
     "constraint_id": "N>NIL_94K_1",
     "description": "Out= Nil, avoid O/L Suntop Tee to Wellington (94K/1) on trip of Nil, Feedback",
     "line_name": "suntop tee to wellington",
     "geojson_names": [
       "Wellington to Burrendong Tee"
     ],
-    "binding_pct": 4.51,
-    "avg_mv_binding": 738.6,
-    "median_rhs_binding": 163.9,
-    "p10_rhs_binding": 140.2,
-    "total_binding_intervals": 11059
+    "binding_pct": 4.67,
+    "avg_mv_binding": 710.2,
+    "median_rhs_binding": 162.9,
+    "p10_rhs_binding": 135.9,
+    "total_binding_intervals": 11874
   },
   {
     "constraint_id": "N>947_94T",
@@ -1028,19 +1054,6 @@
     "median_rhs_binding": 130.7,
     "p10_rhs_binding": 92.3,
     "total_binding_intervals": 48
-  },
-  {
-    "constraint_id": "Q>NIL_LCCP_CLWU",
-    "description": "Out= Nil, avoid O/L Larcom Creek to Calliope River (8859) 275kV line on trip of Calvale to Wurdong (871) 275kV line, Feedback",
-    "line_name": "larcom creek to calliope river",
-    "geojson_names": [
-      "Larcom Creek-H058 to Calliope River-H67"
-    ],
-    "binding_pct": 4.0,
-    "avg_mv_binding": 595.7,
-    "median_rhs_binding": 1040.8,
-    "p10_rhs_binding": 934.6,
-    "total_binding_intervals": 1722
   },
   {
     "constraint_id": "S-TIBAT1-L_0",
@@ -1095,6 +1108,19 @@
     "total_binding_intervals": 81
   },
   {
+    "constraint_id": "N>NIL_945_947",
+    "description": "Out= Nil, avoid O/L Wellington to Wellington Town (945/2) 132kV line on trip of Wellington to Orange North (947) 132kV line, Feedback",
+    "line_name": "wellington to wellington town",
+    "geojson_names": [
+      "Wellington to Wellington Town"
+    ],
+    "binding_pct": 3.61,
+    "avg_mv_binding": 1673.8,
+    "median_rhs_binding": 151.9,
+    "p10_rhs_binding": 125.8,
+    "total_binding_intervals": 1272
+  },
+  {
     "constraint_id": "N>79_94T_72",
     "description": "Out= Wollar West to Wellington (79) 330kV line or Wollar 500/330kV TX or Wollar to Wollar West (75) 330kV line, avoid O/L Molong to Orange North (94T) 132kV line on trip of Wellington to Mt Piper (72) 330kV line, Feedback",
     "line_name": "molong to orange north",
@@ -1147,6 +1173,19 @@
     "total_binding_intervals": 110
   },
   {
+    "constraint_id": "Q>NIL_LCCP_CLWU",
+    "description": "Out= Nil, avoid O/L Larcom Creek to Calliope River (8859) 275kV line on trip of Calvale to Wurdong (871) 275kV line, Feedback",
+    "line_name": "larcom creek to calliope river",
+    "geojson_names": [
+      "Larcom Creek-H058 to Calliope River-H67"
+    ],
+    "binding_pct": 3.35,
+    "avg_mv_binding": 592.4,
+    "median_rhs_binding": 1040.3,
+    "p10_rhs_binding": 933.6,
+    "total_binding_intervals": 1739
+  },
+  {
     "constraint_id": "N>>945_947_72",
     "description": "Out= Wellington to Molong 132kV line (945), avoid O/L Wellington to Orange North (947) 132kV line on trip of Wellington to Mt Piper (72) 330kV line, Feedback",
     "line_name": "wellington to orange north",
@@ -1160,6 +1199,19 @@
     "total_binding_intervals": 2
   },
   {
+    "constraint_id": "S>>NIL_TPWTX_TPDR",
+    "description": "Out= NIL, avoid O/L Templers to Dorrien 132kV line on trip of Templers West 132/275kV transformer, Feedback",
+    "line_name": "templers to dorrien",
+    "geojson_names": [
+      "Dorrien to Templers"
+    ],
+    "binding_pct": 3.31,
+    "avg_mv_binding": 172.8,
+    "median_rhs_binding": 102.3,
+    "p10_rhs_binding": 93.2,
+    "total_binding_intervals": 1838
+  },
+  {
     "constraint_id": "V>>N_060_66_65",
     "description": "Out = Jindera to Wodonga(060), avoid O/L Murray to Lower Tumut (66) using 15 mins rating on trip of Murray to Upper Tumut (65) line,  [ Assumed lines 996, 63, 99J,99D,99L, 9R4 OPEN; with both Yass TXs I/S (990,991  & 970 OPEN) as per OM521]",
     "line_name": "murray to lower tumut",
@@ -1171,19 +1223,6 @@
     "median_rhs_binding": 850.2,
     "p10_rhs_binding": 836.4,
     "total_binding_intervals": 12
-  },
-  {
-    "constraint_id": "N>94T_945_94K",
-    "description": "Out= Molong to Orange North (94T) 132kV line, avoid O/L Molong to Wellington (945/1) on trip of Parkes to Wellington (94K) line, Feedback",
-    "line_name": "molong to wellington",
-    "geojson_names": [
-      "Wellington Town to Molong"
-    ],
-    "binding_pct": 3.22,
-    "avg_mv_binding": 164.0,
-    "median_rhs_binding": 144.3,
-    "p10_rhs_binding": 126.7,
-    "total_binding_intervals": 382
   },
   {
     "constraint_id": "S>>X_DVBR_BRTW_05",
@@ -1212,17 +1251,43 @@
     "total_binding_intervals": 4
   },
   {
+    "constraint_id": "N>94T_945_94K",
+    "description": "Out= Molong to Orange North (94T) 132kV line, avoid O/L Molong to Wellington (945/1) on trip of Parkes to Wellington (94K) line, Feedback",
+    "line_name": "molong to wellington",
+    "geojson_names": [
+      "Wellington Town to Molong"
+    ],
+    "binding_pct": 2.95,
+    "avg_mv_binding": 190.7,
+    "median_rhs_binding": 143.5,
+    "p10_rhs_binding": 124.1,
+    "total_binding_intervals": 510
+  },
+  {
     "constraint_id": "Q>NIL_LCCP_BCCP",
     "description": "Out= Nil, avoid O/L Larcom Creek to Calliope River (8859) 275kV line on trip of Bouldercombe to Calliope River (812) 275kV line, Feedback",
     "line_name": "larcom creek to calliope river",
     "geojson_names": [
       "Larcom Creek-H058 to Calliope River-H67"
     ],
-    "binding_pct": 3.0,
-    "avg_mv_binding": 547.6,
-    "median_rhs_binding": 1220.3,
-    "p10_rhs_binding": 1097.1,
-    "total_binding_intervals": 1293
+    "binding_pct": 2.89,
+    "avg_mv_binding": 524.2,
+    "median_rhs_binding": 1206.8,
+    "p10_rhs_binding": 1068.8,
+    "total_binding_intervals": 1502
+  },
+  {
+    "constraint_id": "S>>X_DVLK+LKCN_05",
+    "description": "Out= Davenport-Mt Lock-Canowie 275kV line (this offloads Hornsdale #1 & #2  &#3 WF & battery) OR Davenport-Mt Lock 275kV line O/S, avoid O/L Waterloo-Templers 132kV line on trip of Blyth West-Munno Para 275kV  line, Feedback",
+    "line_name": "waterloo-templers",
+    "geojson_names": [
+      "Waterloo to Templers"
+    ],
+    "binding_pct": 2.88,
+    "avg_mv_binding": 341.8,
+    "median_rhs_binding": 687.1,
+    "p10_rhs_binding": 588.2,
+    "total_binding_intervals": 7
   },
   {
     "constraint_id": "N>>17_39_11",
@@ -1236,19 +1301,6 @@
     "median_rhs_binding": 4044.7,
     "p10_rhs_binding": 3517.4,
     "total_binding_intervals": 142
-  },
-  {
-    "constraint_id": "S>>NIL_TPWTX_TPDR",
-    "description": "Out= NIL, avoid O/L Templers to Dorrien 132kV line on trip of Templers West 132/275kV transformer, Feedback",
-    "line_name": "templers to dorrien",
-    "geojson_names": [
-      "Dorrien to Templers"
-    ],
-    "binding_pct": 2.73,
-    "avg_mv_binding": 230.2,
-    "median_rhs_binding": 101.9,
-    "p10_rhs_binding": 92.6,
-    "total_binding_intervals": 1270
   },
   {
     "constraint_id": "T>T_GTHA_IMP_4N",
@@ -1277,19 +1329,6 @@
     "total_binding_intervals": 902
   },
   {
-    "constraint_id": "S>NIL_NWRB2_NWRB1",
-    "description": "Out= NIL, avoid O/L North West Bend-Robertstown #1 132kV line on trip of North West Bend-Robertstown #2 132kV line (this trips MWP1-3 SFs), Feedback",
-    "line_name": "north west bend-robertstown",
-    "geojson_names": [
-      "North West Bend to Robertstown"
-    ],
-    "binding_pct": 2.58,
-    "avg_mv_binding": 1253.9,
-    "median_rhs_binding": 147.5,
-    "p10_rhs_binding": 135.2,
-    "total_binding_intervals": 6335
-  },
-  {
     "constraint_id": "S>>WEWT_RBTU_RBTU",
     "description": "Out= Waterloo East - Waterloo132kV line, avoid O/L Robertstown to Tungkillo 275kV line 1 or 2 on trip of the other Robertstown to Tungkillo 275kV line, Feedback",
     "line_name": "robertstown to tungkillo",
@@ -1316,6 +1355,19 @@
     "total_binding_intervals": 68
   },
   {
+    "constraint_id": "S>NIL_NWRB2_NWRB1",
+    "description": "Out= NIL, avoid O/L North West Bend-Robertstown #1 132kV line on trip of North West Bend-Robertstown #2 132kV line (this trips MWP1-3 SFs), Feedback",
+    "line_name": "north west bend-robertstown",
+    "geojson_names": [
+      "North West Bend to Robertstown"
+    ],
+    "binding_pct": 2.52,
+    "avg_mv_binding": 1243.7,
+    "median_rhs_binding": 147.5,
+    "p10_rhs_binding": 135.3,
+    "total_binding_intervals": 6403
+  },
+  {
     "constraint_id": "N>>5_998_4",
     "description": "Out= Marulan-Yass (5), avoid O/L Cowra to Forbes (998) 132kV line on trip of Collector to Marulan (4) 330kV line, [Wagga-Yass 132kV parallel lines CLOSED], Feedback",
     "line_name": "cowra to forbes",
@@ -1327,6 +1379,19 @@
     "median_rhs_binding": 295.5,
     "p10_rhs_binding": 273.5,
     "total_binding_intervals": 375
+  },
+  {
+    "constraint_id": "V>>BDBU_WBBA_KGBE",
+    "description": "Out = Bundey to Buronga (6F) 330kV line, avoid O/L Waubra to Ballarat 220kV line on trip of Kerang to Bendigo 220kV line, Feedback",
+    "line_name": "waubra to ballarat",
+    "geojson_names": [
+      "Waubra Terminal to Ballarat Terminal"
+    ],
+    "binding_pct": 2.42,
+    "avg_mv_binding": 691.2,
+    "median_rhs_binding": 719.4,
+    "p10_rhs_binding": 628.8,
+    "total_binding_intervals": 993
   },
   {
     "constraint_id": "S>>RBTU_N-2_WTTP",
@@ -1362,36 +1427,10 @@
       "Molong to Orange North"
     ],
     "binding_pct": 2.38,
-    "avg_mv_binding": 2084.3,
-    "median_rhs_binding": 190.1,
-    "p10_rhs_binding": 150.6,
-    "total_binding_intervals": 5840
-  },
-  {
-    "constraint_id": "V>>BDBU_WBBA_KGBE",
-    "description": "Out = Bundey to Buronga (6F) 330kV line, avoid O/L Waubra to Ballarat 220kV line on trip of Kerang to Bendigo 220kV line, Feedback",
-    "line_name": "waubra to ballarat",
-    "geojson_names": [
-      "Waubra Terminal to Ballarat Terminal"
-    ],
-    "binding_pct": 2.38,
-    "avg_mv_binding": 703.0,
-    "median_rhs_binding": 722.3,
-    "p10_rhs_binding": 628.5,
-    "total_binding_intervals": 894
-  },
-  {
-    "constraint_id": "N>NIL_9R4_99A",
-    "description": "Out= Nil, avoid O/L Finley to Mulwala 132kV line (9R4) on trip of Finley to Uranquinty (99A) line, Feedback",
-    "line_name": "finley to mulwala",
-    "geojson_names": [
-      "Mulwala to Finley"
-    ],
-    "binding_pct": 2.36,
-    "avg_mv_binding": 477.1,
-    "median_rhs_binding": 149.2,
-    "p10_rhs_binding": 139.2,
-    "total_binding_intervals": 5786
+    "avg_mv_binding": 2055.3,
+    "median_rhs_binding": 191.3,
+    "p10_rhs_binding": 151.0,
+    "total_binding_intervals": 6042
   },
   {
     "constraint_id": "N>9ML_947_94T",
@@ -1407,6 +1446,19 @@
     "total_binding_intervals": 206
   },
   {
+    "constraint_id": "N>NIL_9R4_99A",
+    "description": "Out= Nil, avoid O/L Finley to Mulwala 132kV line (9R4) on trip of Finley to Uranquinty (99A) line, Feedback",
+    "line_name": "finley to mulwala",
+    "geojson_names": [
+      "Mulwala to Finley"
+    ],
+    "binding_pct": 2.28,
+    "avg_mv_binding": 477.1,
+    "median_rhs_binding": 149.2,
+    "p10_rhs_binding": 139.2,
+    "total_binding_intervals": 5786
+  },
+  {
     "constraint_id": "S>>DVBG_RBTU_RBTU",
     "description": "Out= Davenport-Bungama 275kV line, avoid O/L Robertstown to Tungkillo 275kV line 1 or 2 on trip of the other Robertstown to Tungkillo 275kV line, Feedback",
     "line_name": "robertstown to tungkillo",
@@ -1418,19 +1470,6 @@
     "median_rhs_binding": 1126.1,
     "p10_rhs_binding": 1006.2,
     "total_binding_intervals": 195
-  },
-  {
-    "constraint_id": "V>>BDBU_WBBA_RCWEKG",
-    "description": "Out = Bundey to Buronga (6F) 330kV line, avoid O/L Waubra to Ballarat 220kV line on trip of Red Cliffs to Wemen to Kerang 220kV line (this trips off Bannerton and Wemen solar farms), Feedback",
-    "line_name": "waubra to ballarat",
-    "geojson_names": [
-      "Waubra Terminal to Ballarat Terminal"
-    ],
-    "binding_pct": 2.12,
-    "avg_mv_binding": 291.0,
-    "median_rhs_binding": 740.5,
-    "p10_rhs_binding": 651.8,
-    "total_binding_intervals": 794
   },
   {
     "constraint_id": "N>>NIL_990_051",
@@ -1446,6 +1485,19 @@
     "total_binding_intervals": 2549
   },
   {
+    "constraint_id": "V>>BDBU_WBBA_RCWEKG",
+    "description": "Out = Bundey to Buronga (6F) 330kV line, avoid O/L Waubra to Ballarat 220kV line on trip of Red Cliffs to Wemen to Kerang 220kV line (this trips off Bannerton and Wemen solar farms), Feedback",
+    "line_name": "waubra to ballarat",
+    "geojson_names": [
+      "Waubra Terminal to Ballarat Terminal"
+    ],
+    "binding_pct": 2.02,
+    "avg_mv_binding": 299.5,
+    "median_rhs_binding": 737.2,
+    "p10_rhs_binding": 647.4,
+    "total_binding_intervals": 830
+  },
+  {
     "constraint_id": "N>>4_998_5",
     "description": "Out = Collector - Marulan (4), avoid O/L Cowra to Forbes (998) 132kV line on trip of Yass to Marulan (5) 330kV line, [Wagga-Yass 132kV parallel lines CLOSED]",
     "line_name": "cowra to forbes",
@@ -1457,6 +1509,19 @@
     "median_rhs_binding": 284.5,
     "p10_rhs_binding": 260.3,
     "total_binding_intervals": 372
+  },
+  {
+    "constraint_id": "N>>31_33_34",
+    "description": "Out = Bayswater to Regentville (31), avoid O/L Bayswater to Liddell (33) or Bayswater to Liddell (34) line on trip of Bayswater to Liddell (34) or Bayswater to Liddell (33) line, Feedback",
+    "line_name": "bayswater to liddell",
+    "geojson_names": [
+      "Liddell to Bayswater"
+    ],
+    "binding_pct": 1.97,
+    "avg_mv_binding": 10.1,
+    "median_rhs_binding": 1525.8,
+    "p10_rhs_binding": 1466.2,
+    "total_binding_intervals": 22
   },
   {
     "constraint_id": "S>>RBTX1_RBTX2_WTTP",
@@ -1472,17 +1537,17 @@
     "total_binding_intervals": 19
   },
   {
-    "constraint_id": "N>>964_85_86_S",
-    "description": "Out= Taree to Port Macquarie (964) 132kV line, avoid O/L Uralla to Tamworth (85) on trip of Armidale to Tamworth (86) line, Feedback",
-    "line_name": "uralla to tamworth",
+    "constraint_id": "N>NIL_977_976",
+    "description": "Out= Nil, avoid O/L of one Canberra to Queanbeyan (977/1 or 976/1) 132kV line on trip of other Canberra to Queanbeyan (977/1 or 976/1) 132kV line, Feedback",
+    "line_name": "canberra to queanbeyan (977/1 or 976/1)",
     "geojson_names": [
-      "Tamworth to Manilla"
+      "Canberra to Queanbeyan (North East)"
     ],
-    "binding_pct": 1.91,
-    "avg_mv_binding": 28.5,
-    "median_rhs_binding": 1253.3,
-    "p10_rhs_binding": 1172.0,
-    "total_binding_intervals": 14
+    "binding_pct": 1.87,
+    "avg_mv_binding": 2486.5,
+    "median_rhs_binding": 63.9,
+    "p10_rhs_binding": 42.4,
+    "total_binding_intervals": 4760
   },
   {
     "constraint_id": "T>T_GT_HA_220_3B",
@@ -1511,32 +1576,6 @@
     "total_binding_intervals": 7
   },
   {
-    "constraint_id": "N>NIL_977_976",
-    "description": "Out= Nil, avoid O/L of one Canberra to Queanbeyan (977/1 or 976/1) 132kV line on trip of other Canberra to Queanbeyan (977/1 or 976/1) 132kV line, Feedback",
-    "line_name": "canberra to queanbeyan (977/1 or 976/1)",
-    "geojson_names": [
-      "Canberra to Queanbeyan (North East)"
-    ],
-    "binding_pct": 1.77,
-    "avg_mv_binding": 2730.2,
-    "median_rhs_binding": 63.2,
-    "p10_rhs_binding": 41.4,
-    "total_binding_intervals": 4327
-  },
-  {
-    "constraint_id": "Q>NIL_CPWU_CLWU",
-    "description": "Out= Nil, avoid O/L Calliope River to Wurdong (818) 275kV line on trip of Calvale to Wurdong (871) 275kV line, Feedback.  [DS RHS to swamp if 8810+8811 lines O/S]",
-    "line_name": "calliope river to wurdong",
-    "geojson_names": [
-      "Calliope River-H67 to Wurdong"
-    ],
-    "binding_pct": 1.77,
-    "avg_mv_binding": 1060.1,
-    "median_rhs_binding": 2327.9,
-    "p10_rhs_binding": 2205.2,
-    "total_binding_intervals": 760
-  },
-  {
     "constraint_id": "N>>16_8_39",
     "description": "Out = Avon-Marulan (16), avoid O/L Marulan to Dapto (8) on trip of Bannaby to Sydney West (39) line, Feedback",
     "line_name": "marulan to dapto",
@@ -1563,17 +1602,17 @@
     "total_binding_intervals": 73
   },
   {
-    "constraint_id": "N>>NIL_85_86_S",
-    "description": "Out= NIL, avoid O/L Uralla to Tamworth (85) on trip of Armidale to Tamworth (86) line, Feedback",
-    "line_name": "uralla to tamworth",
+    "constraint_id": "V>>BDBU_ELML_BAML2",
+    "description": "Out = Bundey to Buronga (6F) 330kV line, avoid O/L Elaine to Moorabool 220kV line on trip of Ballarat to Moorabool No.2 220kV line, Feedback",
+    "line_name": "elaine to moorabool",
     "geojson_names": [
-      "Tamworth to Manilla"
+      "Moorabool Terminal to Elaine Terminal"
     ],
-    "binding_pct": 1.72,
-    "avg_mv_binding": 453.5,
-    "median_rhs_binding": 1190.1,
-    "p10_rhs_binding": 1106.4,
-    "total_binding_intervals": 4227
+    "binding_pct": 1.75,
+    "avg_mv_binding": 138.6,
+    "median_rhs_binding": 1086.9,
+    "p10_rhs_binding": 980.7,
+    "total_binding_intervals": 718
   },
   {
     "constraint_id": "S>>CB6128_TBTX4_TBMO",
@@ -1587,6 +1626,32 @@
     "median_rhs_binding": 156.2,
     "p10_rhs_binding": 151.7,
     "total_binding_intervals": 26
+  },
+  {
+    "constraint_id": "N>>NIL_85_86_S",
+    "description": "Out= NIL, avoid O/L Uralla to Tamworth (85) on trip of Armidale to Tamworth (86) line, Feedback",
+    "line_name": "uralla to tamworth",
+    "geojson_names": [
+      "Tamworth to Manilla"
+    ],
+    "binding_pct": 1.71,
+    "avg_mv_binding": 440.5,
+    "median_rhs_binding": 1192.8,
+    "p10_rhs_binding": 1107.4,
+    "total_binding_intervals": 4355
+  },
+  {
+    "constraint_id": "N>>964_85_86_S",
+    "description": "Out= Taree to Port Macquarie (964) 132kV line, avoid O/L Uralla to Tamworth (85) on trip of Armidale to Tamworth (86) line, Feedback",
+    "line_name": "uralla to tamworth",
+    "geojson_names": [
+      "Tamworth to Manilla"
+    ],
+    "binding_pct": 1.71,
+    "avg_mv_binding": 28.5,
+    "median_rhs_binding": 1253.3,
+    "p10_rhs_binding": 1172.0,
+    "total_binding_intervals": 14
   },
   {
     "constraint_id": "S>>MKRB_BRTW_WTTP",
@@ -1621,11 +1686,11 @@
     "geojson_names": [
       "Moorabool Terminal to Elaine Terminal"
     ],
-    "binding_pct": 1.62,
-    "avg_mv_binding": 301.6,
-    "median_rhs_binding": 1145.3,
-    "p10_rhs_binding": 985.3,
-    "total_binding_intervals": 3979
+    "binding_pct": 1.58,
+    "avg_mv_binding": 301.0,
+    "median_rhs_binding": 1144.5,
+    "p10_rhs_binding": 986.0,
+    "total_binding_intervals": 4002
   },
   {
     "constraint_id": "S>>BWMP_BRTW_WTTP",
@@ -1641,17 +1706,17 @@
     "total_binding_intervals": 51
   },
   {
-    "constraint_id": "V>>BDBU_ELML_BAML2",
-    "description": "Out = Bundey to Buronga (6F) 330kV line, avoid O/L Elaine to Moorabool 220kV line on trip of Ballarat to Moorabool No.2 220kV line, Feedback",
-    "line_name": "elaine to moorabool",
+    "constraint_id": "Q>NIL_CPWU_CLWU",
+    "description": "Out= Nil, avoid O/L Calliope River to Wurdong (818) 275kV line on trip of Calvale to Wurdong (871) 275kV line, Feedback.  [DS RHS to swamp if 8810+8811 lines O/S]",
+    "line_name": "calliope river to wurdong",
     "geojson_names": [
-      "Moorabool Terminal to Elaine Terminal"
+      "Calliope River-H67 to Wurdong"
     ],
-    "binding_pct": 1.54,
-    "avg_mv_binding": 88.6,
-    "median_rhs_binding": 1087.3,
-    "p10_rhs_binding": 1003.5,
-    "total_binding_intervals": 577
+    "binding_pct": 1.5,
+    "avg_mv_binding": 1036.7,
+    "median_rhs_binding": 2331.4,
+    "p10_rhs_binding": 2205.4,
+    "total_binding_intervals": 778
   },
   {
     "constraint_id": "N>94K2_94T_998",
@@ -1673,11 +1738,11 @@
     "geojson_names": [
       "Armidale to Tamworth"
     ],
-    "binding_pct": 1.45,
-    "avg_mv_binding": 90.6,
-    "median_rhs_binding": 1386.7,
-    "p10_rhs_binding": 1252.2,
-    "total_binding_intervals": 3558
+    "binding_pct": 1.44,
+    "avg_mv_binding": 88.6,
+    "median_rhs_binding": 1385.8,
+    "p10_rhs_binding": 1245.5,
+    "total_binding_intervals": 3655
   },
   {
     "constraint_id": "N>>18_998_61",
@@ -1699,24 +1764,11 @@
     "geojson_names": [
       "Corowa to Mulwala"
     ],
-    "binding_pct": 1.36,
+    "binding_pct": 1.31,
     "avg_mv_binding": 520.2,
     "median_rhs_binding": 139.9,
     "p10_rhs_binding": 113.2,
     "total_binding_intervals": 3333
-  },
-  {
-    "constraint_id": "V>>BDBU_WBBA_BESH",
-    "description": "Out = Bundey to Buronga (6F) 330kV line, avoid O/L Waubra to Ballarat 220kV line on trip of Bendigo to Shepparton 220kV line, Feedback",
-    "line_name": "waubra to ballarat",
-    "geojson_names": [
-      "Waubra Terminal to Ballarat Terminal"
-    ],
-    "binding_pct": 1.31,
-    "avg_mv_binding": 709.1,
-    "median_rhs_binding": 650.2,
-    "p10_rhs_binding": 599.3,
-    "total_binding_intervals": 232
   },
   {
     "constraint_id": "S>>BRTX3_RBTU_WTTP",
@@ -1797,19 +1849,6 @@
     "total_binding_intervals": 16
   },
   {
-    "constraint_id": "V>>N_NIL_65_051",
-    "description": "Out = NIL, avoid O/L Murray to Upper Tumut (65) on trip of Wagga to Lower Tumut (051) line, Feedback",
-    "line_name": "murray to upper tumut",
-    "geojson_names": [
-      "Upper Tumut to Murray"
-    ],
-    "binding_pct": 1.19,
-    "avg_mv_binding": 51.8,
-    "median_rhs_binding": 1603.4,
-    "p10_rhs_binding": 1445.6,
-    "total_binding_intervals": 2916
-  },
-  {
     "constraint_id": "S>>BRBG_BGTX_HUWT",
     "description": "Out= Brinkworth to Redhill to Bungama 132kV lines (this takes out Clements Gap WF), avoid O/L Hummocks to Waterloo 132kV on trip of Bungama 132/275kV TX2, Feedback",
     "line_name": "hummocks to waterloo",
@@ -1849,17 +1888,43 @@
     "total_binding_intervals": 239
   },
   {
+    "constraint_id": "V>>N_NIL_65_051",
+    "description": "Out = NIL, avoid O/L Murray to Upper Tumut (65) on trip of Wagga to Lower Tumut (051) line, Feedback",
+    "line_name": "murray to upper tumut",
+    "geojson_names": [
+      "Upper Tumut to Murray"
+    ],
+    "binding_pct": 1.15,
+    "avg_mv_binding": 51.8,
+    "median_rhs_binding": 1603.4,
+    "p10_rhs_binding": 1445.6,
+    "total_binding_intervals": 2916
+  },
+  {
     "constraint_id": "V>>NIL_WBBA_KGBE",
     "description": "Out= Nil, avoid O/L Waubra to Ballarat 220kV line on trip of Kerang to Bendigo 220kV line, Feedback",
     "line_name": "waubra to ballarat",
     "geojson_names": [
       "Waubra Terminal to Ballarat Terminal"
     ],
-    "binding_pct": 1.15,
-    "avg_mv_binding": 642.9,
+    "binding_pct": 1.11,
+    "avg_mv_binding": 642.7,
     "median_rhs_binding": 686.8,
     "p10_rhs_binding": 592.2,
-    "total_binding_intervals": 2816
+    "total_binding_intervals": 2817
+  },
+  {
+    "constraint_id": "V>>BDBU_WBBA_BESH",
+    "description": "Out = Bundey to Buronga (6F) 330kV line, avoid O/L Waubra to Ballarat 220kV line on trip of Bendigo to Shepparton 220kV line, Feedback",
+    "line_name": "waubra to ballarat",
+    "geojson_names": [
+      "Waubra Terminal to Ballarat Terminal"
+    ],
+    "binding_pct": 1.09,
+    "avg_mv_binding": 706.1,
+    "median_rhs_binding": 649.8,
+    "p10_rhs_binding": 599.3,
+    "total_binding_intervals": 233
   },
   {
     "constraint_id": "V::S_TBCB94_35_SETB",
@@ -1873,19 +1938,6 @@
     "median_rhs_binding": 776.4,
     "p10_rhs_binding": 729.9,
     "total_binding_intervals": 97
-  },
-  {
-    "constraint_id": "N>NIL_997_99A",
-    "description": "Out= Nil, avoid O/L Corowa to Albury 132kV line (997/1) on trip of  Finley to Uranquinty 132kV line (99A), Feedback",
-    "line_name": "corowa to albury",
-    "geojson_names": [
-      "Corowa to Albury"
-    ],
-    "binding_pct": 1.06,
-    "avg_mv_binding": 838.7,
-    "median_rhs_binding": 99.0,
-    "p10_rhs_binding": 86.9,
-    "total_binding_intervals": 2590
   },
   {
     "constraint_id": "N>>NIL_998_18",
@@ -1912,6 +1964,19 @@
     "median_rhs_binding": 716.1,
     "p10_rhs_binding": 656.7,
     "total_binding_intervals": 56
+  },
+  {
+    "constraint_id": "N>NIL_997_99A",
+    "description": "Out= Nil, avoid O/L Corowa to Albury 132kV line (997/1) on trip of  Finley to Uranquinty 132kV line (99A), Feedback",
+    "line_name": "corowa to albury",
+    "geojson_names": [
+      "Corowa to Albury"
+    ],
+    "binding_pct": 1.02,
+    "avg_mv_binding": 838.7,
+    "median_rhs_binding": 99.0,
+    "p10_rhs_binding": 86.9,
+    "total_binding_intervals": 2590
   },
   {
     "constraint_id": "V>>MLSY_GTDPT_MLSY",
@@ -1953,32 +2018,6 @@
     "total_binding_intervals": 56
   },
   {
-    "constraint_id": "S>>BDBU_TBTX4_TBMO_1",
-    "description": "Out= Bundey to Buronga (6F) 330kV line, avoid O/L Tailem Bend to Mobilong #1 132kV line on trip of Tailem Bend 275/132kV #4 transformer, Feedback",
-    "line_name": "tailem bend to mobilong",
-    "geojson_names": [
-      "Tailem Bend to Mobilong"
-    ],
-    "binding_pct": 0.88,
-    "avg_mv_binding": 293.6,
-    "median_rhs_binding": 163.2,
-    "p10_rhs_binding": 156.6,
-    "total_binding_intervals": 331
-  },
-  {
-    "constraint_id": "S>>RBMW4_RBTU_RBTU",
-    "description": "Out= Robertstown -MWP4 O/S, avoid O/L Robertstown to Tungkillo #1 or 2 275kV line on trip of the other Robertstown to Tungkillo 275kV line, Feedback",
-    "line_name": "robertstown to tungkillo #1 or 2",
-    "geojson_names": [
-      "Robertstown to Tungkillo"
-    ],
-    "binding_pct": 0.86,
-    "avg_mv_binding": 197.7,
-    "median_rhs_binding": 991.9,
-    "p10_rhs_binding": 935.2,
-    "total_binding_intervals": 41
-  },
-  {
     "constraint_id": "N>89_96L_967_S",
     "description": "Out= Coffs Harbour to Lismore (89), avoid O/L Lismore to Casino Tee (96L) 132kV line on trip of Lismore to Koolkhan (967) 132kV line, Feedback",
     "line_name": "lismore to casino tee",
@@ -1992,17 +2031,17 @@
     "total_binding_intervals": 1
   },
   {
-    "constraint_id": "S>>BDBU_RBTU_RBTU",
-    "description": "Out= Bundey to Buronga 330kV, avoid O/L Robertstown-Tungkillo 275kV line 1 or 2 on trip of parallel Robertstown-Tungkillo 275kV line 2 or 1, Feedback",
-    "line_name": "robertstown-tungkillo",
+    "constraint_id": "S>>RBMW4_RBTU_RBTU",
+    "description": "Out= Robertstown -MWP4 O/S, avoid O/L Robertstown to Tungkillo #1 or 2 275kV line on trip of the other Robertstown to Tungkillo 275kV line, Feedback",
+    "line_name": "robertstown to tungkillo #1 or 2",
     "geojson_names": [
       "Robertstown to Tungkillo"
     ],
-    "binding_pct": 0.85,
-    "avg_mv_binding": 248.2,
-    "median_rhs_binding": 1017.7,
-    "p10_rhs_binding": 965.3,
-    "total_binding_intervals": 319
+    "binding_pct": 0.84,
+    "avg_mv_binding": 197.7,
+    "median_rhs_binding": 991.9,
+    "p10_rhs_binding": 935.2,
+    "total_binding_intervals": 41
   },
   {
     "constraint_id": "V::S_TB35_SETB_2",
@@ -2031,6 +2070,19 @@
     "total_binding_intervals": 2
   },
   {
+    "constraint_id": "S>>BDBU_TBTX4_TBMO_1",
+    "description": "Out= Bundey to Buronga (6F) 330kV line, avoid O/L Tailem Bend to Mobilong #1 132kV line on trip of Tailem Bend 275/132kV #4 transformer, Feedback",
+    "line_name": "tailem bend to mobilong",
+    "geojson_names": [
+      "Tailem Bend to Mobilong"
+    ],
+    "binding_pct": 0.81,
+    "avg_mv_binding": 294.5,
+    "median_rhs_binding": 163.2,
+    "p10_rhs_binding": 156.4,
+    "total_binding_intervals": 334
+  },
+  {
     "constraint_id": "N>9ML_94T_947",
     "description": "Out= 9ML (Mt Piper to Crudine Ridge tee Ilford), avoid O/L Molong to Orange North (94T) on trip of Wellington to Orange North (947) line, Feedback",
     "line_name": "molong to orange north",
@@ -2057,43 +2109,17 @@
     "total_binding_intervals": 5
   },
   {
-    "constraint_id": "V>>BDBU_RCWE_HOMRKM",
-    "description": "Out = Bundey to Buronga (6F) 330kV line, avoid O/L Red Cliffs to Wemen 220kV line on trip of Horsham to Murra Warra to Kiamal 220kV line (this trips Murra Warra WF), Feedback",
-    "line_name": "red cliffs to wemen",
+    "constraint_id": "S>>BDBU_RBTU_RBTU",
+    "description": "Out= Bundey to Buronga 330kV, avoid O/L Robertstown-Tungkillo 275kV line 1 or 2 on trip of parallel Robertstown-Tungkillo 275kV line 2 or 1, Feedback",
+    "line_name": "robertstown-tungkillo",
     "geojson_names": [
-      "Red Cliffs to Wemen Terminal"
+      "Robertstown to Tungkillo"
     ],
     "binding_pct": 0.78,
-    "avg_mv_binding": 100.4,
-    "median_rhs_binding": 492.2,
-    "p10_rhs_binding": 433.8,
-    "total_binding_intervals": 294
-  },
-  {
-    "constraint_id": "V>>NIL_WBBA_RCWEKG",
-    "description": "Out = Nil, avoid O/L Waubra to Ballarat 220kV line on trip of Red Cliffs to Wemen to Kerang 220kV line (this trips off Bannerton and Wemen solar farms), Feedback",
-    "line_name": "waubra to ballarat",
-    "geojson_names": [
-      "Waubra Terminal to Ballarat Terminal"
-    ],
-    "binding_pct": 0.77,
-    "avg_mv_binding": 282.4,
-    "median_rhs_binding": 738.9,
-    "p10_rhs_binding": 648.3,
-    "total_binding_intervals": 1883
-  },
-  {
-    "constraint_id": "V>>NIL_MLGT_MLGT",
-    "description": "Out = NIL, avoid O/L Moorabool to Geelong #1 or #2 on trip of other Moorabool to Geelong line, Feedback",
-    "line_name": "moorabool to geelong #1 or",
-    "geojson_names": [
-      "Geelong Terminal to Moorabool Terminal"
-    ],
-    "binding_pct": 0.77,
-    "avg_mv_binding": 1246.4,
-    "median_rhs_binding": 1502.7,
-    "p10_rhs_binding": 1188.2,
-    "total_binding_intervals": 282
+    "avg_mv_binding": 248.2,
+    "median_rhs_binding": 1017.7,
+    "p10_rhs_binding": 965.3,
+    "total_binding_intervals": 319
   },
   {
     "constraint_id": "N>>16_8_18",
@@ -2109,6 +2135,32 @@
     "total_binding_intervals": 188
   },
   {
+    "constraint_id": "V>>NIL_WBBA_RCWEKG",
+    "description": "Out = Nil, avoid O/L Waubra to Ballarat 220kV line on trip of Red Cliffs to Wemen to Kerang 220kV line (this trips off Bannerton and Wemen solar farms), Feedback",
+    "line_name": "waubra to ballarat",
+    "geojson_names": [
+      "Waubra Terminal to Ballarat Terminal"
+    ],
+    "binding_pct": 0.74,
+    "avg_mv_binding": 282.3,
+    "median_rhs_binding": 738.9,
+    "p10_rhs_binding": 648.3,
+    "total_binding_intervals": 1884
+  },
+  {
+    "constraint_id": "V>>BDBU_RCWE_HOMRKM",
+    "description": "Out = Bundey to Buronga (6F) 330kV line, avoid O/L Red Cliffs to Wemen 220kV line on trip of Horsham to Murra Warra to Kiamal 220kV line (this trips Murra Warra WF), Feedback",
+    "line_name": "red cliffs to wemen",
+    "geojson_names": [
+      "Red Cliffs to Wemen Terminal"
+    ],
+    "binding_pct": 0.72,
+    "avg_mv_binding": 100.4,
+    "median_rhs_binding": 492.2,
+    "p10_rhs_binding": 433.8,
+    "total_binding_intervals": 294
+  },
+  {
     "constraint_id": "N>>3L_998_5",
     "description": "Out= Collector - Yass (3L), avoid O/L Cowra to Forbes (998) 132kV line on trip of Yass to Marulan (5) 330kV line, [Wagga-Yass 132kV parallel lines CLOSED], Feedback",
     "line_name": "cowra to forbes",
@@ -2122,30 +2174,17 @@
     "total_binding_intervals": 64
   },
   {
-    "constraint_id": "N>>ERTX_13_14",
-    "description": "Out= Eraring Tie Tx, avoid O/L Kemps Creek to Sydney South (13) 330kV line on trip of Kemps Creek to Sydney North (14) 330kV line, Feedback",
-    "line_name": "kemps creek to sydney south",
-    "geojson_names": [
-      "Kemps Creek to Sydney South"
-    ],
-    "binding_pct": 0.71,
-    "avg_mv_binding": 29.4,
-    "median_rhs_binding": 2042.6,
-    "p10_rhs_binding": 2013.9,
-    "total_binding_intervals": 9
-  },
-  {
     "constraint_id": "N>NIL_94T_947",
     "description": "Out= Nil, avoid O/L Molong to Orange North (94T) on trip of Wellington to Orange North (947) line, Feedback",
     "line_name": "molong to orange north",
     "geojson_names": [
       "Molong to Orange North"
     ],
-    "binding_pct": 0.7,
-    "avg_mv_binding": 1926.4,
-    "median_rhs_binding": 118.5,
+    "binding_pct": 0.68,
+    "avg_mv_binding": 1924.3,
+    "median_rhs_binding": 118.8,
     "p10_rhs_binding": 75.6,
-    "total_binding_intervals": 1716
+    "total_binding_intervals": 1718
   },
   {
     "constraint_id": "N>89_96L_967",
@@ -2167,11 +2206,24 @@
     "geojson_names": [
       "Waterloo to Templers"
     ],
-    "binding_pct": 0.65,
+    "binding_pct": 0.64,
     "avg_mv_binding": 227.0,
     "median_rhs_binding": 307.3,
     "p10_rhs_binding": 300.8,
     "total_binding_intervals": 31
+  },
+  {
+    "constraint_id": "V>>NIL_MLGT_MLGT",
+    "description": "Out = NIL, avoid O/L Moorabool to Geelong #1 or #2 on trip of other Moorabool to Geelong line, Feedback",
+    "line_name": "moorabool to geelong #1 or",
+    "geojson_names": [
+      "Geelong Terminal to Moorabool Terminal"
+    ],
+    "binding_pct": 0.62,
+    "avg_mv_binding": 1246.4,
+    "median_rhs_binding": 1502.7,
+    "p10_rhs_binding": 1188.2,
+    "total_binding_intervals": 282
   },
   {
     "constraint_id": "Q>NIL_EMBW_EMLV_DS",
@@ -2180,11 +2232,11 @@
     "geojson_names": [
       "Emerald to Lilyvale"
     ],
-    "binding_pct": 0.63,
-    "avg_mv_binding": 209.4,
+    "binding_pct": 0.61,
+    "avg_mv_binding": 210.5,
     "median_rhs_binding": 40.0,
     "p10_rhs_binding": 40.0,
-    "total_binding_intervals": 1542
+    "total_binding_intervals": 1551
   },
   {
     "constraint_id": "V>>XMLSY_KTDPT_KTGT",
@@ -2200,6 +2252,19 @@
     "total_binding_intervals": 8
   },
   {
+    "constraint_id": "N>>ERTX_13_14",
+    "description": "Out= Eraring Tie Tx, avoid O/L Kemps Creek to Sydney South (13) 330kV line on trip of Kemps Creek to Sydney North (14) 330kV line, Feedback",
+    "line_name": "kemps creek to sydney south",
+    "geojson_names": [
+      "Kemps Creek to Sydney South"
+    ],
+    "binding_pct": 0.54,
+    "avg_mv_binding": 29.4,
+    "median_rhs_binding": 2042.6,
+    "p10_rhs_binding": 2013.9,
+    "total_binding_intervals": 9
+  },
+  {
     "constraint_id": "T^V_HA_GT_220_1",
     "description": "Out= one George Town to Hadspen 220kV line, limit post-contingency loading on Palmerston to Sheffield 220kV line (flow to north) below 305 MW to avoid voltage collapse on trip of the remaining Hadspen to George Town 220kV line.",
     "line_name": "palmerston to sheffield",
@@ -2211,19 +2276,6 @@
     "median_rhs_binding": 760.8,
     "p10_rhs_binding": 610.0,
     "total_binding_intervals": 10
-  },
-  {
-    "constraint_id": "N>>BDBU_060_051",
-    "description": "Out= Bundey to Buronga (6F) 330kV Line, avoid O/L Jindera to Wodonga (60) 330kV line on trip of Wagga to Lower Tumut (051) 330kV line, Feedback",
-    "line_name": "jindera to wodonga",
-    "geojson_names": [
-      "Wodonga Terminal to Jindera"
-    ],
-    "binding_pct": 0.53,
-    "avg_mv_binding": 456.9,
-    "median_rhs_binding": 1506.6,
-    "p10_rhs_binding": 1434.8,
-    "total_binding_intervals": 39
   },
   {
     "constraint_id": "V>>DDSM_EPTT_DDSM",
@@ -2265,19 +2317,6 @@
     "total_binding_intervals": 8
   },
   {
-    "constraint_id": "N>NIL_9R4_62",
-    "description": "Out= NIL, avoid O/L Finley to Mulwala (9R4) 132kV line on trip of Walla Walla to Jindera (62) 330kV line, Feedback",
-    "line_name": "finley to mulwala",
-    "geojson_names": [
-      "Mulwala to Finley"
-    ],
-    "binding_pct": 0.51,
-    "avg_mv_binding": 520.5,
-    "median_rhs_binding": 185.2,
-    "p10_rhs_binding": 117.7,
-    "total_binding_intervals": 728
-  },
-  {
     "constraint_id": "V>>N_X3_65_66",
     "description": "Out= Balranald to Buronga (X3) 220kV line, avoid O/L Murray to Upper Tumut (65) 330kV line on trip of Murray to Lower Tumut (66) 330kV line, Feedback, Note: Darlington Pt -Wagga 132kV operated CLOSED",
     "line_name": "murray to upper tumut",
@@ -2317,6 +2356,19 @@
     "total_binding_intervals": 994
   },
   {
+    "constraint_id": "N>NIL_9R4_62",
+    "description": "Out= NIL, avoid O/L Finley to Mulwala (9R4) 132kV line on trip of Walla Walla to Jindera (62) 330kV line, Feedback",
+    "line_name": "finley to mulwala",
+    "geojson_names": [
+      "Mulwala to Finley"
+    ],
+    "binding_pct": 0.48,
+    "avg_mv_binding": 520.5,
+    "median_rhs_binding": 185.2,
+    "p10_rhs_binding": 117.7,
+    "total_binding_intervals": 728
+  },
+  {
     "constraint_id": "N>>BYSW_8_16",
     "description": "Out = Bannaby-Sydney West (39), avoid O/L Marulan to Dapto (8) on trip of Marulan to Avon (16) line, Feedback",
     "line_name": "marulan to dapto",
@@ -2341,20 +2393,6 @@
     "median_rhs_binding": 100.3,
     "p10_rhs_binding": 89.0,
     "total_binding_intervals": 73
-  },
-  {
-    "constraint_id": "N>NIL_983_987",
-    "description": "Out= Nil, avoid O/L Tallawarra to Dapto (983) 132kV line on trip of Tallawarra to Dapto (987) 132kV line, Feedback",
-    "line_name": "tallawarra to dapto",
-    "geojson_names": [
-      "Tallawarra to Dapto",
-      "Dapto to Tallawarra"
-    ],
-    "binding_pct": 0.46,
-    "avg_mv_binding": 314.9,
-    "median_rhs_binding": 564.5,
-    "p10_rhs_binding": 549.6,
-    "total_binding_intervals": 880
   },
   {
     "constraint_id": "N>976_977_NIL_1",
@@ -2396,6 +2434,20 @@
     "total_binding_intervals": 57
   },
   {
+    "constraint_id": "N>NIL_983_987",
+    "description": "Out= Nil, avoid O/L Tallawarra to Dapto (983) 132kV line on trip of Tallawarra to Dapto (987) 132kV line, Feedback",
+    "line_name": "tallawarra to dapto",
+    "geojson_names": [
+      "Tallawarra to Dapto",
+      "Dapto to Tallawarra"
+    ],
+    "binding_pct": 0.44,
+    "avg_mv_binding": 314.9,
+    "median_rhs_binding": 564.5,
+    "p10_rhs_binding": 549.6,
+    "total_binding_intervals": 880
+  },
+  {
     "constraint_id": "V>>MLSY_KTDPT_SYML",
     "description": "Out = Moorabool to Sydenham 500 kV line, Emergency Moorabool Transformer Tripping (EMTT) scheme disabled, avoid O/L Keilor to Deer Park 220 kV line on trip of remaining Moorabool to Sydenham 500 kV line, feedback",
     "line_name": "keilor to deer park",
@@ -2407,32 +2459,6 @@
     "median_rhs_binding": -416.3,
     "p10_rhs_binding": -518.4,
     "total_binding_intervals": 44
-  },
-  {
-    "constraint_id": "N>NIL_998_18",
-    "description": "Out= Nil, avoid O/L Cowra to Forbes (998) 132kV line on trip of Kangaroo Valley to Dapto (18) 330kV line, Feedback",
-    "line_name": "cowra to forbes",
-    "geojson_names": [
-      "Cowra to Forbes"
-    ],
-    "binding_pct": 0.43,
-    "avg_mv_binding": 40200.1,
-    "median_rhs_binding": 34.2,
-    "p10_rhs_binding": 6.1,
-    "total_binding_intervals": 176
-  },
-  {
-    "constraint_id": "V>>BDBU_ARTSTL_ARCW",
-    "description": "Out = Bundey to Buronga (6F) 330kV line, avoid O/L Ararat to Stawell 66kV line for loss of the Ararat to Crowlands 220kV line, swamped if BATS-HOTS 66 kV tie opened, or with BGR tie splitting scheme in service, Feedback",
-    "line_name": "ararat to stawell",
-    "geojson_names": [
-      "Stawell to Ararat"
-    ],
-    "binding_pct": 0.42,
-    "avg_mv_binding": 1558.3,
-    "median_rhs_binding": -65.4,
-    "p10_rhs_binding": -83.1,
-    "total_binding_intervals": 156
   },
   {
     "constraint_id": "N>94K2_94T_NIL",
@@ -2461,30 +2487,17 @@
     "total_binding_intervals": 1
   },
   {
-    "constraint_id": "S>>TBTX4_TBTU_TBTU",
-    "description": "Out= Tailem Bend 275/132kV #4 TX (Black Range series caps I/S), avoid O/L of one Tailem Bend-Tungkillo 275 kV line on trip of other Tailem Bend-Tungkillo 275 kV line, Feedback",
-    "line_name": "tailem bend-tungkillo",
+    "constraint_id": "V>>BDBU_ARTSTL_ARCW",
+    "description": "Out = Bundey to Buronga (6F) 330kV line, avoid O/L Ararat to Stawell 66kV line for loss of the Ararat to Crowlands 220kV line, swamped if BATS-HOTS 66 kV tie opened, or with BGR tie splitting scheme in service, Feedback",
+    "line_name": "ararat to stawell",
     "geojson_names": [
-      "Tailem Bend to Tungkillo"
-    ],
-    "binding_pct": 0.4,
-    "avg_mv_binding": 5.1,
-    "median_rhs_binding": 707.9,
-    "p10_rhs_binding": 687.9,
-    "total_binding_intervals": 3
-  },
-  {
-    "constraint_id": "S>>NIL_TBTX4_TBMO_1",
-    "description": "Out= NIL, avoid O/L Tailem Bend to Mobilong #1 132kV line on trip of Tailem Bend 275/132kV #4 transformer, Feedback",
-    "line_name": "tailem bend to mobilong",
-    "geojson_names": [
-      "Tailem Bend to Mobilong"
+      "Stawell to Ararat"
     ],
     "binding_pct": 0.38,
-    "avg_mv_binding": 544.5,
-    "median_rhs_binding": 162.3,
-    "p10_rhs_binding": 136.8,
-    "total_binding_intervals": 642
+    "avg_mv_binding": 1558.3,
+    "median_rhs_binding": -65.4,
+    "p10_rhs_binding": -83.1,
+    "total_binding_intervals": 156
   },
   {
     "constraint_id": "N>>79_944_72",
@@ -2526,6 +2539,19 @@
     "total_binding_intervals": 26
   },
   {
+    "constraint_id": "S>>NIL_TBTX4_TBMO_1",
+    "description": "Out= NIL, avoid O/L Tailem Bend to Mobilong #1 132kV line on trip of Tailem Bend 275/132kV #4 transformer, Feedback",
+    "line_name": "tailem bend to mobilong",
+    "geojson_names": [
+      "Tailem Bend to Mobilong"
+    ],
+    "binding_pct": 0.36,
+    "avg_mv_binding": 544.5,
+    "median_rhs_binding": 162.3,
+    "p10_rhs_binding": 136.8,
+    "total_binding_intervals": 642
+  },
+  {
     "constraint_id": "N>NIL_9R5_9R6_N",
     "description": "Out= NIL, avoid O/L Wagga330 to Wagga North (9R5) 132kV line on trip of Wagga132 to Wagga North (9R6) 132kV line, Feedback",
     "line_name": "wagga330 to wagga north",
@@ -2539,17 +2565,17 @@
     "total_binding_intervals": 727
   },
   {
-    "constraint_id": "V>>BDBU_BABE_HOMRKM",
-    "description": "Out = Bundey to Buronga (6F) 330kV line, avoid O/L Ballarat to Bendigo 220kV line on trip of Horsham to Murra Warra to Kiamal 220kV line (this trips Murra Warra WF), Feedback",
-    "line_name": "ballarat to bendigo",
+    "constraint_id": "N>NIL_998_18",
+    "description": "Out= Nil, avoid O/L Cowra to Forbes (998) 132kV line on trip of Kangaroo Valley to Dapto (18) 330kV line, Feedback",
+    "line_name": "cowra to forbes",
     "geojson_names": [
-      "Bendigo Terminal to Ballarat Terminal"
+      "Cowra to Forbes"
     ],
-    "binding_pct": 0.33,
-    "avg_mv_binding": 311.1,
-    "median_rhs_binding": 351.0,
-    "p10_rhs_binding": 239.1,
-    "total_binding_intervals": 122
+    "binding_pct": 0.35,
+    "avg_mv_binding": 40200.1,
+    "median_rhs_binding": 34.2,
+    "p10_rhs_binding": 6.1,
+    "total_binding_intervals": 176
   },
   {
     "constraint_id": "N>>79_94X_72",
@@ -2591,17 +2617,17 @@
     "total_binding_intervals": 46
   },
   {
-    "constraint_id": "S>>BDBU_TBTU_TBTU_1",
-    "description": "Out= Bundey to Buronga 330kV, avoid O/L Tailem Bend-Tungkillo 275kV line 1 or 2 on trip of parallel Tailem Bend-Tungkillo 275 kV line 2 or 1, Feedback",
-    "line_name": "tailem bend-tungkillo",
+    "constraint_id": "V>>BDBU_BABE_HOMRKM",
+    "description": "Out = Bundey to Buronga (6F) 330kV line, avoid O/L Ballarat to Bendigo 220kV line on trip of Horsham to Murra Warra to Kiamal 220kV line (this trips Murra Warra WF), Feedback",
+    "line_name": "ballarat to bendigo",
     "geojson_names": [
-      "Tailem Bend to Tungkillo"
+      "Bendigo Terminal to Ballarat Terminal"
     ],
-    "binding_pct": 0.31,
-    "avg_mv_binding": 139.2,
-    "median_rhs_binding": 670.9,
-    "p10_rhs_binding": 598.3,
-    "total_binding_intervals": 116
+    "binding_pct": 0.3,
+    "avg_mv_binding": 311.1,
+    "median_rhs_binding": 351.0,
+    "p10_rhs_binding": 239.1,
+    "total_binding_intervals": 122
   },
   {
     "constraint_id": "S>>TPRS_RBTU_RBTU",
@@ -2610,24 +2636,11 @@
     "geojson_names": [
       "Robertstown to Tungkillo"
     ],
-    "binding_pct": 0.31,
+    "binding_pct": 0.3,
     "avg_mv_binding": 17.0,
     "median_rhs_binding": 956.7,
     "p10_rhs_binding": 931.0,
     "total_binding_intervals": 13
-  },
-  {
-    "constraint_id": "V>>N_NIL_65_66",
-    "description": "Out = Nil, avoid Murray to Upper Tumut(65) O/L on Murray to Lower Tumut(66) trip; Feedback",
-    "line_name": "on murray to lower tumut",
-    "geojson_names": [
-      "Lower Tumut to Murray"
-    ],
-    "binding_pct": 0.29,
-    "avg_mv_binding": 2192.3,
-    "median_rhs_binding": 1154.7,
-    "p10_rhs_binding": 1073.3,
-    "total_binding_intervals": 717
   },
   {
     "constraint_id": "N>999_998_18",
@@ -2643,30 +2656,30 @@
     "total_binding_intervals": 12
   },
   {
-    "constraint_id": "S>>BRMN_NIL_WTTP",
-    "description": "Out= Brinkworth - Mintaro (or any line section between Brinkworth and Mintaro) 132kV line, avoid O/L Waterloo-Templers 132kV line on Nil trip, Feedback",
-    "line_name": "waterloo-templers",
+    "constraint_id": "S>>BDBU_TBTU_TBTU_1",
+    "description": "Out= Bundey to Buronga 330kV, avoid O/L Tailem Bend-Tungkillo 275kV line 1 or 2 on trip of parallel Tailem Bend-Tungkillo 275 kV line 2 or 1, Feedback",
+    "line_name": "tailem bend-tungkillo",
     "geojson_names": [
-      "Waterloo to Templers"
+      "Tailem Bend to Tungkillo"
     ],
     "binding_pct": 0.28,
-    "avg_mv_binding": 0.6,
-    "median_rhs_binding": 437.3,
-    "p10_rhs_binding": 432.6,
-    "total_binding_intervals": 21
+    "avg_mv_binding": 139.2,
+    "median_rhs_binding": 670.9,
+    "p10_rhs_binding": 598.3,
+    "total_binding_intervals": 116
   },
   {
-    "constraint_id": "S>V_NIL_SEHY",
-    "description": "Out = NIL, avoid O/L either South East to Heywood 275 kV line on trip of parallel circuit, flow SA to VIC, feedback",
-    "line_name": "either south east to heywood",
+    "constraint_id": "V>>N_NIL_65_66",
+    "description": "Out = Nil, avoid Murray to Upper Tumut(65) O/L on Murray to Lower Tumut(66) trip; Feedback",
+    "line_name": "on murray to lower tumut",
     "geojson_names": [
-      "Heywood Terminal to South East"
+      "Lower Tumut to Murray"
     ],
     "binding_pct": 0.28,
-    "avg_mv_binding": 21.6,
-    "median_rhs_binding": 537.8,
-    "p10_rhs_binding": 446.7,
-    "total_binding_intervals": 679
+    "avg_mv_binding": 2192.3,
+    "median_rhs_binding": 1154.7,
+    "p10_rhs_binding": 1073.3,
+    "total_binding_intervals": 717
   },
   {
     "constraint_id": "N>>79_33_34",
@@ -2708,13 +2721,26 @@
     "total_binding_intervals": 502
   },
   {
+    "constraint_id": "S>V_NIL_SEHY",
+    "description": "Out = NIL, avoid O/L either South East to Heywood 275 kV line on trip of parallel circuit, flow SA to VIC, feedback",
+    "line_name": "either south east to heywood",
+    "geojson_names": [
+      "Heywood Terminal to South East"
+    ],
+    "binding_pct": 0.27,
+    "avg_mv_binding": 21.6,
+    "median_rhs_binding": 537.8,
+    "p10_rhs_binding": 446.7,
+    "total_binding_intervals": 679
+  },
+  {
     "constraint_id": "V>>NIL_BABE_HOMRKM",
     "description": "Out= Nil, avoid O/L Ballarat to Bendigo 220kV line on trip of Horsham to Murra Warra to Kiamal 220kV line (this trips Murra Warra WF), Feedback",
     "line_name": "ballarat to bendigo",
     "geojson_names": [
       "Bendigo Terminal to Ballarat Terminal"
     ],
-    "binding_pct": 0.27,
+    "binding_pct": 0.26,
     "avg_mv_binding": 198.5,
     "median_rhs_binding": 407.7,
     "p10_rhs_binding": 295.6,
@@ -2728,10 +2754,10 @@
       "Waubra Terminal to Ballarat Terminal"
     ],
     "binding_pct": 0.26,
-    "avg_mv_binding": 508.2,
-    "median_rhs_binding": 520.9,
+    "avg_mv_binding": 505.7,
+    "median_rhs_binding": 521.0,
     "p10_rhs_binding": 498.2,
-    "total_binding_intervals": 643
+    "total_binding_intervals": 653
   },
   {
     "constraint_id": "T>T_GTHA_IMP_4O",
@@ -2825,19 +2851,6 @@
     "total_binding_intervals": 482
   },
   {
-    "constraint_id": "S>>NIL_RBTU_RBTU",
-    "description": "Out= NIL, avoid O/L Robertstown-Tungkillo 275kV line 1 or 2 on trip of parallel Robertstown-Tungkillo 275kV line 2 or 1, Feedback",
-    "line_name": "robertstown-tungkillo",
-    "geojson_names": [
-      "Robertstown to Tungkillo"
-    ],
-    "binding_pct": 0.24,
-    "avg_mv_binding": 91.6,
-    "median_rhs_binding": 1110.2,
-    "p10_rhs_binding": 916.7,
-    "total_binding_intervals": 596
-  },
-  {
     "constraint_id": "S>>TBWBUS_TBTX4_TBMO",
     "description": "Out= Tailem Bend 275kV West Bus, avoid O/L Tailem Bend to Mobilong #1 132kV line on trip of Tailem Bend 132/275kV #4 transformer (this offloads Tungkillo to Tailem Bend #1 275kV line and South East to Tailem Bend #1 275kV line), Feedback",
     "line_name": "tailem bend to mobilong",
@@ -2849,6 +2862,19 @@
     "median_rhs_binding": 194.4,
     "p10_rhs_binding": 183.6,
     "total_binding_intervals": 8
+  },
+  {
+    "constraint_id": "S>>NIL_RBTU_RBTU",
+    "description": "Out= NIL, avoid O/L Robertstown-Tungkillo 275kV line 1 or 2 on trip of parallel Robertstown-Tungkillo 275kV line 2 or 1, Feedback",
+    "line_name": "robertstown-tungkillo",
+    "geojson_names": [
+      "Robertstown to Tungkillo"
+    ],
+    "binding_pct": 0.23,
+    "avg_mv_binding": 91.6,
+    "median_rhs_binding": 1110.2,
+    "p10_rhs_binding": 916.7,
+    "total_binding_intervals": 596
   },
   {
     "constraint_id": "S>>TB6536_TBTX4_TBMO",
@@ -2875,6 +2901,19 @@
     "median_rhs_binding": 285.5,
     "p10_rhs_binding": 245.2,
     "total_binding_intervals": 28
+  },
+  {
+    "constraint_id": "S>>TBTX4_TBTU_TBTU",
+    "description": "Out= Tailem Bend 275/132kV #4 TX (Black Range series caps I/S), avoid O/L of one Tailem Bend-Tungkillo 275 kV line on trip of other Tailem Bend-Tungkillo 275 kV line, Feedback",
+    "line_name": "tailem bend-tungkillo",
+    "geojson_names": [
+      "Tailem Bend to Tungkillo"
+    ],
+    "binding_pct": 0.21,
+    "avg_mv_binding": 3.3,
+    "median_rhs_binding": 766.8,
+    "p10_rhs_binding": 687.9,
+    "total_binding_intervals": 6
   },
   {
     "constraint_id": "S>>V_CGTI_TIPA_PGPA",
@@ -2916,56 +2955,17 @@
     "total_binding_intervals": 3
   },
   {
-    "constraint_id": "N>>NIL_39",
-    "description": "Out= Nil, avoid O/L Bannaby to Sydney West (39) 330kV line on trip of Nil, Feedback",
-    "line_name": "bannaby to sydney west",
-    "geojson_names": [
-      "Sydney West to Bannaby"
-    ],
-    "binding_pct": 0.2,
-    "avg_mv_binding": 1400.3,
-    "median_rhs_binding": 6036.2,
-    "p10_rhs_binding": 4658.5,
-    "total_binding_intervals": 96
-  },
-  {
     "constraint_id": "V>>N_BDBU_65_66",
     "description": "Out = Bundey to Buronga (6F) 330kV line, avoid Murray to Upper Tumut(65) O/L on Murray to Lower Tumut(66) trip; Feedback",
     "line_name": "on murray to lower tumut",
     "geojson_names": [
       "Lower Tumut to Murray"
     ],
-    "binding_pct": 0.19,
+    "binding_pct": 0.18,
     "avg_mv_binding": 7331.3,
     "median_rhs_binding": 1226.7,
     "p10_rhs_binding": 1099.0,
     "total_binding_intervals": 72
-  },
-  {
-    "constraint_id": "Q>NIL_CLWU_LCCP",
-    "description": "Out= Nil, avoid O/L Calvale to Wurdong (871) 275kV line on trip of Larcom Creek to Calliope River (8859) 275kV line, Feedback",
-    "line_name": "calvale to wurdong",
-    "geojson_names": [
-      "Wurdong to Calvale"
-    ],
-    "binding_pct": 0.19,
-    "avg_mv_binding": 591.8,
-    "median_rhs_binding": 2218.8,
-    "p10_rhs_binding": 2029.0,
-    "total_binding_intervals": 70
-  },
-  {
-    "constraint_id": "V>>NIL_BABE_RCWEKO",
-    "description": "Out= Nil, avoid O/L Ballarat to Bendigo 220kV line on trip of Red Cliffs to Wemen to Koorangie 220kV line (this trips off Bannerton and Wemen solar farms), Feedback",
-    "line_name": "ballarat to bendigo",
-    "geojson_names": [
-      "Bendigo Terminal to Ballarat Terminal"
-    ],
-    "binding_pct": 0.18,
-    "avg_mv_binding": 112.9,
-    "median_rhs_binding": 350.7,
-    "p10_rhs_binding": 318.5,
-    "total_binding_intervals": 168
   },
   {
     "constraint_id": "Q>>NIL_BCCP_RGLC",
@@ -2981,6 +2981,32 @@
     "total_binding_intervals": 362
   },
   {
+    "constraint_id": "V>>NIL_BABE_RCWEKO",
+    "description": "Out= Nil, avoid O/L Ballarat to Bendigo 220kV line on trip of Red Cliffs to Wemen to Koorangie 220kV line (this trips off Bannerton and Wemen solar farms), Feedback",
+    "line_name": "ballarat to bendigo",
+    "geojson_names": [
+      "Bendigo Terminal to Ballarat Terminal"
+    ],
+    "binding_pct": 0.17,
+    "avg_mv_binding": 112.9,
+    "median_rhs_binding": 350.7,
+    "p10_rhs_binding": 318.5,
+    "total_binding_intervals": 168
+  },
+  {
+    "constraint_id": "S>>BRMN_NIL_WTTP",
+    "description": "Out= Brinkworth - Mintaro (or any line section between Brinkworth and Mintaro) 132kV line, avoid O/L Waterloo-Templers 132kV line on Nil trip, Feedback",
+    "line_name": "waterloo-templers",
+    "geojson_names": [
+      "Waterloo to Templers"
+    ],
+    "binding_pct": 0.17,
+    "avg_mv_binding": 0.6,
+    "median_rhs_binding": 437.3,
+    "p10_rhs_binding": 432.6,
+    "total_binding_intervals": 21
+  },
+  {
     "constraint_id": "S>>NIL_BWMP_RBTU",
     "description": "Out= NIL, avoid O/L Robertstown-Tungkillo 275kV line 1 or 2 on trip of Blyth West-Munno Para 275kV line, Feedback",
     "line_name": "robertstown-tungkillo",
@@ -2994,17 +3020,17 @@
     "total_binding_intervals": 428
   },
   {
-    "constraint_id": "N>>NIL_996_62",
-    "description": "Out = Nil, avoid Wagga to ANM(996) O/L on Wagga to Jindera(62) trip; Feedback (Note: constraint swamped when 996 is O/S)",
-    "line_name": "on wagga to jindera",
+    "constraint_id": "N>>NIL_39",
+    "description": "Out= Nil, avoid O/L Bannaby to Sydney West (39) 330kV line on trip of Nil, Feedback",
+    "line_name": "bannaby to sydney west",
     "geojson_names": [
-      "Wagga 330 to Jindera"
+      "Sydney West to Bannaby"
     ],
-    "binding_pct": 0.16,
-    "avg_mv_binding": 983.8,
-    "median_rhs_binding": 600.6,
-    "p10_rhs_binding": 557.8,
-    "total_binding_intervals": 346
+    "binding_pct": 0.17,
+    "avg_mv_binding": 1400.3,
+    "median_rhs_binding": 6036.2,
+    "p10_rhs_binding": 4658.5,
+    "total_binding_intervals": 96
   },
   {
     "constraint_id": "S>>NIL_TBTU_TBTU_1",
@@ -3031,6 +3057,32 @@
     "median_rhs_binding": 2987.4,
     "p10_rhs_binding": 2564.5,
     "total_binding_intervals": 72
+  },
+  {
+    "constraint_id": "N>>NIL_996_62",
+    "description": "Out = Nil, avoid Wagga to ANM(996) O/L on Wagga to Jindera(62) trip; Feedback (Note: constraint swamped when 996 is O/S)",
+    "line_name": "on wagga to jindera",
+    "geojson_names": [
+      "Wagga 330 to Jindera"
+    ],
+    "binding_pct": 0.15,
+    "avg_mv_binding": 983.8,
+    "median_rhs_binding": 600.6,
+    "p10_rhs_binding": 557.8,
+    "total_binding_intervals": 346
+  },
+  {
+    "constraint_id": "Q>NIL_CLWU_LCCP",
+    "description": "Out= Nil, avoid O/L Calvale to Wurdong (871) 275kV line on trip of Larcom Creek to Calliope River (8859) 275kV line, Feedback",
+    "line_name": "calvale to wurdong",
+    "geojson_names": [
+      "Wurdong to Calvale"
+    ],
+    "binding_pct": 0.15,
+    "avg_mv_binding": 591.8,
+    "median_rhs_binding": 2218.8,
+    "p10_rhs_binding": 2029.0,
+    "total_binding_intervals": 70
   },
   {
     "constraint_id": "V>>NIL_RCWE_HOMRKM",
@@ -3124,19 +3176,6 @@
     "total_binding_intervals": 2
   },
   {
-    "constraint_id": "N>NIL_94B",
-    "description": "Out= Nil, avoid O/L  Beryl to Wellington 132 kV (94B/1) on nil trip, Feedback. Metering at Wellington is used",
-    "line_name": "beryl to wellington",
-    "geojson_names": [
-      "Wellington to Beryl"
-    ],
-    "binding_pct": 0.12,
-    "avg_mv_binding": 611.4,
-    "median_rhs_binding": 131.9,
-    "p10_rhs_binding": 110.1,
-    "total_binding_intervals": 291
-  },
-  {
     "constraint_id": "S>>PAPG_PPLF_PGPS",
     "description": "Out= Para to Parafield Gardens West 275kV, avoid O/L Parafield gardens west-Parafield Gardens 66kV on trip of Pelican Pt-Lefever 275kV line, Feedback",
     "line_name": "parafield gardens west-parafield gardens",
@@ -3170,10 +3209,23 @@
       "Waterloo to Templers"
     ],
     "binding_pct": 0.12,
-    "avg_mv_binding": 145.9,
-    "median_rhs_binding": 687.4,
-    "p10_rhs_binding": 582.1,
-    "total_binding_intervals": 295
+    "avg_mv_binding": 145.0,
+    "median_rhs_binding": 690.5,
+    "p10_rhs_binding": 582.7,
+    "total_binding_intervals": 301
+  },
+  {
+    "constraint_id": "N>NIL_94B",
+    "description": "Out= Nil, avoid O/L  Beryl to Wellington 132 kV (94B/1) on nil trip, Feedback. Metering at Wellington is used",
+    "line_name": "beryl to wellington",
+    "geojson_names": [
+      "Wellington to Beryl"
+    ],
+    "binding_pct": 0.11,
+    "avg_mv_binding": 611.4,
+    "median_rhs_binding": 131.9,
+    "p10_rhs_binding": 110.1,
+    "total_binding_intervals": 291
   },
   {
     "constraint_id": "N>>99D_99J_63",
@@ -3222,23 +3274,23 @@
       "Armidale to Walcha"
     ],
     "binding_pct": 0.11,
-    "avg_mv_binding": 46.5,
-    "median_rhs_binding": 1168.0,
+    "avg_mv_binding": 46.1,
+    "median_rhs_binding": 1170.6,
     "p10_rhs_binding": 1009.0,
-    "total_binding_intervals": 280
+    "total_binding_intervals": 283
   },
   {
-    "constraint_id": "N>NIL_947_94T",
-    "description": "Out= Nil, avoid O/L Wellington to Orange North (947) on trip of Molong to Orange North (94T), Feedback",
-    "line_name": "wellington to orange north",
+    "constraint_id": "N>>13+31/38_34_33",
+    "description": "Out= 13 (Kemps Creek to Sydney South) + 31 (Bayswater to Regentville)/38 (Sydney West to Regentville) O/S, avoid O/L Bayswater to Liddell (33) 330kV line on trip of Bayswater to Liddell (34) 330kV line and Bayswater to Liddell (33) 330kV line lines,",
+    "line_name": "bayswater to liddell",
     "geojson_names": [
-      "Wellington to Dubbo (North East)"
+      "Liddell to Bayswater"
     ],
-    "binding_pct": 0.1,
-    "avg_mv_binding": 1671.8,
-    "median_rhs_binding": 288.9,
-    "p10_rhs_binding": 270.2,
-    "total_binding_intervals": 236
+    "binding_pct": 0.11,
+    "avg_mv_binding": 49.6,
+    "median_rhs_binding": 1412.3,
+    "p10_rhs_binding": 1342.5,
+    "total_binding_intervals": 4
   },
   {
     "constraint_id": "S>>RBTX_BRTW_WTTP",
@@ -3252,32 +3304,6 @@
     "median_rhs_binding": 627.9,
     "p10_rhs_binding": 627.9,
     "total_binding_intervals": 1
-  },
-  {
-    "constraint_id": "N>>03_64_07",
-    "description": "Out = Lower Tumut to Yass (03), avoid O/L Lower Tumut to Upper Tumut (64), on trip of Lower Tumut to Canberra (7) ,Feedback",
-    "line_name": "lower tumut to upper tumut",
-    "geojson_names": [
-      "Lower Tumut to Upper Tumut"
-    ],
-    "binding_pct": 0.1,
-    "avg_mv_binding": 6.6,
-    "median_rhs_binding": 1492.8,
-    "p10_rhs_binding": 1399.9,
-    "total_binding_intervals": 3
-  },
-  {
-    "constraint_id": "Q>NIL_BCCP_LCCP",
-    "description": "Out= Nil, avoid O/L Bouldercombe to Calliope River (812) 275kV line on trip of Larcom Creek to Calliope River (8859) 275kV line, Feedback",
-    "line_name": "bouldercombe to calliope river",
-    "geojson_names": [
-      "Bouldercombe-H10 to Calliope River-H67"
-    ],
-    "binding_pct": 0.1,
-    "avg_mv_binding": 1056.2,
-    "median_rhs_binding": 2000.6,
-    "p10_rhs_binding": 1952.2,
-    "total_binding_intervals": 41
   },
   {
     "constraint_id": "N>>62_07_3_RADIAL",
@@ -3306,17 +3332,17 @@
     "total_binding_intervals": 5
   },
   {
-    "constraint_id": "S>>BDBU_BWMP_WTTP",
-    "description": "Out= Bundey to Buronga 330kV, avoid O/L Waterloo - Templers 132kV on trip of Blyth West- Munno Para 275kV line, Feedback",
-    "line_name": "waterloo - templers",
+    "constraint_id": "N>NIL_947_94T",
+    "description": "Out= Nil, avoid O/L Wellington to Orange North (947) on trip of Molong to Orange North (94T), Feedback",
+    "line_name": "wellington to orange north",
     "geojson_names": [
-      "Waterloo to Templers"
+      "Wellington to Dubbo (North East)"
     ],
     "binding_pct": 0.09,
-    "avg_mv_binding": 231.4,
-    "median_rhs_binding": 708.6,
-    "p10_rhs_binding": 616.1,
-    "total_binding_intervals": 33
+    "avg_mv_binding": 1671.8,
+    "median_rhs_binding": 288.9,
+    "p10_rhs_binding": 270.2,
+    "total_binding_intervals": 236
   },
   {
     "constraint_id": "V>>N_6Y+X5_65_66",
@@ -3329,6 +3355,19 @@
     "avg_mv_binding": 34.5,
     "median_rhs_binding": 775.9,
     "p10_rhs_binding": 768.3,
+    "total_binding_intervals": 3
+  },
+  {
+    "constraint_id": "N>>03_64_07",
+    "description": "Out = Lower Tumut to Yass (03), avoid O/L Lower Tumut to Upper Tumut (64), on trip of Lower Tumut to Canberra (7) ,Feedback",
+    "line_name": "lower tumut to upper tumut",
+    "geojson_names": [
+      "Lower Tumut to Upper Tumut"
+    ],
+    "binding_pct": 0.09,
+    "avg_mv_binding": 6.6,
+    "median_rhs_binding": 1492.8,
+    "p10_rhs_binding": 1399.9,
     "total_binding_intervals": 3
   },
   {
@@ -3358,17 +3397,30 @@
     "total_binding_intervals": 197
   },
   {
-    "constraint_id": "Q>NIL_RGLC_CLWU",
-    "description": "Out= Nil, avoid O/L Raglan to Larcom Creek (8875) 275kV line on trip of Calvale to Wurdong (871) 275kV line, Feedback",
-    "line_name": "raglan to larcom creek",
+    "constraint_id": "S>>BDBU_BWMP_WTTP",
+    "description": "Out= Bundey to Buronga 330kV, avoid O/L Waterloo - Templers 132kV on trip of Blyth West- Munno Para 275kV line, Feedback",
+    "line_name": "waterloo - templers",
     "geojson_names": [
-      "Raglan to Larcom Creek"
+      "Waterloo to Templers"
     ],
     "binding_pct": 0.08,
-    "avg_mv_binding": 159.1,
-    "median_rhs_binding": 1929.2,
-    "p10_rhs_binding": 1831.0,
+    "avg_mv_binding": 231.4,
+    "median_rhs_binding": 708.6,
+    "p10_rhs_binding": 616.1,
     "total_binding_intervals": 33
+  },
+  {
+    "constraint_id": "Q>NIL_BCCP_LCCP",
+    "description": "Out= Nil, avoid O/L Bouldercombe to Calliope River (812) 275kV line on trip of Larcom Creek to Calliope River (8859) 275kV line, Feedback",
+    "line_name": "bouldercombe to calliope river",
+    "geojson_names": [
+      "Bouldercombe-H10 to Calliope River-H67"
+    ],
+    "binding_pct": 0.08,
+    "avg_mv_binding": 1056.2,
+    "median_rhs_binding": 2000.6,
+    "p10_rhs_binding": 1952.2,
+    "total_binding_intervals": 41
   },
   {
     "constraint_id": "N>>79_949_72",
@@ -3384,19 +3436,6 @@
     "total_binding_intervals": 22
   },
   {
-    "constraint_id": "N>NIL_997/2_3G",
-    "description": "Out= Nil, avoid O/L Mulwala to Corowa (996/2) 132kV line on trip of Wagga to Culcairn (3G) 330kV line, Feedback",
-    "line_name": "mulwala to corowa",
-    "geojson_names": [
-      "Corowa to Mulwala"
-    ],
-    "binding_pct": 0.07,
-    "avg_mv_binding": 31.3,
-    "median_rhs_binding": 110.5,
-    "p10_rhs_binding": 93.3,
-    "total_binding_intervals": 31
-  },
-  {
     "constraint_id": "N>>NIL_998",
     "description": "Out= Nil, avoid O/L Cowra to Forbes (998) on trip of Nil, Feedback",
     "line_name": "cowra to forbes",
@@ -3408,32 +3447,6 @@
     "median_rhs_binding": 146.1,
     "p10_rhs_binding": 92.7,
     "total_binding_intervals": 133
-  },
-  {
-    "constraint_id": "T>T_NIL_BL_110_4",
-    "description": "Out = Nil, avoid O/L New Norfolk to Creek Road 110 kV line (flow to South) on trip of New Norfolk to Chapel St 110 kV line, feedback",
-    "line_name": "new norfolk to creek road",
-    "geojson_names": [
-      "Creek Road to New Norfolk"
-    ],
-    "binding_pct": 0.07,
-    "avg_mv_binding": 182.4,
-    "median_rhs_binding": 168.6,
-    "p10_rhs_binding": 143.4,
-    "total_binding_intervals": 160
-  },
-  {
-    "constraint_id": "V>>NIL_MBDD_MBDD",
-    "description": "Out = Nil, avoid O/L either Mount Beauty to Dederang 220 kV line (flow to North) for trip of the parallel line, feedback",
-    "line_name": "either mount beauty to dederang",
-    "geojson_names": [
-      "Mount Beauty Terminal to Dederang Terminal"
-    ],
-    "binding_pct": 0.07,
-    "avg_mv_binding": 97.0,
-    "median_rhs_binding": 615.1,
-    "p10_rhs_binding": 527.5,
-    "total_binding_intervals": 162
   },
   {
     "constraint_id": "S>>BDBU_SETB_SETB_1",
@@ -3462,6 +3475,32 @@
     "total_binding_intervals": 8
   },
   {
+    "constraint_id": "N>NIL_997/2_3G",
+    "description": "Out= Nil, avoid O/L Mulwala to Corowa (996/2) 132kV line on trip of Wagga to Culcairn (3G) 330kV line, Feedback",
+    "line_name": "mulwala to corowa",
+    "geojson_names": [
+      "Corowa to Mulwala"
+    ],
+    "binding_pct": 0.06,
+    "avg_mv_binding": 31.3,
+    "median_rhs_binding": 110.5,
+    "p10_rhs_binding": 93.3,
+    "total_binding_intervals": 31
+  },
+  {
+    "constraint_id": "T>T_NIL_BL_110_4",
+    "description": "Out = Nil, avoid O/L New Norfolk to Creek Road 110 kV line (flow to South) on trip of New Norfolk to Chapel St 110 kV line, feedback",
+    "line_name": "new norfolk to creek road",
+    "geojson_names": [
+      "Creek Road to New Norfolk"
+    ],
+    "binding_pct": 0.06,
+    "avg_mv_binding": 182.4,
+    "median_rhs_binding": 168.6,
+    "p10_rhs_binding": 143.4,
+    "total_binding_intervals": 160
+  },
+  {
     "constraint_id": "S>>RBMW4_BRTW_WTTP",
     "description": "Out= Robertstown - MWP4 O/S, avoid O/L Waterloo - Templers 132kV on trip of Brinkworth - Templers West 275kV line, Feedback",
     "line_name": "waterloo - templers",
@@ -3475,17 +3514,17 @@
     "total_binding_intervals": 3
   },
   {
-    "constraint_id": "V>>BDBU_BABE_KMRC",
-    "description": "Out = Bundey to Buronga (6F) 330kV line, avoid O/L Ballarat to Bendigo 220kV line on trip of Kiamal to Red Cliffs 220kV line, Feedback. Constraint active only when GFT2 on Murra Warra WF I/S.",
-    "line_name": "ballarat to bendigo",
+    "constraint_id": "V>>NIL_MBDD_MBDD",
+    "description": "Out = Nil, avoid O/L either Mount Beauty to Dederang 220 kV line (flow to North) for trip of the parallel line, feedback",
+    "line_name": "either mount beauty to dederang",
     "geojson_names": [
-      "Bendigo Terminal to Ballarat Terminal"
+      "Mount Beauty Terminal to Dederang Terminal"
     ],
     "binding_pct": 0.06,
-    "avg_mv_binding": 297.3,
-    "median_rhs_binding": 375.2,
-    "p10_rhs_binding": 332.4,
-    "total_binding_intervals": 22
+    "avg_mv_binding": 97.0,
+    "median_rhs_binding": 615.1,
+    "p10_rhs_binding": 527.5,
+    "total_binding_intervals": 162
   },
   {
     "constraint_id": "V>>XMLSY_GTKT1_GTKT3",
@@ -3501,6 +3540,19 @@
     "total_binding_intervals": 2
   },
   {
+    "constraint_id": "Q>NIL_RGLC_CLWU",
+    "description": "Out= Nil, avoid O/L Raglan to Larcom Creek (8875) 275kV line on trip of Calvale to Wurdong (871) 275kV line, Feedback",
+    "line_name": "raglan to larcom creek",
+    "geojson_names": [
+      "Raglan to Larcom Creek"
+    ],
+    "binding_pct": 0.06,
+    "avg_mv_binding": 159.1,
+    "median_rhs_binding": 1929.2,
+    "p10_rhs_binding": 1831.0,
+    "total_binding_intervals": 33
+  },
+  {
     "constraint_id": "N>NIL_9R6_9R5_N",
     "description": "Out= NIL, avoid O/L Wagga132 to Wagga North (9R6) 132kV line on trip of Wagga330 to Wagga North (9R5) 132kV line, Feedback",
     "line_name": "wagga132 to wagga north",
@@ -3512,6 +3564,19 @@
     "median_rhs_binding": 18.2,
     "p10_rhs_binding": 0.7,
     "total_binding_intervals": 104
+  },
+  {
+    "constraint_id": "V>>BDBU_BABE_KMRC",
+    "description": "Out = Bundey to Buronga (6F) 330kV line, avoid O/L Ballarat to Bendigo 220kV line on trip of Kiamal to Red Cliffs 220kV line, Feedback. Constraint active only when GFT2 on Murra Warra WF I/S.",
+    "line_name": "ballarat to bendigo",
+    "geojson_names": [
+      "Bendigo Terminal to Ballarat Terminal"
+    ],
+    "binding_pct": 0.05,
+    "avg_mv_binding": 297.3,
+    "median_rhs_binding": 375.2,
+    "p10_rhs_binding": 332.4,
+    "total_binding_intervals": 22
   },
   {
     "constraint_id": "V>>BDBU_MBDD_MBDD",
@@ -3592,32 +3657,6 @@
     "total_binding_intervals": 83
   },
   {
-    "constraint_id": "Q>NIL_RGLC_BCCP",
-    "description": "Out= Nil, avoid O/L Raglan to Larcom Creek (8875) on trip of Bouldercombe to Calliope River (812) line, Feedback",
-    "line_name": "raglan to larcom creek",
-    "geojson_names": [
-      "Raglan to Larcom Creek"
-    ],
-    "binding_pct": 0.03,
-    "avg_mv_binding": 40.8,
-    "median_rhs_binding": 1888.5,
-    "p10_rhs_binding": 1869.8,
-    "total_binding_intervals": 11
-  },
-  {
-    "constraint_id": "Q>NIL_CLWU_BCRG",
-    "description": "Out= Nil, avoid O/L Calvale to Wurdong (871) 275kV line on trip of Bouldercombe to Raglan (811) 275kV line, Feedback. [NOTE: DS RHS to swamp if 8810+8811 lines O/S]",
-    "line_name": "calvale to wurdong",
-    "geojson_names": [
-      "Wurdong to Calvale"
-    ],
-    "binding_pct": 0.03,
-    "avg_mv_binding": 126.7,
-    "median_rhs_binding": 2173.0,
-    "p10_rhs_binding": 2056.7,
-    "total_binding_intervals": 12
-  },
-  {
     "constraint_id": "Q>>NIL_LCCP_BCCP",
     "description": "Out= Nil, avoid O/L Bouldercombe to Calliope River (812) on trip of Larcom Creek to Calliope River (8859) line, Feedback",
     "line_name": "bouldercombe to calliope river",
@@ -3668,6 +3707,19 @@
     "median_rhs_binding": 401.3,
     "p10_rhs_binding": 394.3,
     "total_binding_intervals": 2
+  },
+  {
+    "constraint_id": "S>>NIL_BRTW_WTTP",
+    "description": "Out= Nil, avoid O/L Waterloo - Templers 132kV on trip of Brinkworth - Templers West 275kV line, Feedback",
+    "line_name": "waterloo - templers",
+    "geojson_names": [
+      "Waterloo to Templers"
+    ],
+    "binding_pct": 0.02,
+    "avg_mv_binding": 97.0,
+    "median_rhs_binding": 649.7,
+    "p10_rhs_binding": 595.8,
+    "total_binding_intervals": 47
   },
   {
     "constraint_id": "N>>NIL_9W2_9W8",
@@ -3722,19 +3774,6 @@
     "total_binding_intervals": 1
   },
   {
-    "constraint_id": "T>T_NIL_BL_IMP_5F",
-    "description": "Out = Nil, avoid O/L Hadspen to Georgetown No. 1 220 kV line (flow to North) for trip of the Hadspen to Georgetown No. 2 220 kV line with no SPS action, feedback",
-    "line_name": "hadspen to georgetown",
-    "geojson_names": [
-      "George Town to Hadspen"
-    ],
-    "binding_pct": 0.02,
-    "avg_mv_binding": 170131.5,
-    "median_rhs_binding": 1157.1,
-    "p10_rhs_binding": 1103.3,
-    "total_binding_intervals": 38
-  },
-  {
     "constraint_id": "V>>N_X3_66_65",
     "description": "Out= Balranald to Buronga (X3) 220kV line, avoid O/L Murray to Lower Tumut (66) 330kV line on trip of Murray to Upper Tumut (65) 330kV line, Feedback, Note: Darlington Pt -Wagga 132kV operated CLOSED",
     "line_name": "murray to lower tumut",
@@ -3746,6 +3785,32 @@
     "median_rhs_binding": 1245.4,
     "p10_rhs_binding": 1245.4,
     "total_binding_intervals": 1
+  },
+  {
+    "constraint_id": "Q>NIL_RGLC_BCCP",
+    "description": "Out= Nil, avoid O/L Raglan to Larcom Creek (8875) on trip of Bouldercombe to Calliope River (812) line, Feedback",
+    "line_name": "raglan to larcom creek",
+    "geojson_names": [
+      "Raglan to Larcom Creek"
+    ],
+    "binding_pct": 0.02,
+    "avg_mv_binding": 40.8,
+    "median_rhs_binding": 1888.5,
+    "p10_rhs_binding": 1869.8,
+    "total_binding_intervals": 11
+  },
+  {
+    "constraint_id": "Q>NIL_CLWU_BCRG",
+    "description": "Out= Nil, avoid O/L Calvale to Wurdong (871) 275kV line on trip of Bouldercombe to Raglan (811) 275kV line, Feedback. [NOTE: DS RHS to swamp if 8810+8811 lines O/S]",
+    "line_name": "calvale to wurdong",
+    "geojson_names": [
+      "Wurdong to Calvale"
+    ],
+    "binding_pct": 0.02,
+    "avg_mv_binding": 126.7,
+    "median_rhs_binding": 2173.0,
+    "p10_rhs_binding": 2056.7,
+    "total_binding_intervals": 12
   },
   {
     "constraint_id": "Q>>NIL_CLWU_RGLC",
@@ -3865,19 +3930,6 @@
     "total_binding_intervals": 28
   },
   {
-    "constraint_id": "S>>BDBU_TBTU_TBMO_1",
-    "description": "Out= Bundey to Buronga 330kV, avoid O/L Tailem Bend-Mobilong 132kV line on trip of one Tailem Bend-Tungkillo 275kV line, Feedback",
-    "line_name": "tailem bend-mobilong",
-    "geojson_names": [
-      "Tailem Bend to Mobilong"
-    ],
-    "binding_pct": 0.01,
-    "avg_mv_binding": 162.8,
-    "median_rhs_binding": 318.0,
-    "p10_rhs_binding": 312.9,
-    "total_binding_intervals": 2
-  },
-  {
     "constraint_id": "N>>99J_99D_63",
     "description": "Out= Griffith to Yanco (99J) 132kV line, avoid O/L Darlington Point to Yanco (99D) 132kV line on trip of Darlington Point to Wagga (63) 330kV line, (Note:X5 trip scheme disarmed and Wagga to Darlington Point network solid, option C on OM521)",
     "line_name": "darlington point to yanco",
@@ -3902,19 +3954,6 @@
     "median_rhs_binding": 702.8,
     "p10_rhs_binding": 602.8,
     "total_binding_intervals": 9
-  },
-  {
-    "constraint_id": "S>>NIL_BRTW_WTTP",
-    "description": "Out= Nil, avoid O/L Waterloo - Templers 132kV on trip of Brinkworth - Templers West 275kV line, Feedback",
-    "line_name": "waterloo - templers",
-    "geojson_names": [
-      "Waterloo to Templers"
-    ],
-    "binding_pct": 0.01,
-    "avg_mv_binding": 87.9,
-    "median_rhs_binding": 708.1,
-    "p10_rhs_binding": 594.3,
-    "total_binding_intervals": 31
   },
   {
     "constraint_id": "V>>NIL_ARWB_KGBE",
@@ -4006,6 +4045,19 @@
     "median_rhs_binding": 1156.0,
     "p10_rhs_binding": 933.7,
     "total_binding_intervals": 13
+  },
+  {
+    "constraint_id": "T>T_NIL_BL_IMP_5F",
+    "description": "Out = Nil, avoid O/L Hadspen to Georgetown No. 1 220 kV line (flow to North) for trip of the Hadspen to Georgetown No. 2 220 kV line with no SPS action, feedback",
+    "line_name": "hadspen to georgetown",
+    "geojson_names": [
+      "George Town to Hadspen"
+    ],
+    "binding_pct": 0.01,
+    "avg_mv_binding": 170131.5,
+    "median_rhs_binding": 1157.1,
+    "p10_rhs_binding": 1103.3,
+    "total_binding_intervals": 38
   },
   {
     "constraint_id": "N>>NIL_86_8U_S",
@@ -4203,6 +4255,19 @@
     "total_binding_intervals": 1
   },
   {
+    "constraint_id": "S>>BDBU_TBTU_TBMO_1",
+    "description": "Out= Bundey to Buronga 330kV, avoid O/L Tailem Bend-Mobilong 132kV line on trip of one Tailem Bend-Tungkillo 275kV line, Feedback",
+    "line_name": "tailem bend-mobilong",
+    "geojson_names": [
+      "Tailem Bend to Mobilong"
+    ],
+    "binding_pct": 0.0,
+    "avg_mv_binding": 162.8,
+    "median_rhs_binding": 318.0,
+    "p10_rhs_binding": 312.9,
+    "total_binding_intervals": 2
+  },
+  {
     "constraint_id": "S>>NIL_TBTU_TBMO_1",
     "description": "Out= NIL, avoid O/L Tailem Bend-Mobilong 132kV line on trip of one Tailem Bend-Tungkillo 275kV line, Feedback",
     "line_name": "tailem bend-mobilong",
@@ -4229,6 +4294,19 @@
     "total_binding_intervals": 10
   },
   {
+    "constraint_id": "S>>NIL_RBTU_WTTP",
+    "description": "Out= Nil, avoid O/L Waterloo - Templers 132kV on trip of one Robertstown - Tungkillo 275kV line, Feedback",
+    "line_name": "waterloo - templers",
+    "geojson_names": [
+      "Waterloo to Templers"
+    ],
+    "binding_pct": 0.0,
+    "avg_mv_binding": 30.1,
+    "median_rhs_binding": 629.3,
+    "p10_rhs_binding": 597.4,
+    "total_binding_intervals": 11
+  },
+  {
     "constraint_id": "V>>NIL_ARWB_RCWEKG",
     "description": "Out = Nil, avoid O/L Ararat to Waubra 220kV line on trip of Red Cliffs to Wemen to Kerang 220kV line (this trips off Bannerton and Wemen solar farms), Feedback",
     "line_name": "ararat to waubra",
@@ -4240,19 +4318,6 @@
     "median_rhs_binding": 644.6,
     "p10_rhs_binding": 644.6,
     "total_binding_intervals": 1
-  },
-  {
-    "constraint_id": "S>>NIL_RBTU_WTTP",
-    "description": "Out= Nil, avoid O/L Waterloo - Templers 132kV on trip of one Robertstown - Tungkillo 275kV line, Feedback",
-    "line_name": "waterloo - templers",
-    "geojson_names": [
-      "Waterloo to Templers"
-    ],
-    "binding_pct": 0.0,
-    "avg_mv_binding": 0.5,
-    "median_rhs_binding": 657.7,
-    "p10_rhs_binding": 587.9,
-    "total_binding_intervals": 7
   },
   {
     "constraint_id": "N>>NIL_X3_060",
@@ -4949,6 +5014,71 @@
     "line_name": "848 or 849 (stanwell to bouldercombe)",
     "geojson_names": [
       "Stanwell to Bouldercombe"
+    ],
+    "binding_pct": 0.0,
+    "avg_mv_binding": null,
+    "median_rhs_binding": null,
+    "p10_rhs_binding": null,
+    "total_binding_intervals": 0
+  },
+  {
+    "constraint_id": "S>>BRDV_BRTW_WTTP",
+    "description": "Out= Brinkworth - Davenport 275kV line, avoid O/L Waterloo - Templers 132kV on trip of Brinkworth - Templers West 275kV line (this offloads Brinkworth 132/275kV transformer), Feedback",
+    "line_name": "waterloo - templers",
+    "geojson_names": [
+      "Waterloo to Templers"
+    ],
+    "binding_pct": 0.0,
+    "avg_mv_binding": null,
+    "median_rhs_binding": null,
+    "p10_rhs_binding": null,
+    "total_binding_intervals": 0
+  },
+  {
+    "constraint_id": "S>>BRDV_BWPA_WTTP",
+    "description": "Out= Brinkworth - Davenport 275kV line, avoid O/L Waterloo - Templers 132kV on trip of Blyth West-Munno Para 275kV line, Feedback",
+    "line_name": "waterloo - templers",
+    "geojson_names": [
+      "Waterloo to Templers"
+    ],
+    "binding_pct": 0.0,
+    "avg_mv_binding": null,
+    "median_rhs_binding": null,
+    "p10_rhs_binding": null,
+    "total_binding_intervals": 0
+  },
+  {
+    "constraint_id": "S>>BRDV_MKRB_CNRB",
+    "description": "Out= Brinkworth - Davenport 275kV line, avoid O/L Canowi-Robertstown 275kV line on trip of Mokota-Robertstown (this trips Hallet Hill WF) 275kV line, Feedback",
+    "line_name": "canowi-robertstown",
+    "geojson_names": [
+      "Para to Robertstown"
+    ],
+    "binding_pct": 0.0,
+    "avg_mv_binding": null,
+    "median_rhs_binding": null,
+    "p10_rhs_binding": null,
+    "total_binding_intervals": 0
+  },
+  {
+    "constraint_id": "S>>BRDV_RBTU_WTTP",
+    "description": "Out= Brinkworth - Davenport 275kV line, avoid O/L Waterloo - Templers 132kV on trip of Robertstown-Tungkillo 275kV  line 1 or 2, Feedback",
+    "line_name": "waterloo - templers",
+    "geojson_names": [
+      "Waterloo to Templers"
+    ],
+    "binding_pct": 0.0,
+    "avg_mv_binding": null,
+    "median_rhs_binding": null,
+    "p10_rhs_binding": null,
+    "total_binding_intervals": 0
+  },
+  {
+    "constraint_id": "S>>DVBR_BGDV_WTWE",
+    "description": "Out= Brinkworth - Davenport 275kV line, avoid O/L  Waterloo-Waterloo East 132kV line on trip of Bungama-Davenport 275kV line, Feedback",
+    "line_name": "waterloo-waterloo east",
+    "geojson_names": [
+      "Waterloo to Waterloo East"
     ],
     "binding_pct": 0.0,
     "avg_mv_binding": null,
@@ -5725,6 +5855,201 @@
     "total_binding_intervals": 0
   },
   {
+    "constraint_id": "N>>13+32_23_22",
+    "description": "Out= 13 (Kemps Creek to Sydney South) + 32 (Bayswater to Sydney West) 330kV lines O/S, avoid O/L Vales Point to Munmorah (23) on trip of Vales Point to Sydney North (22) line, Feedback",
+    "line_name": "vales point to munmorah",
+    "geojson_names": [
+      "Vales Point to Munmorah"
+    ],
+    "binding_pct": 0.0,
+    "avg_mv_binding": null,
+    "median_rhs_binding": null,
+    "p10_rhs_binding": null,
+    "total_binding_intervals": 0
+  },
+  {
+    "constraint_id": "N>>13+32_23_25",
+    "description": "Out= 13 (Kemps Creek to Sydney South) + 32 (Bayswater to Sydney West) 330kV lines O/S, avoid O/L Vales Point to Munmorah (23) on trip of Eraring to Vineyard (25) line, Feedback",
+    "line_name": "vales point to munmorah",
+    "geojson_names": [
+      "Vales Point to Munmorah"
+    ],
+    "binding_pct": 0.0,
+    "avg_mv_binding": null,
+    "median_rhs_binding": null,
+    "p10_rhs_binding": null,
+    "total_binding_intervals": 0
+  },
+  {
+    "constraint_id": "N>>13+32_23_31",
+    "description": "Out= 13 (Kemps Creek to Sydney South) + 32 (Bayswater to Sydney West) 330kV lines O/S, avoid O/L Vales Point to Munmorah (23) on trip of Bayswater to Regentville (31) line, Feedback",
+    "line_name": "vales point to munmorah",
+    "geojson_names": [
+      "Vales Point to Munmorah"
+    ],
+    "binding_pct": 0.0,
+    "avg_mv_binding": null,
+    "median_rhs_binding": null,
+    "p10_rhs_binding": null,
+    "total_binding_intervals": 0
+  },
+  {
+    "constraint_id": "N>>13+32_34_33",
+    "description": "Out= 13 (Kemps Creek to Sydney South) + 32 (Bayswater to Sydney West) 330kV lines O/S, avoid O/L Bayswater to Liddell (34) on trip of Bayswater to Liddell (33) line, Feedback",
+    "line_name": "bayswater to liddell",
+    "geojson_names": [
+      "Liddell to Bayswater"
+    ],
+    "binding_pct": 0.0,
+    "avg_mv_binding": null,
+    "median_rhs_binding": null,
+    "p10_rhs_binding": null,
+    "total_binding_intervals": 0
+  },
+  {
+    "constraint_id": "N>>13+32_39_31",
+    "description": "Out= 13 (Kemps Creek to Sydney South) + 32 (Bayswater to Sydney West) 330kV lines O/S, avoid O/L Bannaby to Sydney West (39) on trip of Bayswater to Regentville (31) line, Feedback",
+    "line_name": "bannaby to sydney west",
+    "geojson_names": [
+      "Sydney West to Bannaby"
+    ],
+    "binding_pct": 0.0,
+    "avg_mv_binding": null,
+    "median_rhs_binding": null,
+    "p10_rhs_binding": null,
+    "total_binding_intervals": 0
+  },
+  {
+    "constraint_id": "N>>13+32_70_71",
+    "description": "Out= 13 (Kemps Creek to Sydney South) + 32 (Bayswater to Sydney West) 330kV lines O/S, avoid O/L Mt Piper to Wallerawang (70) on trip of Mt Piper to Wallerawang (71) line, Feedback",
+    "line_name": "mt piper to wallerawang",
+    "geojson_names": [
+      "Wallerawang to Mount Piper"
+    ],
+    "binding_pct": 0.0,
+    "avg_mv_binding": null,
+    "median_rhs_binding": null,
+    "p10_rhs_binding": null,
+    "total_binding_intervals": 0
+  },
+  {
+    "constraint_id": "N>>13+32_76_77",
+    "description": "Out= 13 (Kemps Creek to Sydney South) + 32 (Bayswater to Sydney West) 330kV lines O/S, avoid O/L Wallerawang to Sydney South (76) 330kV line on trip of Wallerawang to Ingleburn (77) 330kV line, Feedback",
+    "line_name": "wallerawang to sydney south",
+    "geojson_names": [
+      "Wallerawang to Sydney South"
+    ],
+    "binding_pct": 0.0,
+    "avg_mv_binding": null,
+    "median_rhs_binding": null,
+    "p10_rhs_binding": null,
+    "total_binding_intervals": 0
+  },
+  {
+    "constraint_id": "N>>13+32_77_76",
+    "description": "Out= 13 (Kemps Creek to Sydney South) + 32 (Bayswater to Sydney West) 330kV lines O/S, avoid O/L Wallerawang to Ingleburn (77) 330kV line on trip of Wallerawang to Sydney South (76) 330kV line, Feedback",
+    "line_name": "wallerawang to ingleburn",
+    "geojson_names": [
+      "Ingleburn to Wallerawang"
+    ],
+    "binding_pct": 0.0,
+    "avg_mv_binding": null,
+    "median_rhs_binding": null,
+    "p10_rhs_binding": null,
+    "total_binding_intervals": 0
+  },
+  {
+    "constraint_id": "N>>13+32_81_31",
+    "description": "Out= 13 (Kemps Creek to Sydney South) + 32 (Bayswater to Sydney West) 330kV lines O/S, avoid O/L Liddell to Newcastle (81) on trip of Bayswater to Regentville (31) line, Feedback",
+    "line_name": "liddell to newcastle",
+    "geojson_names": [
+      "Liddell to Newcastle"
+    ],
+    "binding_pct": 0.0,
+    "avg_mv_binding": null,
+    "median_rhs_binding": null,
+    "p10_rhs_binding": null,
+    "total_binding_intervals": 0
+  },
+  {
+    "constraint_id": "N>>13+32_81_5A3",
+    "description": "Out= 13 (Kemps Creek to Sydney South) + 32 (Bayswater to Sydney West) 330kV lines O/S, avoid O/L Liddell to Newcastle (81) on trip of Bayswater to Mt Piper (5A3) line, Feedback",
+    "line_name": "liddell to newcastle",
+    "geojson_names": [
+      "Liddell to Newcastle"
+    ],
+    "binding_pct": 0.0,
+    "avg_mv_binding": null,
+    "median_rhs_binding": null,
+    "p10_rhs_binding": null,
+    "total_binding_intervals": 0
+  },
+  {
+    "constraint_id": "N>>13+32_81_5A4",
+    "description": "Out= 13 (Kemps Creek to Sydney South) + 32 (Bayswater to Sydney West) 330kV lines O/S, avoid O/L Liddell to Newcastle (81) on trip of Bayswater to Wollar (5A4) line, Feedback",
+    "line_name": "liddell to newcastle",
+    "geojson_names": [
+      "Liddell to Newcastle"
+    ],
+    "binding_pct": 0.0,
+    "avg_mv_binding": null,
+    "median_rhs_binding": null,
+    "p10_rhs_binding": null,
+    "total_binding_intervals": 0
+  },
+  {
+    "constraint_id": "N>>13+32_81_82",
+    "description": "Out= 13 (Kemps Creek to Sydney South) + 32 (Bayswater to Sydney West) 330kV lines O/S, avoid O/L Liddell to Newcastle (81) on trip of Liddell to Tomago (82) line, Feedback",
+    "line_name": "liddell to newcastle",
+    "geojson_names": [
+      "Liddell to Newcastle"
+    ],
+    "binding_pct": 0.0,
+    "avg_mv_binding": null,
+    "median_rhs_binding": null,
+    "p10_rhs_binding": null,
+    "total_binding_intervals": 0
+  },
+  {
+    "constraint_id": "N>>13+32_81_NIL",
+    "description": "Out= 13 (Kemps Creek to Sydney South) + 32 (Bayswater to Sydney West) 330kV lines O/S, avoid O/L Liddell to Newcastle (81) on Nil trip, Feedback",
+    "line_name": "liddell to newcastle",
+    "geojson_names": [
+      "Liddell to Newcastle"
+    ],
+    "binding_pct": 0.0,
+    "avg_mv_binding": null,
+    "median_rhs_binding": null,
+    "p10_rhs_binding": null,
+    "total_binding_intervals": 0
+  },
+  {
+    "constraint_id": "N>>13+32_82_31",
+    "description": "Out= 13 (Kemps Creek to Sydney South) + 32 (Bayswater to Sydney West) 330kV lines O/S, avoid O/L Liddell to Tomago (82) on trip of Bayswater to Regentville (31) line, Feedback",
+    "line_name": "liddell to tomago",
+    "geojson_names": [
+      "Liddell to Tomago"
+    ],
+    "binding_pct": 0.0,
+    "avg_mv_binding": null,
+    "median_rhs_binding": null,
+    "p10_rhs_binding": null,
+    "total_binding_intervals": 0
+  },
+  {
+    "constraint_id": "N>>13+32_82_81",
+    "description": "Out= 13 (Kemps Creek to Sydney South) + 32 (Bayswater to Sydney West) 330kV lines O/S, avoid O/L Liddell to Tomago (82) on trip of Liddell to Newcastle (81) line, Feedback",
+    "line_name": "liddell to tomago",
+    "geojson_names": [
+      "Liddell to Tomago"
+    ],
+    "binding_pct": 0.0,
+    "avg_mv_binding": null,
+    "median_rhs_binding": null,
+    "p10_rhs_binding": null,
+    "total_binding_intervals": 0
+  },
+  {
     "constraint_id": "S-TIBAT1-G_0",
     "description": "Discretionary upper limit for Torrens Island Battery (generation component) of 0 MW",
     "line_name": "torrens island battery",
@@ -6077,6 +6402,19 @@
     "total_binding_intervals": 0
   },
   {
+    "constraint_id": "N>>13+31/38_39_32",
+    "description": "Out= 13 (Kemps Creek to Sydney South) + 31 (Bayswater to Regentsville)/38 (Sydney West to Regentsville) O/S, avoid O/L Bannaby to Sydney West (39) 330kV line on trip of Bayswater to Sydney West (32) 330kV line, Feedback",
+    "line_name": "bannaby to sydney west",
+    "geojson_names": [
+      "Sydney West to Bannaby"
+    ],
+    "binding_pct": 0.0,
+    "avg_mv_binding": null,
+    "median_rhs_binding": null,
+    "p10_rhs_binding": null,
+    "total_binding_intervals": 0
+  },
+  {
     "constraint_id": "N>987/983_983_984",
     "description": "Out= Dapto - Tallawarra (983 or 987) 132kV line, avoid O/L Tallawarra to Dapto (983/987) 132kV line on trip of remaining Tallawarra to Dapto (984) 132kV line,  Feedback",
     "line_name": "tallawarra to dapto",
@@ -6119,6 +6457,19 @@
   {
     "constraint_id": "Q>STBS_STBS_BCBS",
     "description": "Out= Stanwell to Broadsound (856 or 8831), avoid O/L Bouldercombe to Broadsound (820) on trip of remaining Stanwell to Broadsound (856 or 8831), Feedback",
+    "line_name": "bouldercombe to broadsound",
+    "geojson_names": [
+      "Bouldercombe to Broadsound"
+    ],
+    "binding_pct": 0.0,
+    "avg_mv_binding": null,
+    "median_rhs_binding": null,
+    "p10_rhs_binding": null,
+    "total_binding_intervals": 0
+  },
+  {
+    "constraint_id": "Q>BCNE_BCBS_STNBS",
+    "description": "Out=Bouldercombe to Nebo (821) 275kV line with 7114/1 closed, avoid O/L Bouldercombe to Broadsound (820) 275kV line on trip of Stanwell to Broadsound (8831) 275kV line, Feedback. (7114/1 will be opened at Baralaba post contingent)",
     "line_name": "bouldercombe to broadsound",
     "geojson_names": [
       "Bouldercombe to Broadsound"
@@ -9588,6 +9939,19 @@
     "total_binding_intervals": 0
   },
   {
+    "constraint_id": "V::S_TBTX_SETB",
+    "description": "Out= Tailembend 275/132kV #4 TX (Note: with both Black Range series caps I/S); Vic to SA Transient Stability limit for loss of South East - Tailem Bend 275kV line.",
+    "line_name": "loss of south east - tailem bend",
+    "geojson_names": [
+      "South East to Tailem Bend"
+    ],
+    "binding_pct": 0.0,
+    "avg_mv_binding": null,
+    "median_rhs_binding": null,
+    "p10_rhs_binding": null,
+    "total_binding_intervals": 0
+  },
+  {
     "constraint_id": "V^^S_TBEBUS_SETB",
     "description": "Out= Tailem Bend 275 kV East Bus(This offloads Tailem Bend 275/132kV #4 TX and C64 Cap Bank) (Both Black Range series Caps I/S); Vic to SA Long Term Voltage Stability limit for loss of South East-Tailembend 275kV line",
     "line_name": "loss of south east-tailembend",
@@ -9863,6 +10227,19 @@
   {
     "constraint_id": "V::S_KHKN_SETB_2-DS",
     "description": "Out= Keith - Kincraig 132 kV line(Note: with both Black Range series caps O/S); Vic to SA Transient Stability limit for loss of South East - Tailem Bend 275kV line.(NOTE:DS RHS ONLY)",
+    "line_name": "loss of south east - tailem bend",
+    "geojson_names": [
+      "South East to Tailem Bend"
+    ],
+    "binding_pct": 0.0,
+    "avg_mv_binding": null,
+    "median_rhs_binding": null,
+    "p10_rhs_binding": null,
+    "total_binding_intervals": 0
+  },
+  {
+    "constraint_id": "V^^S_TBTX_SETB",
+    "description": "Out= Tailembend 275/132kV #4 TX (Note: with both Black Range series caps I/S); Vic to SA Long Term Voltage Stability limit for loss of South East - Tailem Bend 275kV line.",
     "line_name": "loss of south east - tailem bend",
     "geojson_names": [
       "South East to Tailem Bend"
@@ -10394,37 +10771,11 @@
     "total_binding_intervals": 0
   },
   {
-    "constraint_id": "S>>X_DVLK+LKCN_05",
-    "description": "Out= Davenport-Mt Lock-Canowie 275kV line (this offloads Hornsdale #1 & #2  &#3 WF & battery) OR Davenport-Mt Lock 275kV line O/S, avoid O/L Waterloo-Templers 132kV line on trip of Blyth West-Munno Para 275kV  line, Feedback",
-    "line_name": "waterloo-templers",
-    "geojson_names": [
-      "Waterloo to Templers"
-    ],
-    "binding_pct": 0.0,
-    "avg_mv_binding": null,
-    "median_rhs_binding": null,
-    "p10_rhs_binding": null,
-    "total_binding_intervals": 0
-  },
-  {
     "constraint_id": "S>>X_DVLK+LKCN_07",
     "description": "Out=Davenport-Mt Lock-Canowie 275kV line(this offloads Hornsdale#1&#2 &#3 WF & battery) OR Davenport-Mt Lock 275kV line O/S, avoid O/L MWP4- Robertstown 132kV line on trip of Mokota-Robertstown 275kV line (this trips Hall H windfarm)",
     "line_name": "mwp4- robertstown",
     "geojson_names": [
       "Para to Robertstown"
-    ],
-    "binding_pct": 0.0,
-    "avg_mv_binding": null,
-    "median_rhs_binding": null,
-    "p10_rhs_binding": null,
-    "total_binding_intervals": 0
-  },
-  {
-    "constraint_id": "S>>X_DVLK+LKCN_15",
-    "description": "Out= Davenport-Mt Lock-Canowie 275kV line (this offloads Hornsdale #1 & #2  &#3 WF & battery) OR Davenport-Mt Lock 275kV line O/S, avoid O/L Waterloo-Templers 132kV on trip of Robertstown-Tungkillo 275kV line, Feedback",
-    "line_name": "waterloo-templers",
-    "geojson_names": [
-      "Waterloo to Templers"
     ],
     "binding_pct": 0.0,
     "avg_mv_binding": null,
@@ -10693,11 +11044,115 @@
     "total_binding_intervals": 0
   },
   {
-    "constraint_id": "S>>X_DVLK+LKCN_16",
-    "description": "Out= Davenport-Mt Lock-Canowie 275kV line (this offloads Hornsdale #1 & #2  &#3 WF & battery) OR Davenport-Mt Lock 275kV line O/S, avoid O/L either Robertstown to Tungkillo 275kV lines on trip of other Robertstown to Tungkillo 275kV line, Feedback",
-    "line_name": "either robertstown to tungkillo",
+    "constraint_id": "N>>13+31/38_76_77",
+    "description": "Out= 13 (Kemps Creek to Sydney South) + 31 (Bayswater to Regentville)/38 (Sydney West to Regentville) O/S, avoid O/L Wallerawang to Sydney South (76) 330kV line on trip of Wallerawang to Ingleburn (77) 330kV line, Feedback",
+    "line_name": "wallerawang to sydney south",
     "geojson_names": [
-      "Robertstown to Tungkillo"
+      "Wallerawang to Sydney South"
+    ],
+    "binding_pct": 0.0,
+    "avg_mv_binding": null,
+    "median_rhs_binding": null,
+    "p10_rhs_binding": null,
+    "total_binding_intervals": 0
+  },
+  {
+    "constraint_id": "N>>13+31/38_77_76",
+    "description": "Out= 13 (Kemps Creek to Sydney South) + 31 (Bayswater to Regentville)/38 (Sydney West to Regentville) O/S, avoid O/L Wallerawang to Ingleburn (77) 330kV line on trip of Wallerawang to Sydney South (76) 330kV line, Feedback",
+    "line_name": "wallerawang to ingleburn",
+    "geojson_names": [
+      "Ingleburn to Wallerawang"
+    ],
+    "binding_pct": 0.0,
+    "avg_mv_binding": null,
+    "median_rhs_binding": null,
+    "p10_rhs_binding": null,
+    "total_binding_intervals": 0
+  },
+  {
+    "constraint_id": "N>>13+31/38_81_32",
+    "description": "Out= 13 (Kemps Creek to Sydney South) + 31 (Bayswater to Regentville)/38 (Sydney West to Regentville) O/S, avoid O/L Liddell to Newcastle (81) 330kV line on trip of Bayswater to Sydney West (32) 330kV line, Feedback",
+    "line_name": "liddell to newcastle",
+    "geojson_names": [
+      "Liddell to Newcastle"
+    ],
+    "binding_pct": 0.0,
+    "avg_mv_binding": null,
+    "median_rhs_binding": null,
+    "p10_rhs_binding": null,
+    "total_binding_intervals": 0
+  },
+  {
+    "constraint_id": "N>>13+31/38_81_5A3",
+    "description": "Out= 13 (Kemps Creek to Sydney South) + 31 (Bayswater to Regentville)/38 (Sydney West to Regentville) O/S, avoid O/L Liddell to Newcastle (81) 330kV line on trip of Bayswater to Mt Piper (5A3) 500kV line, Feedback",
+    "line_name": "liddell to newcastle",
+    "geojson_names": [
+      "Liddell to Newcastle"
+    ],
+    "binding_pct": 0.0,
+    "avg_mv_binding": null,
+    "median_rhs_binding": null,
+    "p10_rhs_binding": null,
+    "total_binding_intervals": 0
+  },
+  {
+    "constraint_id": "N>>13+31/38_81_5A4",
+    "description": "Out= 13 (Kemps Creek to Sydney South) + 31 (Bayswater to Regentville)/38 (Sydney West to Regentville) O/S, avoid O/L Liddell to Newcastle (81) 330kV line on trip of Bayswater to Wollar (5A4) 500kV line, Feedback",
+    "line_name": "liddell to newcastle",
+    "geojson_names": [
+      "Liddell to Newcastle"
+    ],
+    "binding_pct": 0.0,
+    "avg_mv_binding": null,
+    "median_rhs_binding": null,
+    "p10_rhs_binding": null,
+    "total_binding_intervals": 0
+  },
+  {
+    "constraint_id": "N>>13+31/38_81_82",
+    "description": "Out= 13 (Kemps Creek to Sydney South) + 31 (Bayswater to Regentville)/38 (Sydney West to Regentville) O/S, avoid O/L Liddell to Newcastle (81) 330kV line on trip of Liddell to Tomago (82) 330kV line, Feedback",
+    "line_name": "liddell to newcastle",
+    "geojson_names": [
+      "Liddell to Newcastle"
+    ],
+    "binding_pct": 0.0,
+    "avg_mv_binding": null,
+    "median_rhs_binding": null,
+    "p10_rhs_binding": null,
+    "total_binding_intervals": 0
+  },
+  {
+    "constraint_id": "N>>13+31/38_81_NIL",
+    "description": "Out= 13 (Kemps Creek to Sydney South) + 31 (Bayswater to Regentville)/38 (Sydney West to Regentville) O/S, avoid O/L Liddell to Newcastle (81) 330kV line on trip of Nil, Feedback",
+    "line_name": "liddell to newcastle",
+    "geojson_names": [
+      "Liddell to Newcastle"
+    ],
+    "binding_pct": 0.0,
+    "avg_mv_binding": null,
+    "median_rhs_binding": null,
+    "p10_rhs_binding": null,
+    "total_binding_intervals": 0
+  },
+  {
+    "constraint_id": "N>>13+31/38_82_32",
+    "description": "Out= 13 (Kemps Creek to Sydney South) + 31 (Bayswater to Regentville)/38 (Sydney West to Regentville) O/S, avoid O/L Liddell to Tomago (82) 330kV line on trip of Bayswater to Sydney West (32) 330kV line, Feedback",
+    "line_name": "liddell to tomago",
+    "geojson_names": [
+      "Liddell to Tomago"
+    ],
+    "binding_pct": 0.0,
+    "avg_mv_binding": null,
+    "median_rhs_binding": null,
+    "p10_rhs_binding": null,
+    "total_binding_intervals": 0
+  },
+  {
+    "constraint_id": "N>>13+31/38_82_81",
+    "description": "Out= 13 (Kemps Creek to Sydney South) + 31 (Bayswater to Regentville)/38 (Sydney West to Regentville) O/S, avoid O/L Liddell to Tomago (82) 330kV line on trip of Liddell to Newcastle (81) 330kV line, Feedback",
+    "line_name": "liddell to tomago",
+    "geojson_names": [
+      "Liddell to Tomago"
     ],
     "binding_pct": 0.0,
     "avg_mv_binding": null,
@@ -11205,19 +11660,6 @@
     "line_name": "vales point to munmorah",
     "geojson_names": [
       "Vales Point to Munmorah"
-    ],
-    "binding_pct": 0.0,
-    "avg_mv_binding": null,
-    "median_rhs_binding": null,
-    "p10_rhs_binding": null,
-    "total_binding_intervals": 0
-  },
-  {
-    "constraint_id": "N>>31_33_34",
-    "description": "Out = Bayswater to Regentville (31), avoid O/L Bayswater to Liddell (33) or Bayswater to Liddell (34) line on trip of Bayswater to Liddell (34) or Bayswater to Liddell (33) line, Feedback",
-    "line_name": "bayswater to liddell",
-    "geojson_names": [
-      "Liddell to Bayswater"
     ],
     "binding_pct": 0.0,
     "avg_mv_binding": null,
@@ -11908,6 +12350,58 @@
     "line_name": "kemps creek to sydney south",
     "geojson_names": [
       "Kemps Creek to Sydney South"
+    ],
+    "binding_pct": 0.0,
+    "avg_mv_binding": null,
+    "median_rhs_binding": null,
+    "p10_rhs_binding": null,
+    "total_binding_intervals": 0
+  },
+  {
+    "constraint_id": "N>>13+31/38_23_22",
+    "description": "Out= 13 (Kemps Creek to Sydney South) + 31 (Bayswater to Regentville)/38 (Sydney West to Regentville) O/S, avoid O/L Vales Point to Munmorah (23) 330kV line on trip of Vales Point to Sydney North (22) 330kV line, Feedback",
+    "line_name": "vales point to munmorah",
+    "geojson_names": [
+      "Vales Point to Munmorah"
+    ],
+    "binding_pct": 0.0,
+    "avg_mv_binding": null,
+    "median_rhs_binding": null,
+    "p10_rhs_binding": null,
+    "total_binding_intervals": 0
+  },
+  {
+    "constraint_id": "N>>13+31/38_23_25",
+    "description": "Out= 13 (Kemps Creek to Sydney South) + 31 (Bayswater to Regentville)/38 (Sydney West to Regentville) O/S, avoid O/L Vales Point to Munmorah (23) 330kV line on trip of Eraring to Vineyard (25) 330kV line, Feedback",
+    "line_name": "vales point to munmorah",
+    "geojson_names": [
+      "Vales Point to Munmorah"
+    ],
+    "binding_pct": 0.0,
+    "avg_mv_binding": null,
+    "median_rhs_binding": null,
+    "p10_rhs_binding": null,
+    "total_binding_intervals": 0
+  },
+  {
+    "constraint_id": "N>>13+31/38_23_32",
+    "description": "Out= 13 (Kemps Creek to Sydney South) + 31 (Bayswater to Regentville)/38 (Sydney West to Regentville) O/S, avoid O/L Vales Point to Munmorah (23) 330kV line on trip of Bayswater to Sydney West (32) 330kV line, Feedback",
+    "line_name": "vales point to munmorah",
+    "geojson_names": [
+      "Vales Point to Munmorah"
+    ],
+    "binding_pct": 0.0,
+    "avg_mv_binding": null,
+    "median_rhs_binding": null,
+    "p10_rhs_binding": null,
+    "total_binding_intervals": 0
+  },
+  {
+    "constraint_id": "N>>13+31/38_70_71",
+    "description": "Out= 13 (Kemps Creek to Sydney South) + 31 (Bayswater to Regentville)/38 (Sydney West to Regentville) O/S, avoid O/L Mt Piper to Wallerawang (70) 330kV line on trip of Mt Piper to Wallerawang (71) 330kV line",
+    "line_name": "mt piper to wallerawang",
+    "geojson_names": [
+      "Wallerawang to Mount Piper"
     ],
     "binding_pct": 0.0,
     "avg_mv_binding": null,
@@ -21215,6 +21709,58 @@
     "total_binding_intervals": 0
   },
   {
+    "constraint_id": "V>>KOWE_WBBA_X5",
+    "description": "Out = Koorangie to Wemen 220kV line, avoid O/L Waubra to Ballarat 220kV line on trip of Balranald to Darlington Point (X5) 220kV line, Feedback",
+    "line_name": "waubra to ballarat",
+    "geojson_names": [
+      "Waubra Terminal to Ballarat Terminal"
+    ],
+    "binding_pct": 0.0,
+    "avg_mv_binding": null,
+    "median_rhs_binding": null,
+    "p10_rhs_binding": null,
+    "total_binding_intervals": 0
+  },
+  {
+    "constraint_id": "V>>KOWE_DPTX_ARWB",
+    "description": "Out= Koorangie to Wemen 220kV line, avoid O/L Darlington Point TX3/TX4 (220 to 330kV) on trip of Ararat to Waubra to Ballarat 220kV line, Feedback",
+    "line_name": "darlington point tx3/tx4 (220 to",
+    "geojson_names": [
+      "Darlington Point to Hillston"
+    ],
+    "binding_pct": 0.0,
+    "avg_mv_binding": null,
+    "median_rhs_binding": null,
+    "p10_rhs_binding": null,
+    "total_binding_intervals": 0
+  },
+  {
+    "constraint_id": "V>>KOWE_WBBA_X3",
+    "description": "Out = Koorangie to Wemen 220kV line, avoid O/L Waubra to Ballarat 220kV line on trip of Buronga to Balranald (X3) 220kV line, Feedback",
+    "line_name": "waubra to ballarat",
+    "geojson_names": [
+      "Waubra Terminal to Ballarat Terminal"
+    ],
+    "binding_pct": 0.0,
+    "avg_mv_binding": null,
+    "median_rhs_binding": null,
+    "p10_rhs_binding": null,
+    "total_binding_intervals": 0
+  },
+  {
+    "constraint_id": "V>>KOWE_X5DP_ARWB",
+    "description": "Out = Koorangie to Wemen 220kV line, avoid O/L BALRANALD to Darlington Point (X5) on trip of Ararat to Waubra to Ballarat 220kV line, Feedback",
+    "line_name": "balranald to darlington point",
+    "geojson_names": [
+      "Darlington Point to Balranald"
+    ],
+    "binding_pct": 0.0,
+    "avg_mv_binding": null,
+    "median_rhs_binding": null,
+    "p10_rhs_binding": null,
+    "total_binding_intervals": 0
+  },
+  {
     "constraint_id": "N>>X_12+70_71_8",
     "description": "Out = Liverpool-Sydney South (12) 330kV line + Mt. Piper to Wallerawang (70 or 71) 330kV line, avoid O/L Mt Piper to Wallerawang (71 or 70) on trip of Marulan to Dapto (8) line, [Note: Line 94E O/S as per OM521]",
     "line_name": "mt piper to wallerawang (71 or 70)",
@@ -21545,6 +22091,19 @@
     "line_name": "bannaby to sydney west",
     "geojson_names": [
       "Sydney West to Bannaby"
+    ],
+    "binding_pct": 0.0,
+    "avg_mv_binding": null,
+    "median_rhs_binding": null,
+    "p10_rhs_binding": null,
+    "total_binding_intervals": 0
+  },
+  {
+    "constraint_id": "V>>DDGE_DDGN1_DDGN3",
+    "description": "Out = Dederang to Goorambat East 220kV line, avoid O/L Dederang to Glenrowan No.1 or No.3 220kV line on trip of Dederang to Glenrowan No.3 or No.1 220kV line, Feedback",
+    "line_name": "dederang to glenrowan no.1 or",
+    "geojson_names": [
+      "Dederang Terminal to Glenrowan Terminal"
     ],
     "binding_pct": 0.0,
     "avg_mv_binding": null,
@@ -21930,6 +22489,19 @@
     "total_binding_intervals": 0
   },
   {
+    "constraint_id": "N>>BDBU_6M_66",
+    "description": "Out = Bundey to Buronga (6F) 330kV line, avoid Upper Tumut to  Maragle (6M) O/L on Murray to Lower Tumut(66) trip; Feedback",
+    "line_name": "on murray to lower tumut",
+    "geojson_names": [
+      "Lower Tumut to Murray"
+    ],
+    "binding_pct": 0.0,
+    "avg_mv_binding": null,
+    "median_rhs_binding": null,
+    "p10_rhs_binding": null,
+    "total_binding_intervals": 0
+  },
+  {
     "constraint_id": "N>96H_966_89",
     "description": "Out= Coffs Harbour to Grafton East (96H) or Grafton East to Koolkhan (9W0), avoid O/L Armidale to Koolkhan (966) on trip of Coffs Harbour to Lismore (89), [ Note: swamped when Directlink ECS is I/S or swamp out when all 3 Directlink O/S)]",
     "line_name": "armidale to koolkhan",
@@ -21995,6 +22567,32 @@
     "total_binding_intervals": 0
   },
   {
+    "constraint_id": "N>7_998_4",
+    "description": "Out= Canberra to Lower Tumut (07), avoid O/L Cowra to Forbes (998) 132kV line on trip of Collector to Marulan (4) 330kV line, Feedback",
+    "line_name": "cowra to forbes",
+    "geojson_names": [
+      "Cowra to Forbes"
+    ],
+    "binding_pct": 0.0,
+    "avg_mv_binding": null,
+    "median_rhs_binding": null,
+    "p10_rhs_binding": null,
+    "total_binding_intervals": 0
+  },
+  {
+    "constraint_id": "N>7_998_61",
+    "description": "Out= Canberra to Lower Tumut (07), avoid O/L Cowra to Forbes (998) 132kV line on trip of Crookwell to Bannaby (61) 330kV line,  Feedback",
+    "line_name": "cowra to forbes",
+    "geojson_names": [
+      "Cowra to Forbes"
+    ],
+    "binding_pct": 0.0,
+    "avg_mv_binding": null,
+    "median_rhs_binding": null,
+    "p10_rhs_binding": null,
+    "total_binding_intervals": 0
+  },
+  {
     "constraint_id": "N>5_998_3L",
     "description": "Out= Marulan-Yass (5), avoid O/L Cowra to Forbes (998) 132kV line on trip of Yass to Collector (3L) 330kV line, [Wagga-Yass 132kV parallel lines CLOSED], Feedback",
     "line_name": "cowra to forbes",
@@ -22023,6 +22621,32 @@
   {
     "constraint_id": "N>5_998_61",
     "description": "Out = Marulan-Yass (5), avoid O/L Cowra to Forbes (998) 132kV line on trip of Crookwell to Bannaby (61) 330kV line,  [Wagga-Yass 132kV parallel lines CLOSED]",
+    "line_name": "cowra to forbes",
+    "geojson_names": [
+      "Cowra to Forbes"
+    ],
+    "binding_pct": 0.0,
+    "avg_mv_binding": null,
+    "median_rhs_binding": null,
+    "p10_rhs_binding": null,
+    "total_binding_intervals": 0
+  },
+  {
+    "constraint_id": "N>7_998_18",
+    "description": "Out= Canberra to Lower Tumut (07), avoid O/L Cowra to Forbes (998) 132kV line on trip of Kangaroo Valley to Dapto (18) 330kV line, Feedback",
+    "line_name": "cowra to forbes",
+    "geojson_names": [
+      "Cowra to Forbes"
+    ],
+    "binding_pct": 0.0,
+    "avg_mv_binding": null,
+    "median_rhs_binding": null,
+    "p10_rhs_binding": null,
+    "total_binding_intervals": 0
+  },
+  {
+    "constraint_id": "N>7_998_3L",
+    "description": "Out= Canberra to Lower Tumut (07), avoid O/L Cowra to Forbes (998) 132kV line on trip of Yass to Collector (3L) 330kV line, Feedback",
     "line_name": "cowra to forbes",
     "geojson_names": [
       "Cowra to Forbes"
@@ -22494,6 +23118,162 @@
     "line_name": "gin gin to woolooga",
     "geojson_names": [
       "Woolooga to Gin Gin"
+    ],
+    "binding_pct": 0.0,
+    "avg_mv_binding": null,
+    "median_rhs_binding": null,
+    "p10_rhs_binding": null,
+    "total_binding_intervals": 0
+  },
+  {
+    "constraint_id": "V>>SRAS_WOJIN_DDMS",
+    "description": "Out= 6F, DDTS-MSS2, DDTS-SMTS2, SMTS F1, SMTS H2&3, avoid O/L the Wodonga to Jindera (060) 330 kV line (flow to North) on trip of remaining Dederang to Murray 330 kV line, feedback",
+    "line_name": "wodonga to jindera",
+    "geojson_names": [
+      "Wodonga Terminal to Jindera"
+    ],
+    "binding_pct": 0.0,
+    "avg_mv_binding": null,
+    "median_rhs_binding": null,
+    "p10_rhs_binding": null,
+    "total_binding_intervals": 0
+  },
+  {
+    "constraint_id": "V>>SRAS_BABE_SMDD",
+    "description": "Out= 6F, DDTS-MSS2, DDTS-SMTS2, SMTS F1, SMTS H2&3, avoid O/L Ballarat to Bendigo 220kV line on trip of South Morang to Dederang #1 330kV line, Feedback",
+    "line_name": "ballarat to bendigo",
+    "geojson_names": [
+      "Bendigo Terminal to Ballarat Terminal"
+    ],
+    "binding_pct": 0.0,
+    "avg_mv_binding": null,
+    "median_rhs_binding": null,
+    "p10_rhs_binding": null,
+    "total_binding_intervals": 0
+  },
+  {
+    "constraint_id": "V>>SRAS_BEBA_DDSM",
+    "description": "Out= 6F, DDTS-MSS2, DDTS-SMTS2, SMTS F1, SMTS H2&3, avoid O/L Bendigo to Ballarat 220kV line on trip of the remaining Dederang to South Morang 330kV line, Feedback",
+    "line_name": "bendigo to ballarat",
+    "geojson_names": [
+      "Bendigo Terminal to Ballarat Terminal"
+    ],
+    "binding_pct": 0.0,
+    "avg_mv_binding": null,
+    "median_rhs_binding": null,
+    "p10_rhs_binding": null,
+    "total_binding_intervals": 0
+  },
+  {
+    "constraint_id": "V>>SRAS_DDWO_DDMS",
+    "description": "Out= 6F, DDTS-MSS2, DDTS-SMTS2, SMTS F1, SMTS H2&3, avoid O/L Dederang to Wodonga 330 kV line (flow North) for trip the remaining Dederang to Murray 330 kV line, feedback",
+    "line_name": "dederang to wodonga",
+    "geojson_names": [
+      "Wodonga Terminal to Dederang Terminal"
+    ],
+    "binding_pct": 0.0,
+    "avg_mv_binding": null,
+    "median_rhs_binding": null,
+    "p10_rhs_binding": null,
+    "total_binding_intervals": 0
+  },
+  {
+    "constraint_id": "V>>SRAS_EPTT_DDSM",
+    "description": "Out= 6F, DDTS-MSS2, DDTS-SMTS2, SMTS F1, SMTS H2&3, avoid O/L the Eildon to Thomastown 220 kV line (flow to South) on trip of the remaining Dederang to South Morang 330 kV line, feedback",
+    "line_name": "eildon to thomastown",
+    "geojson_names": [
+      "Keilor Terminal to Thomastown Terminal"
+    ],
+    "binding_pct": 0.0,
+    "avg_mv_binding": null,
+    "median_rhs_binding": null,
+    "p10_rhs_binding": null,
+    "total_binding_intervals": 0
+  },
+  {
+    "constraint_id": "V::S_TBTU+BDBU_12",
+    "description": "Out= Buronga - Bundey 330 kV line + Tailem Bend - Tungkillo 275 kV line (Both Black Range series caps I/S); Vic to SA Transient Stability limit for the loss of one South East-Tailem Bend 275kV line",
+    "line_name": "loss of one south east-tailem bend",
+    "geojson_names": [
+      "South East to Tailem Bend"
+    ],
+    "binding_pct": 0.0,
+    "avg_mv_binding": null,
+    "median_rhs_binding": null,
+    "p10_rhs_binding": null,
+    "total_binding_intervals": 0
+  },
+  {
+    "constraint_id": "Q>BCLC_BCCP_CLWU",
+    "description": "Out= Bouldercombe to Raglan (811) or Raglan to Larcom Creek (8875), avoid O/L Bouldercombe to Calliope River (812) on trip of Calvale to Wurdong (871) line, Feedback",
+    "line_name": "bouldercombe to calliope river",
+    "geojson_names": [
+      "Bouldercombe-H10 to Calliope River-H67"
+    ],
+    "binding_pct": 0.0,
+    "avg_mv_binding": null,
+    "median_rhs_binding": null,
+    "p10_rhs_binding": null,
+    "total_binding_intervals": 0
+  },
+  {
+    "constraint_id": "Q>BCLC_CLWU_BCCP",
+    "description": "Out= Bouldercombe to Raglan (811) or Raglan to Larcom Creek (8875), avoid O/L Calvale to Wurdong (871) on trip of Bouldercombe to Calliope River (812) line, Feedback",
+    "line_name": "calvale to wurdong",
+    "geojson_names": [
+      "Wurdong to Calvale"
+    ],
+    "binding_pct": 0.0,
+    "avg_mv_binding": null,
+    "median_rhs_binding": null,
+    "p10_rhs_binding": null,
+    "total_binding_intervals": 0
+  },
+  {
+    "constraint_id": "S>TUTX_PWSE_TBMO",
+    "description": "Out= Tailem Bend 275/132 kV #4 TX (Black Range series caps I/S), avoid O/L Tailem Bend to Mobilong #1 132kV line on trip of Penola West to South East #1 132kV line, Feedback",
+    "line_name": "tailem bend to mobilong",
+    "geojson_names": [
+      "Tailem Bend to Mobilong"
+    ],
+    "binding_pct": 0.0,
+    "avg_mv_binding": null,
+    "median_rhs_binding": null,
+    "p10_rhs_binding": null,
+    "total_binding_intervals": 0
+  },
+  {
+    "constraint_id": "N>>NIL_990_051_S",
+    "description": "Out= Nil, avoid O/L Yass to Wagga (990) 132kV line on trip of Lower Tumut to Wagga (051) 330kV line, Feedback. Swamped if Yass-Wagga 132kV overload scheme is I/S.  DS only.",
+    "line_name": "yass to wagga",
+    "geojson_names": [
+      "Wagga 132 to Yass"
+    ],
+    "binding_pct": 0.0,
+    "avg_mv_binding": null,
+    "median_rhs_binding": null,
+    "p10_rhs_binding": null,
+    "total_binding_intervals": 0
+  },
+  {
+    "constraint_id": "N>>NIL_99M_051_S",
+    "description": "Out= Nil, avoid O/L Yass to Murrumburrah (99M) 132kV line on trip of Lower Tumut to Wagga (051) 330kV line, Feedback. Swamped if Yass-Wagga 132kV overload scheme is I/S. DS only.",
+    "line_name": "yass to murrumburrah",
+    "geojson_names": [
+      "Murrumburrah to Yass"
+    ],
+    "binding_pct": 0.0,
+    "avg_mv_binding": null,
+    "median_rhs_binding": null,
+    "p10_rhs_binding": null,
+    "total_binding_intervals": 0
+  },
+  {
+    "constraint_id": "N>NIL_970_051_S",
+    "description": "Out= Nil, avoid O/L Yass to Burrinjuck (970) 132kV line on trip of Lower Tumut to Wagga (051) 330kV line, Feedback. Swamped if Yass-Wagga 132kV overload scheme is I/S. DS only.",
+    "line_name": "yass to burrinjuck",
+    "geojson_names": [
+      "Burrinjuck to Yass"
     ],
     "binding_pct": 0.0,
     "avg_mv_binding": null,
