@@ -1417,12 +1417,35 @@ function bindMapEvents() {
 
         html += `<div style="margin-top:8px;font-size:11px;color:#8b949e;font-weight:600;margin-bottom:4px">
           Binding constraints (${constrs.length}) — click for detail:</div>`;
+        // Line-level time-of-day driver (binding_pct-weighted across constraints).
+        // Tells a developer at a glance whether this congestion competes with
+        // their technology's operating hours or not.
+        if (p.congestion_tod) {
+          const todLine = {
+            solar:     ['Binds mostly in midday solar hours — limits solar export; a load (DC / charging BESS) here relieves it', '#d29922'],
+            evening:   ['Binds mostly in evening/morning demand peaks — limits load (DC) and evening flows', '#f0883e'],
+            overnight: ['Binds mostly overnight — wind / light-load driven; solar unaffected', '#58a6ff'],
+            mixed:     ['Binds across mixed hours — assess against your dispatch profile', '#8b949e'],
+          }[p.congestion_tod];
+          if (todLine) html += `<div style="font-size:10px;color:${todLine[1]};margin:-2px 0 5px">◷ ${todLine[0]}</div>`;
+        }
 
         constrs.forEach(c => {
           if (!c.id) return;
           const cpctNum = c.binding_pct != null ? parseFloat(c.binding_pct) : 0;
           const cpctStr = c.binding_pct != null ? cpctNum.toFixed(1) + '%' : '–';
           const barCol  = cpctNum > 50 ? '#f85149' : cpctNum > 20 ? '#f0883e' : cpctNum > 5 ? '#d29922' : '#79c0ff';
+          // Time-of-day driver badge (from analyze_constraint_tod.py hour profiles)
+          let todBadge = '';
+          if (c.tod) {
+            const tb = {solar: ['☀ midday', '#d29922'], evening: ['◑ evening', '#f0883e'],
+                        overnight: ['☽ overnight', '#58a6ff'], mixed: ['↔ mixed', '#8b949e']}[c.tod];
+            if (tb) {
+              const pctTxt = c.tod_sh != null ? ` ${Math.round(c.tod_sh * 100)}%` : '';
+              todBadge = `<span style="color:${tb[1]};font-size:9px;border:1px solid ${tb[1]}55;border-radius:3px;padding:0 3px;margin-left:6px;white-space:nowrap">${tb[0]}${pctTxt}</span>`;
+            }
+          }
+          if (c.episodic) todBadge += `<span style="color:#f85149;font-size:9px;margin-left:4px;white-space:nowrap">⚠ outage-period</span>`;
           // Full (cleaned) description goes to the modal via data-desc.
           // Row preview (rowDesc) is a short slice that fits the single visible line.
           const descFull = (c.desc || '')
@@ -1438,7 +1461,7 @@ function bindMapEvents() {
               style="display:flex;align-items:center;gap:8px;padding:5px 4px;border-bottom:1px solid #21262d;cursor:pointer">
             <div style="flex:1;min-width:0">
               <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:2px">
-                <span style="color:#e6edf3;font-weight:600;font-size:11px">${c.id}</span>
+                <span style="color:#e6edf3;font-weight:600;font-size:11px">${c.id}${todBadge}</span>
                 <span style="color:${barCol};font-weight:700;font-size:11px;flex-shrink:0;margin-left:8px">${cpctStr}</span>
               </div>
               <div style="background:#21262d;border-radius:2px;height:3px;margin-bottom:2px">
