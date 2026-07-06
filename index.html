@@ -1462,7 +1462,7 @@ function bindMapEvents() {
             <div style="flex:1;min-width:0">
               <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:2px">
                 <span style="color:#e6edf3;font-weight:600;font-size:11px">${c.id}${todBadge}</span>
-                <span style="color:${barCol};font-weight:700;font-size:11px;flex-shrink:0;margin-left:8px">${cpctStr}</span>
+                <span style="flex-shrink:0;margin-left:8px;font-size:11px">${c.bind_h != null ? `<span style="color:#8b949e;font-weight:400">${Math.round(c.bind_h).toLocaleString()} h · </span>` : ''}<span style="color:${barCol};font-weight:700">${cpctStr}</span></span>
               </div>
               <div style="background:#21262d;border-radius:2px;height:3px;margin-bottom:2px">
                 <div style="width:${Math.min(100,cpctNum)}%;height:100%;background:${barCol};border-radius:2px"></div>
