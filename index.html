@@ -1499,7 +1499,7 @@ function bindMapEvents() {
       const impCol = imp == null ? '#8b949e' : imp < 50 ? '#f85149' : imp < 200 ? '#d29922' : '#3fb950';
       html += `<div class="popup-section"><div class="popup-section-title">N-1 Midpoint Hosting Capacity</div>`;
       html += `<div style="font-size:10px;color:#8b949e;margin-bottom:3px">50% tap along line · worst 8-case PSS/E · RATE1 · 2024 dispatch · DC linearised</div>`;
-      html += `<div style="font-size:10px;color:#6e7681;margin-bottom:5px;font-style:italic">Marginal single-project capacity assuming full NEMDE redispatch — competing connections share this headroom; system-strength must-run not modelled. Per-constraint relief; simultaneous feasibility not enforced — treat multi-GW figures as ceilings.</div>`;
+      html += `<div style="font-size:10px;color:#6e7681;margin-bottom:5px;font-style:italic">Marginal single-project capacity, net of the attrition-weighted local connection queue (≤2 substation hops — see "Generation modelled here" on nearby substations). Redispatch relief from the existing fleet only; per-constraint relief, simultaneous feasibility not enforced — treat multi-GW figures as ceilings; system-strength must-run not modelled.</div>`;
       html += `<div class="popup-grid">`;
       if (r1) html += `<span class="popup-label">Line rating</span><span class="popup-value">${r1.toLocaleString()} MVA</span>`;
       if (p.n1_mid_loading_pct != null) {
@@ -1763,7 +1763,7 @@ function bindMapEvents() {
       const expBar = exp == null ? 0 : Math.min(exp >= 4999 ? 100 : exp / 10, 100);
       html += `<div class="popup-section"><div class="popup-section-title">N-1 Hosting Capacity (bus)</div>`;
       html += `<div style="font-size:10px;color:#8b949e;margin-bottom:3px">Worst 8-case PSS/E · RATE1 · 2024 dispatch · DC linearised model (±10–20%)</div>`;
-      html += `<div style="font-size:10px;color:#6e7681;margin-bottom:5px;font-style:italic">Marginal single-project net-new MW (existing dispatched gen at this bus excluded from relief pool). Competing connections share this headroom; system-strength must-run not modelled. Per-constraint relief; simultaneous feasibility not enforced — treat multi-GW figures as ceilings.</div>`;
+      html += `<div style="font-size:10px;color:#6e7681;margin-bottom:5px;font-style:italic">Marginal net-new MW, net of the attrition-weighted local connection queue (≤2 substation hops — see "Generation modelled here" below). Redispatch relief from the existing fleet only (this site's own plant excluded); per-constraint relief, simultaneous feasibility not enforced — treat multi-GW figures as ceilings; system-strength must-run not modelled.</div>`;
       html += `<div class="popup-grid">`;
       html += `<span class="popup-label">Max export (gen)</span><span class="popup-value" style="color:${expCol};font-weight:700">${expLim}</span>`;
       html += `<span class="popup-label">Max import (battery)</span><span class="popup-value" style="color:${impCol};font-weight:700">${impLim}</span>`;
@@ -2733,11 +2733,12 @@ function buildGenProvenanceHtml(p) {
   const projs = gp.projects || [];
   const TREAT = {
     in_base_psse:   { label: 'in base case', col: '#3fb950' },
-    relief_pool:    { label: 'relief only',  col: '#58a6ff' },
+    queue_debit:    { label: 'queue debit',  col: '#58a6ff' },
+    relief_pool:    { label: 'relief only',  col: '#58a6ff' },   // legacy data
     not_considered: { label: 'not considered', col: '#d29922' },
     unmatched:      { label: 'unmatched',    col: '#f85149' },
   };
-  const order = ['in_base_psse', 'relief_pool', 'not_considered', 'unmatched'];
+  const order = ['in_base_psse', 'queue_debit', 'relief_pool', 'not_considered', 'unmatched'];
   let html = `<div class="popup-section"><div class="popup-section-title">Generation modelled here</div>`;
   html += `<div style="font-size:10px;color:#8b949e;margin-bottom:4px">What the hosting-capacity model assumed at this node. PSS/E base case: ${Math.round(gp.psse_disp || 0).toLocaleString()} MW dispatched (${gp.case || '–'}). Large plants on separate generator buses can read 0 here — see list.</div>`;
   const sum = gp.summary || {};
@@ -2747,9 +2748,12 @@ function buildGenProvenanceHtml(p) {
   if (projs.length) {
     const rows = projs.map(pr => {
       const t = TREAT[pr.t] || { col: '#8b949e', label: pr.t };
+      // 'me' = expected MW (capacity × attrition × coincidence) actually
+      // debited when this project competes within 2 hops of an assessed node.
+      const eff = pr.me != null ? ` <span style="color:#8b949e">(→${Math.round(pr.me).toLocaleString()})</span>` : '';
       return `<div style="font-size:10px;display:flex;justify-content:space-between;gap:6px;padding:1px 0">`
            + `<span style="color:#e6edf3">${pr.n}</span>`
-           + `<span style="white-space:nowrap;color:${t.col}">${(pr.mw || 0).toLocaleString()} MW · ${pr.s}</span></div>`;
+           + `<span style="white-space:nowrap;color:${t.col}">${(pr.mw || 0).toLocaleString()} MW${eff} · ${pr.s}</span></div>`;
     });
     html += rows.slice(0, 6).join('');
     if (rows.length > 6) {
@@ -2757,7 +2761,7 @@ function buildGenProvenanceHtml(p) {
       html += `<div style="display:none">${rows.slice(6).join('')}</div>`;
     }
   }
-  html += `<div style="font-size:9px;color:#6e7681;margin-top:4px;font-style:italic">in base = real gen loading the network · relief only = curtailable but not modelled as load · not considered = queued project the model ignores.</div>`;
+  html += `<div style="font-size:9px;color:#6e7681;margin-top:4px;font-style:italic">in base = real gen loading the network (and curtailable) · queue debit = competing queue project injected first when assessing nodes within 2 hops (shown: nameplate (→expected MW = × attrition × coincidence)) · not considered = status outside the queue model.</div>`;
   html += `</div>`;
   return html;
 }
