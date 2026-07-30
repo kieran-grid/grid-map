@@ -363,11 +363,20 @@
 
     <div id="mlf-heatmap-legend" style="display:none">
       <div class="section-title">Legend – MLF Heatmap</div>
-      <div class="legend-item"><div class="legend-line" style="background:rgb(40,185,50);height:10px;border-radius:2px;width:28px"></div>&gt; 1.04</div>
-      <div class="legend-item"><div class="legend-line" style="background:rgb(190,190,0);height:10px;border-radius:2px;width:28px"></div>0.97 – 1.04</div>
-      <div class="legend-item"><div class="legend-line" style="background:rgb(240,140,0);height:10px;border-radius:2px;width:28px"></div>0.93 – 0.97</div>
-      <div class="legend-item"><div class="legend-line" style="background:rgb(220,30,30);height:10px;border-radius:2px;width:28px"></div>&lt; 0.93</div>
-      <div style="font-size:11px;color:#8b949e;margin-top:3px">Gen: generator connection points<br>Load: substation load MLFs</div>
+      <div id="mlf-legend-gen">
+        <div class="legend-item"><div class="legend-line" style="background:rgb(40,185,50);height:10px;border-radius:2px;width:28px"></div>&gt; 1.04 — best</div>
+        <div class="legend-item"><div class="legend-line" style="background:rgb(190,190,0);height:10px;border-radius:2px;width:28px"></div>0.97 – 1.04</div>
+        <div class="legend-item"><div class="legend-line" style="background:rgb(240,140,0);height:10px;border-radius:2px;width:28px"></div>0.93 – 0.97</div>
+        <div class="legend-item"><div class="legend-line" style="background:rgb(220,30,30);height:10px;border-radius:2px;width:28px"></div>&lt; 0.93 — worst</div>
+        <div style="font-size:11px;color:#8b949e;margin-top:3px">Generator connection points. Generation is <em>paid</em><br>RRP × MLF, so <strong>higher is better</strong>.</div>
+      </div>
+      <div id="mlf-legend-load" style="display:none">
+        <div class="legend-item"><div class="legend-line" style="background:rgb(40,185,50);height:10px;border-radius:2px;width:28px"></div>&lt; 0.95 — best</div>
+        <div class="legend-item"><div class="legend-line" style="background:rgb(190,190,0);height:10px;border-radius:2px;width:28px"></div>0.95 – 0.97</div>
+        <div class="legend-item"><div class="legend-line" style="background:rgb(240,140,0);height:10px;border-radius:2px;width:28px"></div>0.97 – 1.00</div>
+        <div class="legend-item"><div class="legend-line" style="background:rgb(220,30,30);height:10px;border-radius:2px;width:28px"></div>&gt; 1.00 — worst</div>
+        <div style="font-size:11px;color:#8b949e;margin-top:3px">Substation load MLFs. Load <em>pays</em> RRP × MLF,<br>so <strong>lower is better</strong> — under 1.00 you pay<br>below the regional reference price.</div>
+      </div>
     </div>
 
     <div class="section-title">Legend – Projects</div>
@@ -482,6 +491,21 @@ function mlfClass(mlf) {
   if (mlf >= 0.97) return 'mlf-good';
   if (mlf >= 0.93) return 'mlf-ok';
   return 'mlf-poor';
+}
+
+// Load / import MLF runs the OPPOSITE way to generation. Settlement applies the
+// factor to the price, so a load pays RRP x MLF: below 1.00 is paying under the
+// regional reference price. Low is good.
+// Bands come from the 2026-27 load distribution (median 0.994, p10 0.942,
+// p90 1.015) — a strict mirror of the generator bands (<=1.03 / <=1.07) would
+// put 95% of nodes in the top tier and discriminate nothing. 1.00 is the
+// break-even; 0.97 mirrors the generator anchor as a 3% loss-factor benefit.
+function mlfLoadClass(mlf) {
+  const v = parseFloat(mlf);
+  if (!isFinite(v) || v === 0) return '';
+  if (v <= 0.97) return 'mlf-good';   // pays >=3% under RRP
+  if (v <= 1.00) return 'mlf-ok';     // still under RRP
+  return 'mlf-poor';                  // pays above RRP
 }
 
 // ─────────────────────────────────────────
@@ -714,7 +738,9 @@ function addLayers() {
   // Bounds: [[west,north],[east,north],[east,south],[west,south]]
   const MLF_BOUNDS = [[112.5,-10.0],[154.5,-10.0],[154.5,-44.5],[112.5,-44.5]];
   map.addSource('mlf-gen-img',  { type: 'image', url: 'mlf_gen_heatmap.png?v=4',  coordinates: MLF_BOUNDS });
-  map.addSource('mlf-load-img', { type: 'image', url: 'mlf_load_heatmap.png?v=4', coordinates: MLF_BOUNDS });
+  // v=5: load ramp inverted 2026-07-30 (low MLF is good for a load) — the bump
+  // is required or cached browsers keep serving the old-direction raster.
+  map.addSource('mlf-load-img', { type: 'image', url: 'mlf_load_heatmap.png?v=5', coordinates: MLF_BOUNDS });
 
   map.addLayer({
     id: 'mlf-gen-heatmap',
@@ -1626,13 +1652,13 @@ function bindMapEvents() {
           : '';
         if (hasDual) {
           html += `<div class="mlf-row"><span>Export (discharge)</span><span class="${mlfClass(p.mlf_gen_export_2026_27)}">${parseFloat(p.mlf_gen_export_2026_27).toFixed(4)} ${chg}</span></div>`;
-          html += `<div class="mlf-row"><span>Import (charge)</span><span class="${mlfClass(p.mlf_gen_import_2026_27)}">${parseFloat(p.mlf_gen_import_2026_27).toFixed(4)}</span></div>`;
+          html += `<div class="mlf-row"><span>Import (charge)</span><span class="${mlfLoadClass(p.mlf_gen_import_2026_27)}">${parseFloat(p.mlf_gen_import_2026_27).toFixed(4)}</span></div>`;
         } else {
           html += `<div class="mlf-row"><span>Generator (${p.mlf_region})</span><span class="${mlfClass(p.mlf_gen_2026_27)}">${parseFloat(p.mlf_gen_2026_27).toFixed(4)} ${chg}</span></div>`;
         }
       }
       if (p.mlf_load_2026_27) {
-        const cls = mlfClass(p.mlf_load_2026_27);
+        const cls = mlfLoadClass(p.mlf_load_2026_27);
         html += `<div class="mlf-row"><span>Load (${p.mlf_region})</span><span class="${cls}">${parseFloat(p.mlf_load_2026_27).toFixed(4)}</span></div>`;
       }
       html += `</div>`;
@@ -1914,14 +1940,14 @@ function bindMapEvents() {
           : '';
         if (hasDual) {
           html += `<div class="mlf-row"><span>Export (discharge${p.mlf_duid ? ` · ${p.mlf_duid}` : ''})</span><span class="${mlfClass(parseFloat(p.mlf_gen_export_2026_27))}">${parseFloat(p.mlf_gen_export_2026_27).toFixed(4)} ${chg}</span></div>`;
-          html += `<div class="mlf-row"><span>Import (charge)</span><span class="${mlfClass(parseFloat(p.mlf_gen_import_2026_27))}">${parseFloat(p.mlf_gen_import_2026_27).toFixed(4)}</span></div>`;
+          html += `<div class="mlf-row"><span>Import (charge)</span><span class="${mlfLoadClass(p.mlf_gen_import_2026_27)}">${parseFloat(p.mlf_gen_import_2026_27).toFixed(4)}</span></div>`;
         } else {
           const genLabel = `Generator${p.mlf_duid ? ` (${p.mlf_duid})` : ''}`;
           html += `<div class="mlf-row"><span>${genLabel}</span><span class="${mlfClass(parseFloat(p.mlf_gen_2026_27))}">${parseFloat(p.mlf_gen_2026_27).toFixed(4)} ${chg}</span></div>`;
         }
       }
       if (p.mlf_load_2026_27) {
-        const cls = mlfClass(parseFloat(p.mlf_load_2026_27));
+        const cls = mlfLoadClass(p.mlf_load_2026_27);
         html += `<div class="mlf-row"><span>Load (import)</span><span class="${cls}">${parseFloat(p.mlf_load_2026_27).toFixed(4)}</span></div>`;
       }
       if (p.mlf_cp_id) html += `<div style="font-size:11px;color:#8b949e;margin-top:4px">Connection point: ${p.mlf_cp_id}</div>`;
@@ -2671,6 +2697,9 @@ function bindSidebar() {
       map.setLayoutProperty('mlf-gen-heatmap',  'visibility', mode === 'gen'  ? 'visible' : 'none');
       map.setLayoutProperty('mlf-load-heatmap', 'visibility', mode === 'load' ? 'visible' : 'none');
       document.getElementById('mlf-heatmap-legend').style.display = mode === 'off' ? 'none' : 'block';
+      // Gen and Load use opposite colour ramps — swap the legend with the layer.
+      document.getElementById('mlf-legend-gen').style.display  = mode === 'gen'  ? '' : 'none';
+      document.getElementById('mlf-legend-load').style.display = mode === 'load' ? '' : 'none';
     });
   });
 }
