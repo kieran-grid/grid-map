@@ -1497,9 +1497,9 @@ function bindMapEvents() {
       const impLim = imp == null ? '–' : (imp >= 4999) ? 'Unconstrained' : `${imp.toLocaleString()} MW`;
       const expCol = exp == null ? '#8b949e' : exp < 50 ? '#f85149' : exp < 200 ? '#d29922' : '#3fb950';
       const impCol = imp == null ? '#8b949e' : imp < 50 ? '#f85149' : imp < 200 ? '#d29922' : '#3fb950';
-      html += `<div class="popup-section"><div class="popup-section-title">N-1 Midpoint Hosting Capacity</div>`;
-      html += `<div style="font-size:10px;color:#8b949e;margin-bottom:3px">50% tap along line · worst 8-case PSS/E · RATE1 · 2024 dispatch · DC linearised</div>`;
-      html += `<div style="font-size:10px;color:#6e7681;margin-bottom:5px;font-style:italic">Marginal single-project capacity, net of the attrition-weighted local connection queue (≤2 substation hops — see "Generation modelled here" on nearby substations). Redispatch relief from the existing fleet only; per-constraint relief, simultaneous feasibility not enforced — treat multi-GW figures as ceilings; system-strength must-run not modelled.</div>`;
+      html += `<div class="popup-section"><div class="popup-section-title">N-1 Midpoint Hosting Capacity <span style="font-size:9px;font-weight:600;color:#58a6ff;background:#1f3a5f;border-radius:3px;padding:1px 5px;vertical-align:1px">2026 MODEL</span></div>`;
+      html += `<div style="font-size:10px;color:#8b949e;margin-bottom:3px">50% tap along line · worst 8-case PSS/E · RATE1 · 2025–26 dispatch · DC linearised</div>`;
+      html += `<div style="font-size:10px;color:#6e7681;margin-bottom:5px;font-style:italic">Marginal single-project capacity. Export is net of the attrition-weighted local connection queue (≤2 substation hops — see "Generation modelled here" on nearby substations); import is as-modelled — loads don't queue behind generation. Redispatch relief from the existing fleet only; per-constraint relief, simultaneous feasibility not enforced — treat multi-GW figures as ceilings; system-strength must-run not modelled.</div>`;
       html += `<div class="popup-grid">`;
       if (r1) html += `<span class="popup-label">Line rating</span><span class="popup-value">${r1.toLocaleString()} MVA</span>`;
       if (p.n1_mid_loading_pct != null) {
@@ -1548,7 +1548,16 @@ function bindMapEvents() {
         });
         html += `</table></div>`;
       }
+      html += buildN1ArchiveHtml(p, 'mid');
       html += `</div>`;
+    } else if (p.n1_arch24) {
+      // Line not matched in the 2026 model run — archived 2024 figures only.
+      const arch = buildN1ArchiveHtml(p, 'mid');
+      if (arch) {
+        html += `<div class="popup-section"><div class="popup-section-title">N-1 Midpoint Hosting Capacity</div>`;
+        html += `<div style="font-size:10px;color:#d29922;margin-bottom:3px">Not matched in the 2026 model (topology/naming change) — archived 2024 figures only.</div>`;
+        html += arch + `</div>`;
+      }
     }
 
     popup.setLngLat(e.lngLat).setHTML(html).addTo(map);
@@ -1761,9 +1770,9 @@ function bindMapEvents() {
       const expCol = exp == null ? '#8b949e' : exp < 50 ? '#f85149' : exp < 200 ? '#d29922' : '#3fb950';
       const impCol = imp == null ? '#8b949e' : imp < 50 ? '#f85149' : imp < 200 ? '#d29922' : '#3fb950';
       const expBar = exp == null ? 0 : Math.min(exp >= 4999 ? 100 : exp / 10, 100);
-      html += `<div class="popup-section"><div class="popup-section-title">N-1 Hosting Capacity (bus)</div>`;
-      html += `<div style="font-size:10px;color:#8b949e;margin-bottom:3px">Worst 8-case PSS/E · RATE1 · 2024 dispatch · DC linearised model (±10–20%)</div>`;
-      html += `<div style="font-size:10px;color:#6e7681;margin-bottom:5px;font-style:italic">Marginal net-new MW, net of the attrition-weighted local connection queue (≤2 substation hops — see "Generation modelled here" below). Redispatch relief from the existing fleet only (this site's own plant excluded); per-constraint relief, simultaneous feasibility not enforced — treat multi-GW figures as ceilings; system-strength must-run not modelled.</div>`;
+      html += `<div class="popup-section"><div class="popup-section-title">N-1 Hosting Capacity (bus) <span style="font-size:9px;font-weight:600;color:#58a6ff;background:#1f3a5f;border-radius:3px;padding:1px 5px;vertical-align:1px">2026 MODEL</span></div>`;
+      html += `<div style="font-size:10px;color:#8b949e;margin-bottom:3px">Worst 8-case PSS/E · RATE1 · 2025–26 dispatch · DC linearised model (±10–20%)</div>`;
+      html += `<div style="font-size:10px;color:#6e7681;margin-bottom:5px;font-style:italic">Marginal net-new MW. Export is net of the attrition-weighted local connection queue (≤2 substation hops — see "Generation modelled here" below); import is as-modelled — loads don't queue behind generation. Redispatch relief from the existing fleet only (this site's own plant excluded); per-constraint relief, simultaneous feasibility not enforced — treat multi-GW figures as ceilings; system-strength must-run not modelled.</div>`;
       html += `<div class="popup-grid">`;
       html += `<span class="popup-label">Max export (gen)</span><span class="popup-value" style="color:${expCol};font-weight:700">${expLim}</span>`;
       html += `<span class="popup-label">Max import (battery)</span><span class="popup-value" style="color:${impCol};font-weight:700">${impLim}</span>`;
@@ -1806,7 +1815,16 @@ function bindMapEvents() {
         });
         html += `</table></div>`;
       }
+      html += buildN1ArchiveHtml(p, 'bus');
       html += `</div>`;
+    } else if (p.n1_arch24) {
+      // Substation not matched in the 2026 model run — archived 2024 figures only.
+      const arch = buildN1ArchiveHtml(p, 'bus');
+      if (arch) {
+        html += `<div class="popup-section"><div class="popup-section-title">N-1 Hosting Capacity (bus)</div>`;
+        html += `<div style="font-size:10px;color:#d29922;margin-bottom:3px">Not matched in the 2026 model (topology/naming change) — archived 2024 figures only.</div>`;
+        html += arch + `</div>`;
+      }
     }
 
     html += buildGenProvenanceHtml(p);
@@ -2727,6 +2745,48 @@ function tryParse(val) {
 // model actually assumed at this node, so the user can see which connection-
 // queue projects were and were not considered. Parsed with JSON.parse (NOT
 // tryParse — project names may contain apostrophes).
+// ── Archived 2024-model N-1 figures (n1_arch24, written by archive_n1_2024.py) ──
+// kind: 'bus' (substation fields n1_*) or 'mid' (line fields n1_mid_*).
+// Collapsible block under the primary 2026-model section, with deltas.
+function buildN1ArchiveHtml(p, kind) {
+  if (!p.n1_arch24) return '';
+  let a;
+  try { a = typeof p.n1_arch24 === 'string' ? JSON.parse(p.n1_arch24) : p.n1_arch24; }
+  catch (err) { return ''; }
+  const pre = kind === 'mid' ? 'n1_mid_' : 'n1_';
+  const rows = [
+    ['Max export (gen)',     pre + 'max_export_mw'],
+    ['Max import (battery)', pre + 'max_import_mw'],
+    ['Import (high-demand)', kind === 'mid' ? 'n1_mid_max_import_hi_mw' : 'n1_max_import_hi_mw'],
+  ];
+  let body = '';
+  rows.forEach(([lbl, key]) => {
+    const oldV = a[key] != null ? parseFloat(a[key]) : null;
+    if (oldV == null) return;
+    const newV = p[key] != null ? parseFloat(p[key]) : null;
+    let delta = '';
+    if (newV != null && oldV > 0) {
+      const d = newV - oldV;
+      const dCol = d >= 0 ? '#3fb950' : '#f85149';
+      const arrow = d >= 0 ? '▲' : '▼';
+      delta = ` <span style="color:${dCol};font-size:9px">${arrow} ${Math.abs(d) >= 100 ? Math.round(Math.abs(d)).toLocaleString() : Math.abs(d).toFixed(0)} MW vs 2026</span>`;
+    }
+    body += `<span class="popup-label">${lbl}</span><span class="popup-value" style="color:#8b949e">${oldV.toLocaleString()} MW${delta}</span>`;
+  });
+  if (!body) return '';
+  const expBr = a[pre + 'export_limit_branch'];
+  const impBr = a[pre + 'import_limit_branch'];
+  let lim = '';
+  if (expBr) lim += `Export limit: ${expBr} (${a[pre + 'export_case'] || '–'})<br>`;
+  if (impBr && impBr !== expBr) lim += `Import limit: ${impBr} (${a[pre + 'import_case'] || '–'})`;
+  return `<button onclick="var t=this.nextElementSibling;var open=t.style.display!=='none';t.style.display=open?'none':'block';this.textContent=open?'2024 model (archive) ▾':'2024 model (archive) ▴';" style="margin-top:6px;background:none;border:none;color:#8b949e;cursor:pointer;font-size:10px;padding:0;text-align:left">2024 model (archive) ▾</button>`
+    + `<div style="display:none;margin-top:4px;border-left:2px solid #30363d;padding-left:6px">`
+    + `<div style="font-size:10px;color:#6e7681;margin-bottom:3px">2024-vintage AEMO snapshots (pre-PEC St2 / HumeLink-era network) — same methodology</div>`
+    + `<div class="popup-grid">${body}</div>`
+    + (lim ? `<div style="font-size:10px;color:#6e7681;margin-top:3px">${lim}</div>` : '')
+    + `</div>`;
+}
+
 function buildGenProvenanceHtml(p) {
   if (!p.gen_provenance) return '';
   let gp; try { gp = JSON.parse(p.gen_provenance); } catch { return ''; }
