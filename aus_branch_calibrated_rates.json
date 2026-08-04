@@ -1,12 +1,30 @@
 {
+  "BALRAT-WAUBRA 220kV ckt1": {
+    "constraint_id": "V>>V_BURC_5",
+    "aemo_line_name": "waubra to ballarat",
+    "calibrated_rate_mw": 570.4,
+    "psse_rate1_mw": 700.0,
+    "binding_pct": 6.0,
+    "avg_mv_binding": 58.6,
+    "match_score": 0.929
+  },
   "MOLONG-ORANGN 132kV ckt1": {
     "constraint_id": "N>947+949_94T",
     "aemo_line_name": "molong to orange north",
     "calibrated_rate_mw": 93.8,
     "psse_rate1_mw": 112.0,
-    "binding_pct": 10.92,
+    "binding_pct": 7.51,
     "avg_mv_binding": 1540.7,
     "match_score": 0.833
+  },
+  "NORWST-ROBERT 132kV ckt1": {
+    "constraint_id": "S>>MW2MW3_RBNW1",
+    "aemo_line_name": "robertstown to north west bend",
+    "calibrated_rate_mw": 114.1,
+    "psse_rate1_mw": 158.0,
+    "binding_pct": 6.43,
+    "avg_mv_binding": 457.4,
+    "match_score": 0.558
   },
   "WELING-WELIGT 132kV ckt1": {
     "constraint_id": "N>MPWW_945_71",
