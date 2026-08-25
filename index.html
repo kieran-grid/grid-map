@@ -519,11 +519,11 @@ const popup = new maplibregl.Popup({ closeButton: true, maxWidth: '360px' });
 popup.on('close', () => { document.getElementById('constr-modal')?.remove(); });
 
 Promise.all([
-  fetch('transmission_lines.geojson?v=20260822').then(r => r.json()),
-  fetch('substations.geojson?v=20260822').then(r => r.json()),
+  fetch('transmission_lines.geojson?v=20260826').then(r => r.json()),
+  fetch('substations.geojson?v=20260826').then(r => r.json()),
   fetch('mlf_2026_27.json').then(r => r.json()),
   fetch('hhci.json').then(r => r.json()).catch(() => ({})),
-  fetch('competing_projects.geojson?v=20260822').then(r => r.json()).catch(() => ({ type: 'FeatureCollection', features: [] })),
+  fetch('competing_projects.geojson?v=20260826').then(r => r.json()).catch(() => ({ type: 'FeatureCollection', features: [] })),
   fetch('nem_regions.geojson').then(r => r.json()).catch(() => ({ type: 'FeatureCollection', features: [] })),
   fetch('nem_interconnectors.geojson').then(r => r.json()).catch(() => ({ type: 'FeatureCollection', features: [] })),
   fetch('isp_upgrades.geojson').then(r => r.json()).catch(() => ({ type: 'FeatureCollection', features: [] })),
@@ -1553,7 +1553,7 @@ function bindMapEvents() {
       const impCol = imp == null ? '#8b949e' : imp < 50 ? '#f85149' : imp < 200 ? '#d29922' : '#3fb950';
       html += `<div class="popup-section"><div class="popup-section-title">N-1 Midpoint Hosting Capacity <span style="font-size:9px;font-weight:600;color:#58a6ff;background:#1f3a5f;border-radius:3px;padding:1px 5px;vertical-align:1px">2026 MODEL</span></div>`;
       html += `<div style="font-size:10px;color:#8b949e;margin-bottom:3px">50% tap along line · worst 8-case PSS/E · RATE1 · 2025–26 dispatch · DC linearised</div>`;
-      html += `<div style="font-size:10px;color:#6e7681;margin-bottom:5px;font-style:italic">Marginal single-project capacity. Export is net of the attrition-weighted local connection queue (≤2 substation hops — see "Generation modelled here" on nearby substations); import is as-modelled — loads don't queue behind generation. <b>Mid-span import is still reduced by the queue's physical flow:</b> this line's own thermal limit is measured against the flow it would carry with the local connection queue generating, so queued projects take up part of the circuit even though no queue debit is applied to the import figure itself. Substation-node import does not carry this effect, so the two sit on slightly different bases. Redispatch relief from the existing fleet only; per-constraint relief, simultaneous feasibility not enforced — treat multi-GW figures as ceilings; system-strength must-run not modelled.</div>`;
+      html += `<div style="font-size:10px;color:#6e7681;margin-bottom:5px;font-style:italic">Marginal single-project capacity. Export is net of the attrition-weighted local connection queue (≤2 substation hops — see "Generation modelled here" on nearby substations); import is as-modelled — loads don't queue behind generation. <b>Mid-span import is still reduced by the queue's physical flow:</b> this line's own thermal limit is measured against the flow it would carry with the local connection queue generating, so queued projects take up part of the circuit even though no queue debit is applied to the import figure itself. Substation-node import does not carry this effect, so the two sit on slightly different bases. <b>Capacity is reported against the redispatch it requires</b> — see the curve below. Existing plant is backed off in constraint-coefficient order, so the units with most effect on the limiting circuit move first. A single figure assumed an unlimited budget: on these snapshots that meant curtailing 4.5–6.8 GW of a 10.3 GW dispatched pool, and at one node it paid 11 MW of curtailment per 1 MW of relief. Relief is assessed per constraint and simultaneous feasibility is not enforced — treat multi-GW figures as ceilings; system-strength must-run not modelled.</div>`;
       html += `<div class="popup-grid">`;
       if (r1) html += `<span class="popup-label">Line rating</span><span class="popup-value">${r1.toLocaleString()} MVA</span>`;
       if (p.n1_mid_loading_pct != null) {
@@ -1565,6 +1565,31 @@ function bindMapEvents() {
       }
       html += `<span class="popup-label">Max export (gen)</span><span class="popup-value" style="color:${expCol};font-weight:700">${expLim}</span>`;
       html += `<span class="popup-label">Max import (battery)</span><span class="popup-value" style="color:${impCol};font-weight:700">${impLim}</span>`;
+      html += `</div>`;
+      html += n1CurveHtml(p.n1_mid_export_curve, 'Export capacity vs redispatch required');
+      html += n1CurveHtml(p.n1_mid_import_curve, 'Import capacity vs redispatch required');
+      html += `<div class="popup-grid">`;
+      // ── Per-section breakdown (corridor matches) ──────────────────────────
+      // A long feature is several PSS/E sections whose capacity differs a lot
+      // along its length — Bannaby–Yass runs 443 to 581 MW import. The headline
+      // above is the WEAKEST section, which answers "what does this corridor
+      // do" and not "where should I connect". For siting, the section matters.
+      const midSegs = tryParse(p.n1_mid_segments);
+      if (midSegs && midSegs.length > 1) {
+        const fmtS = v => v >= 4999 ? 'unconstr.' : Math.round(v).toLocaleString();
+        const colS = v => v < 50 ? '#f85149' : v < 200 ? '#d29922' : '#3fb950';
+        let rows = `<span style="color:#6e7681">section</span><span style="color:#6e7681;text-align:right">import</span><span style="color:#6e7681;text-align:right">export</span>`;
+        midSegs.forEach(s => {
+          rows += `<span style="color:#e6edf3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${s.l}">${s.l}</span>`
+                + `<span style="text-align:right;color:${colS(s.i)}">${fmtS(s.i)}</span>`
+                + `<span style="text-align:right;color:${colS(s.e)}">${fmtS(s.e)}</span>`;
+        });
+        html += `</div>`
+             + `<div style="font-size:10px;color:#e6edf3;font-weight:600;margin-top:7px">This line is ${midSegs.length} sections — capacity varies along it</div>`
+             + `<div style="font-size:10px;color:#8b949e;margin-bottom:3px">The figures above are the weakest section. Where you connect decides which applies.</div>`
+             + `<div style="display:grid;grid-template-columns:1fr auto auto;gap:1px 8px;font-size:10px">${rows}</div>`
+             + `<div class="popup-grid">`;
+      }
       if (p.n1_mid_max_import_hi_mw != null) {
         // Worst HIGH-DEMAND case — the right basis for load (DC) screening;
         // light-load cases carry demand-side headroom and can't bind a load.
@@ -1826,7 +1851,7 @@ function bindMapEvents() {
       const expBar = exp == null ? 0 : Math.min(exp >= 4999 ? 100 : exp / 10, 100);
       html += `<div class="popup-section"><div class="popup-section-title">N-1 Hosting Capacity (bus) <span style="font-size:9px;font-weight:600;color:#58a6ff;background:#1f3a5f;border-radius:3px;padding:1px 5px;vertical-align:1px">2026 MODEL</span></div>`;
       html += `<div style="font-size:10px;color:#8b949e;margin-bottom:3px">Worst 8-case PSS/E · RATE1 · 2025–26 dispatch · DC linearised model (±10–20%)</div>`;
-      html += `<div style="font-size:10px;color:#6e7681;margin-bottom:5px;font-style:italic">Marginal net-new MW. Export is net of the attrition-weighted local connection queue (≤2 substation hops — see "Generation modelled here" below); import is as-modelled — loads don't queue behind generation. Redispatch relief from the existing fleet only (this site's own plant excluded); per-constraint relief, simultaneous feasibility not enforced — treat multi-GW figures as ceilings; system-strength must-run not modelled.</div>`;
+      html += `<div style="font-size:10px;color:#6e7681;margin-bottom:5px;font-style:italic">Marginal net-new MW. Export is net of the attrition-weighted local connection queue (≤2 substation hops — see "Generation modelled here" below); import is as-modelled — loads don't queue behind generation. <b>Capacity is reported against the redispatch it requires</b> — see the curve below. Existing plant, excluding this site's own, is backed off in constraint-coefficient order, so the units with most effect on the limiting circuit move first. A single figure assumed an unlimited budget: on these snapshots that meant curtailing 4.5–6.8 GW of a 10.3 GW dispatched pool, and at one node it paid 11 MW of curtailment per 1 MW of relief. Relief is assessed per constraint and simultaneous feasibility is not enforced — treat multi-GW figures as ceilings; system-strength must-run not modelled.</div>`;
       html += `<div class="popup-grid">`;
       html += `<span class="popup-label">Max export (gen)</span><span class="popup-value" style="color:${expCol};font-weight:700">${expLim}</span>`;
       html += `<span class="popup-label">Max import (battery)</span><span class="popup-value" style="color:${impCol};font-weight:700">${impLim}</span>`;
@@ -1838,6 +1863,8 @@ function bindMapEvents() {
         html += `<span class="popup-label">Import (high-demand)</span><span class="popup-value" style="color:${hiCol}">${impHi.toLocaleString()} MW <span style="color:#8b949e;font-weight:400;font-size:10px">(${p.n1_import_hi_case || '–'})</span></span>`;
       }
       html += `</div>`;
+      html += n1CurveHtml(p.n1_export_curve, 'Export capacity vs redispatch required');
+      html += n1CurveHtml(p.n1_import_curve, 'Import capacity vs redispatch required');
       if (exp != null && exp < 4999) {
         html += `<div style="margin:4px 0 1px;height:5px;background:#21262d;border-radius:2px">`;
         html += `<div style="width:${expBar}%;height:100%;background:${expCol};border-radius:2px"></div></div>`;
@@ -2316,7 +2343,7 @@ function bindMapEvents() {
       const impBar = Math.min(imp >= 4999 ? 100 : imp / 10, 100);
       html += `<div class="popup-section"><div class="popup-section-title">N-1 Hosting Capacity (bus)</div>`;
       html += `<div style="font-size:10px;color:#8b949e;margin-bottom:3px">Worst PSS/E case · RATE1 · Aug 2020 dispatch · DC linearised model (±10–20%)</div>`;
-      html += `<div style="font-size:10px;color:#6e7681;margin-bottom:5px;font-style:italic">Marginal single-project net-new MW (existing dispatched gen at this bus excluded from relief pool). Competing connections share this headroom; system services / must-run not modelled.</div>`;
+      html += `<div style="font-size:10px;color:#6e7681;margin-bottom:5px;font-style:italic">Marginal single-project net-new MW. Redispatch relief is taken in constraint-coefficient order and excludes this bus’s own plant. Competing connections share this headroom; system services / must-run not modelled.</div>`;
       html += `<div class="popup-grid">`;
       html += `<span class="popup-label">Max export (gen)</span><span class="popup-value" style="color:${expCol};font-weight:700">${expLim}</span>`;
       html += `<span class="popup-label">Max import (battery)</span><span class="popup-value" style="color:${impCol};font-weight:700">${impLim}</span>`;
@@ -2792,6 +2819,51 @@ function bindSearch() {
 // ─────────────────────────────────────────
 // UTILS
 // ─────────────────────────────────────────
+// Capacity-vs-curtailment curve. The engine reports hosting capacity at several
+// curtailment budgets rather than one figure, because a single number silently
+// assumed the market would move an unlimited amount of existing generation to
+// admit a new project - on the 2026-08 snapshots that was 4.5-6.8 GW out of a
+// 10.3 GW dispatched pool. Redispatch is taken in constraint-coefficient order,
+// so the plant with the most effect on the limiting circuit is backed off first.
+// The 0 MW point is the capacity that needs nobody else moved.
+function n1CurveHtml(raw, title) {
+  if (!raw) return '';
+  const pts = String(raw).split('|').map(function (seg) {
+    const bits = seg.split(':');
+    return { b: bits[0], v: parseFloat(bits[1]) };
+  }).filter(function (o) { return isFinite(o.v); });
+  if (pts.length < 2) return '';
+  const cap = function (v) { return v >= 4999 ? 'Unconstrained' : Math.round(v).toLocaleString(); };
+  const max = Math.max.apply(null, pts.map(function (o) { return Math.min(o.v, 4999); }).concat([1]));
+  const label = function (b) {
+    if (b === '0')   return 'Firm \u2014 no redispatch';
+    if (b === 'inf') return 'Unlimited redispatch';
+    return 'with ' + Number(b).toLocaleString() + ' MW moved';
+  };
+  let h = '<div style="font-size:10px;color:#8b949e;margin:7px 0 3px">' + title + '</div>';
+  pts.forEach(function (o, i) {
+    const firm = (i === 0);
+    const w = Math.max(2, Math.min(o.v, 4999) / max * 100);
+    const col = firm ? '#58a6ff' : '#3fb950';
+    h += '<div style="display:grid;grid-template-columns:120px 1fr 66px;gap:6px;'
+       + 'align-items:center;font-size:10px;margin-bottom:2px">'
+       + '<span style="color:' + (firm ? '#e6edf3' : '#8b949e') + ';'
+       + (firm ? 'font-weight:600' : '') + '">' + label(o.b) + '</span>'
+       + '<span style="background:#21262d;border-radius:2px;height:7px;display:block;position:relative">'
+       + '<span style="position:absolute;left:0;top:0;bottom:0;width:' + w + '%;'
+       + 'background:' + col + ';border-radius:2px"></span></span>'
+       + '<span style="text-align:right;color:' + (firm ? '#58a6ff' : '#e6edf3') + ';'
+       + (firm ? 'font-weight:700' : '') + '">' + cap(o.v) + '</span>'
+       + '</div>';
+  });
+  h += '<div style="font-size:9px;color:#6e7681;margin-top:3px;font-style:italic">'
+     + 'Existing plant is backed off in constraint-coefficient order \u2014 the units with '
+     + 'most effect on the limiting circuit first. A new generator competes for that '
+     + 'redispatch on price and is not entitled to it, so the firm row is the '
+     + 'conservative basis for curtailment risk.</div>';
+  return h;
+}
+
 function tryParse(val) {
   if (!val || val === 'null' || val === '[]') return null;
   if (typeof val === 'object') return val;
