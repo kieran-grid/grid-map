@@ -97,6 +97,16 @@
     .popup-value { color: #e6edf3; font-size: 12px; }
     .popup-section { margin-top: 10px; padding-top: 10px; border-top: 1px solid #30363d; }
     .popup-section-title { font-size: 11px; font-weight: 600; color: #8b949e; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 6px; }
+    /* Collapsible sections - see collapsifyPopup() */
+    .popup-section > .popup-section-title[role="button"] { cursor: pointer; user-select: none; display: flex; align-items: center; gap: 6px; margin-bottom: 0; padding: 5px 0; }
+    .popup-section > .popup-section-title[role="button"]:hover { color: #c9d1d9; }
+    .popup-section > .popup-section-title .pop-caret { margin-left: auto; font-size: 9px; color: #6e7681; transition: transform .12s ease; }
+    .popup-section.pop-collapsed > .popup-section-title .pop-caret { transform: rotate(-90deg); }
+    .popup-section > .popup-section-body { padding-bottom: 4px; }
+    .popup-section.pop-collapsed > .popup-section-body { display: none; }
+    .popup-section.pop-collapsed > .popup-section-title { margin-bottom: 0; }
+    .pop-allctl { font-size: 10px; color: #58a6ff; cursor: pointer; user-select: none; padding: 2px 0 6px; display: flex; gap: 10px; }
+    .pop-allctl span:hover { text-decoration: underline; }
     .mlf-row { display: flex; justify-content: space-between; padding: 3px 0; font-size: 12px; border-bottom: 1px solid #21262d; }
     .mlf-good  { color: #3fb950; }
     .mlf-ok    { color: #d29922; }
@@ -2826,6 +2836,91 @@ function bindSearch() {
 // 10.3 GW dispatched pool. Redispatch is taken in constraint-coefficient order,
 // so the plant with the most effect on the limiting circuit is backed off first.
 // The 0 MW point is the capacity that needs nobody else moved.
+// ── Collapsible popup sections ──────────────────────────────────────────────
+// The section state is remembered by heading across popups, so opening
+// "N-1 Hosting Capacity" once keeps it open as you click through other sites.
+const POPUP_SECTION_STATE = new Map();
+
+function collapsifyPopup(root) {
+  const first = root.querySelector('.popup-section');
+  root.querySelectorAll('.popup-section').forEach(sec => {
+    if (sec.dataset.popCollapsible) return;
+    const title = sec.querySelector(':scope > .popup-section-title');
+    if (!title) return;
+    sec.dataset.popCollapsible = '1';
+
+    // Move the rest of the section into a body wrapper. Moving nodes (rather
+    // than re-writing HTML) preserves the inline onclick toggles that walk
+    // nextElementSibling, and every already-attached listener.
+    const body = document.createElement('div');
+    body.className = 'popup-section-body';
+    while (title.nextSibling) body.appendChild(title.nextSibling);
+    sec.appendChild(body);
+
+    // Key on the leading text only, so badges like "2026 MODEL" and dynamic
+    // suffixes such as "(AEMO calibrated)" do not fragment the remembered state.
+    const lead = (title.firstChild && title.firstChild.nodeType === 3)
+      ? title.firstChild.textContent : title.textContent;
+    const key = lead.trim().replace(/\s+/g, ' ').slice(0, 48);
+
+    const caret = document.createElement('span');
+    caret.className = 'pop-caret';
+    caret.textContent = '\u25be';
+    title.appendChild(caret);
+    title.setAttribute('role', 'button');
+    title.setAttribute('tabindex', '0');
+
+    const setOpen = o => sec.classList.toggle('pop-collapsed', !o);
+    setOpen(POPUP_SECTION_STATE.has(key) ? POPUP_SECTION_STATE.get(key) : (sec === first));
+
+    title.addEventListener('click', () => {
+      const nowOpen = sec.classList.contains('pop-collapsed');
+      setOpen(nowOpen);
+      POPUP_SECTION_STATE.set(key, nowOpen);
+    });
+    title.addEventListener('keydown', ev => {
+      if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); title.click(); }
+    });
+  });
+
+  // Expand-all / collapse-all, once per popup, above the first section.
+  if (first && !root.querySelector('.pop-allctl')
+      && root.querySelectorAll('.popup-section').length > 2) {
+    const ctl = document.createElement('div');
+    ctl.className = 'pop-allctl';
+    ctl.innerHTML = '<span data-all="open">Expand all</span><span data-all="shut">Collapse all</span>';
+    first.parentNode.insertBefore(ctl, first);
+    ctl.addEventListener('click', ev => {
+      const mode = ev.target && ev.target.dataset ? ev.target.dataset.all : null;
+      if (!mode) return;
+      root.querySelectorAll('.popup-section').forEach(sec => {
+        const t = sec.querySelector(':scope > .popup-section-title');
+        if (!t) return;
+        sec.classList.toggle('pop-collapsed', mode === 'shut');
+        const lead = (t.firstChild && t.firstChild.nodeType === 3)
+          ? t.firstChild.textContent : t.textContent;
+        POPUP_SECTION_STATE.set(lead.trim().replace(/\s+/g, ' ').slice(0, 48), mode === 'open');
+      });
+    });
+  }
+}
+
+let _popCollapsePending = false;
+new MutationObserver(() => {
+  if (_popCollapsePending) return;
+  _popCollapsePending = true;
+  // setTimeout rather than requestAnimationFrame: rAF is starved in headless
+  // Chrome, which makes this untestable, and the work is DOM-only so there is
+  // nothing to gain from frame alignment.
+  setTimeout(() => {
+    _popCollapsePending = false;
+    document.querySelectorAll('.maplibregl-popup-content').forEach(collapsifyPopup);
+  }, 0);
+}).observe(document.body, { childList: true, subtree: true });
+// The observer only reacts to changes. Sweep once at start-up so a popup that is
+// already in the DOM (or one set without a mutation) is not left untouched.
+document.querySelectorAll('.maplibregl-popup-content').forEach(collapsifyPopup);
+
 function n1CurveHtml(raw, title) {
   if (!raw) return '';
   const pts = String(raw).split('|').map(function (seg) {
