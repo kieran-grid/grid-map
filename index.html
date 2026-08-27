@@ -199,6 +199,7 @@
   <input id="search" type="text" placeholder="Search substations, lines..." autocomplete="off" />
   <div id="search-results"></div>
   <a href="sld.html" style="font-size:11px;color:#8b949e;text-decoration:none;white-space:nowrap;margin-left:4px">SLD View →</a>
+  <a href="line_loading.html" style="font-size:11px;color:#8b949e;text-decoration:none;white-space:nowrap;margin-left:4px">Line Loading →</a>
 </div>
 
 <!-- ── Body ── -->
@@ -442,11 +443,21 @@ const map = new maplibregl.Map({
     version: 8,
     glyphs: 'https://fonts.openmaptiles.org/{fontstack}/{range}.pbf',
     sources: {
-      'carto-dark': {
+      // CARTO's keyless basemap now stamps every tile with "API KEY REQUIRED"
+      // (2026-08-27). Esri's dark canvas needs no key and is the same host the
+      // satellite layer already uses. It ships lighter than CARTO's dark_all, so
+      // raster-brightness-max pulls it back down under the line colours, and the
+      // place names come from a separate reference layer.
+      'esri-dark': {
         type: 'raster',
-        tiles: ['https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png'],
+        tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}'],
         tileSize: 256,
-        attribution: '© OpenStreetMap contributors, © CARTO'
+        attribution: '© Esri, © OpenStreetMap contributors'
+      },
+      'esri-dark-labels': {
+        type: 'raster',
+        tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}'],
+        tileSize: 256
       },
       'esri-satellite': {
         type: 'raster',
@@ -456,7 +467,10 @@ const map = new maplibregl.Map({
       }
     },
     layers: [
-      { id: 'background', type: 'raster', source: 'carto-dark' },
+      { id: 'background', type: 'raster', source: 'esri-dark',
+        paint: { 'raster-brightness-max': 0.45, 'raster-saturation': -0.3 } },
+      { id: 'background-labels', type: 'raster', source: 'esri-dark-labels',
+        paint: { 'raster-opacity': 0.75 } },
       { id: 'satellite', type: 'raster', source: 'esri-satellite', layout: { visibility: 'none' } }
     ]
   },
@@ -2533,6 +2547,7 @@ function bindSidebar() {
     const on = e.target.checked;
     map.setLayoutProperty('satellite', 'visibility', on ? 'visible' : 'none');
     map.setLayoutProperty('background', 'visibility', on ? 'none' : 'visible');
+    map.setLayoutProperty('background-labels', 'visibility', on ? 'none' : 'visible');
     // Boost label halos on satellite for legibility
     map.setPaintProperty('cps-labels', 'text-halo-width', on ? 2 : 1);
     map.setPaintProperty('cps-labels', 'text-halo-color', on ? 'rgba(0,0,0,0.85)' : 'rgba(0,0,0,0.6)');
