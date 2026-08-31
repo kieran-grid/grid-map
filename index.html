@@ -434,6 +434,15 @@
 </div>
 
 <script>
+// AUS N-1 sentinel. aus_n1_contingency.py writes MAX_CAP_MW = 9999 for "no
+// network constraint found" and enrich drops any DIRECTION whose published
+// figure reaches 9990, so anything below that is a real modelled capacity.
+// This was 4999 until 2026-08-31 - the value nz_n1_contingency.py uses, which
+// is correct for the NZ blocks below and wrong here: it printed 148 genuine
+// 5-10 GW figures as "-" or "Unconstrained", including every high-demand
+// import at the Latrobe Valley 500 kV buses.
+const N1_SENT = 9990;
+
 // ─────────────────────────────────────────
 // MAP INIT
 // ─────────────────────────────────────────
@@ -543,11 +552,11 @@ const popup = new maplibregl.Popup({ closeButton: true, maxWidth: '360px' });
 popup.on('close', () => { document.getElementById('constr-modal')?.remove(); });
 
 Promise.all([
-  fetch('transmission_lines.geojson?v=20260826').then(r => r.json()),
-  fetch('substations.geojson?v=20260826').then(r => r.json()),
+  fetch('transmission_lines.geojson?v=20260831').then(r => r.json()),
+  fetch('substations.geojson?v=20260831').then(r => r.json()),
   fetch('mlf_2026_27.json').then(r => r.json()),
   fetch('hhci.json').then(r => r.json()).catch(() => ({})),
-  fetch('competing_projects.geojson?v=20260826').then(r => r.json()).catch(() => ({ type: 'FeatureCollection', features: [] })),
+  fetch('competing_projects.geojson?v=20260831').then(r => r.json()).catch(() => ({ type: 'FeatureCollection', features: [] })),
   fetch('nem_regions.geojson').then(r => r.json()).catch(() => ({ type: 'FeatureCollection', features: [] })),
   fetch('nem_interconnectors.geojson').then(r => r.json()).catch(() => ({ type: 'FeatureCollection', features: [] })),
   fetch('isp_upgrades.geojson').then(r => r.json()).catch(() => ({ type: 'FeatureCollection', features: [] })),
@@ -1571,8 +1580,8 @@ function bindMapEvents() {
       const exp    = p.n1_mid_max_export_mw != null ? parseFloat(p.n1_mid_max_export_mw) : null;
       const imp    = p.n1_mid_max_import_mw != null ? parseFloat(p.n1_mid_max_import_mw) : null;
       const r1     = p.n1_mid_rate1_mw ? parseFloat(p.n1_mid_rate1_mw) : null;
-      const expLim = exp == null ? '–' : (exp >= 4999) ? 'Unconstrained' : `${exp.toLocaleString()} MW`;
-      const impLim = imp == null ? '–' : (imp >= 4999) ? 'Unconstrained' : `${imp.toLocaleString()} MW`;
+      const expLim = exp == null ? '–' : (exp >= N1_SENT) ? 'Unconstrained' : `${exp.toLocaleString()} MW`;
+      const impLim = imp == null ? '–' : (imp >= N1_SENT) ? 'Unconstrained' : `${imp.toLocaleString()} MW`;
       const expCol = exp == null ? '#8b949e' : exp < 50 ? '#f85149' : exp < 200 ? '#d29922' : '#3fb950';
       const impCol = imp == null ? '#8b949e' : imp < 50 ? '#f85149' : imp < 200 ? '#d29922' : '#3fb950';
       html += `<div class="popup-section"><div class="popup-section-title">N-1 Midpoint Hosting Capacity <span style="font-size:9px;font-weight:600;color:#58a6ff;background:#1f3a5f;border-radius:3px;padding:1px 5px;vertical-align:1px">2026 MODEL</span></div>`;
@@ -1590,8 +1599,19 @@ function bindMapEvents() {
       html += `<span class="popup-label">Max export (gen)</span><span class="popup-value" style="color:${expCol};font-weight:700">${expLim}</span>`;
       html += `<span class="popup-label">Max import (battery)</span><span class="popup-value" style="color:${impCol};font-weight:700">${impLim}</span>`;
       html += `</div>`;
-      html += n1CurveHtml(p.n1_mid_export_curve, 'Export capacity vs redispatch required');
-      html += n1CurveHtml(p.n1_mid_import_curve, 'Import capacity vs redispatch required');
+      html += n1CurveHtml(p.n1_mid_export_curve, 'Export capacity vs redispatch required',
+                          n1CurveDetail(p, 'n1_mid_export_curve'));
+      html += n1CurveHtml(p.n1_mid_import_curve_hi,
+                          'Import capacity vs redispatch required — load basis',
+                          n1CurveDetail(p, 'n1_mid_import_curve_hi'),
+                          'High-demand cases only. A light-load snapshot carries '
+                        + 'demand-side headroom and cannot limit a new load.',
+                          { firmNA: true, hideInf: true });   // see n1CurveHtml
+      html += n1CurveHtml(p.n1_mid_import_curve,
+                          'Import capacity — all 8 cases',
+                          n1CurveDetail(p, 'n1_mid_import_curve'),
+                          'Includes the light-load cases. Use this for a battery, '
+                        + 'which charges in exactly those conditions.');
       html += `<div class="popup-grid">`;
       // ── Per-section breakdown (corridor matches) ──────────────────────────
       // A long feature is several PSS/E sections whose capacity differs a lot
@@ -1600,7 +1620,7 @@ function bindMapEvents() {
       // do" and not "where should I connect". For siting, the section matters.
       const midSegs = tryParse(p.n1_mid_segments);
       if (midSegs && midSegs.length > 1) {
-        const fmtS = v => v >= 4999 ? 'unconstr.' : Math.round(v).toLocaleString();
+        const fmtS = v => v >= N1_SENT ? 'unconstr.' : Math.round(v).toLocaleString();
         const colS = v => v < 50 ? '#f85149' : v < 200 ? '#d29922' : '#3fb950';
         let rows = `<span style="color:#6e7681">section</span><span style="color:#6e7681;text-align:right">import</span><span style="color:#6e7681;text-align:right">export</span>`;
         midSegs.forEach(s => {
@@ -1622,14 +1642,14 @@ function bindMapEvents() {
         html += `<span class="popup-label">Import (high-demand)</span><span class="popup-value" style="color:${hiCol}">${impHi.toLocaleString()} MW <span style="color:#8b949e;font-weight:400;font-size:10px">(${p.n1_mid_import_hi_case || '–'})</span></span>`;
       }
       html += `</div>`;
-      if (exp != null && exp < 4999 && p.n1_mid_export_limit_branch) {
+      if (exp != null && exp < N1_SENT && p.n1_mid_export_limit_branch) {
         html += `<div style="font-size:10px;color:#8b949e;margin-top:4px">`;
         html += `Export limit: ${p.n1_mid_export_limit_branch}<br>`;
         html += `Contingency: ${p.n1_mid_export_limit_contingency || '–'}<br>`;
         html += `Binding case: ${p.n1_mid_export_case || '–'}`;
         html += `</div>`;
       }
-      if (imp != null && imp < 4999 && p.n1_mid_import_limit_branch && p.n1_mid_import_limit_branch !== p.n1_mid_export_limit_branch) {
+      if (imp != null && imp < N1_SENT && p.n1_mid_import_limit_branch && p.n1_mid_import_limit_branch !== p.n1_mid_export_limit_branch) {
         html += `<div style="font-size:10px;color:#8b949e;margin-top:4px">`;
         html += `Import limit: ${p.n1_mid_import_limit_branch}<br>`;
         html += `Contingency: ${p.n1_mid_import_limit_contingency || '–'}<br>`;
@@ -1642,8 +1662,8 @@ function bindMapEvents() {
         html += `<div style="display:none;margin-top:4px"><table style="width:100%;border-collapse:collapse;font-size:10px">`;
         html += `<tr style="color:#8b949e"><th style="text-align:left;padding:2px 4px">Case</th><th style="text-align:right;padding:2px 4px">Loading</th><th style="text-align:right;padding:2px 4px">Export</th><th style="text-align:right;padding:2px 4px">Import</th></tr>`;
         lineCases.forEach(c => {
-          const eStr = c.e >= 4999 ? '–' : c.e.toLocaleString() + ' MW';
-          const iStr = c.i >= 4999 ? '–' : c.i.toLocaleString() + ' MW';
+          const eStr = c.e >= N1_SENT ? '–' : c.e.toLocaleString() + ' MW';
+          const iStr = c.i >= N1_SENT ? '–' : c.i.toLocaleString() + ' MW';
           const eC = c.e < 50 ? '#f85149' : c.e < 200 ? '#d29922' : '#3fb950';
           const lStr = c.l != null ? c.l.toFixed(0) + '%' : '–';
           const lC = c.l != null && c.l > 90 ? '#f85149' : c.l != null && c.l > 75 ? '#f0883e' : c.l != null && c.l > 50 ? '#d29922' : '#8b949e';
@@ -1868,11 +1888,11 @@ function bindMapEvents() {
     if (p.n1_max_export_mw != null || p.n1_max_import_mw != null) {
       const exp    = p.n1_max_export_mw != null ? parseFloat(p.n1_max_export_mw) : null;
       const imp    = p.n1_max_import_mw != null ? parseFloat(p.n1_max_import_mw) : null;
-      const expLim = exp == null ? '–' : (exp >= 4999) ? 'Unconstrained' : `${exp.toLocaleString()} MW`;
-      const impLim = imp == null ? '–' : (imp >= 4999) ? 'Unconstrained' : `${imp.toLocaleString()} MW`;
+      const expLim = exp == null ? '–' : (exp >= N1_SENT) ? 'Unconstrained' : `${exp.toLocaleString()} MW`;
+      const impLim = imp == null ? '–' : (imp >= N1_SENT) ? 'Unconstrained' : `${imp.toLocaleString()} MW`;
       const expCol = exp == null ? '#8b949e' : exp < 50 ? '#f85149' : exp < 200 ? '#d29922' : '#3fb950';
       const impCol = imp == null ? '#8b949e' : imp < 50 ? '#f85149' : imp < 200 ? '#d29922' : '#3fb950';
-      const expBar = exp == null ? 0 : Math.min(exp >= 4999 ? 100 : exp / 10, 100);
+      const expBar = exp == null ? 0 : Math.min(exp >= N1_SENT ? 100 : exp / 10, 100);
       html += `<div class="popup-section"><div class="popup-section-title">N-1 Hosting Capacity (bus) <span style="font-size:9px;font-weight:600;color:#58a6ff;background:#1f3a5f;border-radius:3px;padding:1px 5px;vertical-align:1px">2026 MODEL</span></div>`;
       html += `<div style="font-size:10px;color:#8b949e;margin-bottom:3px">Worst 8-case PSS/E · RATE1 · 2025–26 dispatch · DC linearised model (±10–20%)</div>`;
       html += `<div style="font-size:10px;color:#6e7681;margin-bottom:5px;font-style:italic">Marginal net-new MW. Export is net of the attrition-weighted local connection queue (≤2 substation hops — see "Generation modelled here" below); import is as-modelled — loads don't queue behind generation. <b>Capacity is reported against the redispatch it requires</b> — see the curve below. Existing plant, excluding this site's own, is backed off in constraint-coefficient order, so the units with most effect on the limiting circuit move first. A single figure assumed an unlimited budget: on these snapshots that meant curtailing 4.5–6.8 GW of a 10.3 GW dispatched pool, and at one node it paid 11 MW of curtailment per 1 MW of relief. Relief is assessed per constraint and simultaneous feasibility is not enforced — treat multi-GW figures as ceilings; system-strength must-run not modelled.</div>`;
@@ -1887,20 +1907,36 @@ function bindMapEvents() {
         html += `<span class="popup-label">Import (high-demand)</span><span class="popup-value" style="color:${hiCol}">${impHi.toLocaleString()} MW <span style="color:#8b949e;font-weight:400;font-size:10px">(${p.n1_import_hi_case || '–'})</span></span>`;
       }
       html += `</div>`;
-      html += n1CurveHtml(p.n1_export_curve, 'Export capacity vs redispatch required');
-      html += n1CurveHtml(p.n1_import_curve, 'Import capacity vs redispatch required');
-      if (exp != null && exp < 4999) {
+      html += n1CurveHtml(p.n1_export_curve, 'Export capacity vs redispatch required',
+                          n1CurveDetail(p, 'n1_export_curve'));
+      // Import is shown on BOTH bases. The high-demand basis is the load basis
+      // and matches the 'Import (high-demand)' figure above; the all-case basis
+      // includes light-load snapshots, which is the right read for a battery
+      // that must be able to charge in any condition. They differ a lot: at
+      // Hazelwood 500 the firm row is 376 MW high-demand and 93 MW all-case.
+      html += n1CurveHtml(p.n1_import_curve_hi,
+                          'Import capacity vs redispatch required — load basis',
+                          n1CurveDetail(p, 'n1_import_curve_hi'),
+                          'High-demand cases only. A light-load snapshot carries '
+                        + 'demand-side headroom and cannot limit a new load.',
+                          { firmNA: true, hideInf: true });   // see n1CurveHtml
+      html += n1CurveHtml(p.n1_import_curve,
+                          'Import capacity — all 8 cases',
+                          n1CurveDetail(p, 'n1_import_curve'),
+                          'Includes the light-load cases. Use this for a battery, '
+                        + 'which charges in exactly those conditions.');
+      if (exp != null && exp < N1_SENT) {
         html += `<div style="margin:4px 0 1px;height:5px;background:#21262d;border-radius:2px">`;
         html += `<div style="width:${expBar}%;height:100%;background:${expCol};border-radius:2px"></div></div>`;
       }
-      if (exp != null && exp < 4999 && p.n1_export_limit_branch) {
+      if (exp != null && exp < N1_SENT && p.n1_export_limit_branch) {
         html += `<div style="font-size:10px;color:#8b949e;margin-top:4px">`;
         html += `Export limit: ${p.n1_export_limit_branch}<br>`;
         html += `Contingency: ${p.n1_export_limit_contingency || '–'}<br>`;
         html += `Binding case: ${p.n1_export_case || '–'}`;
         html += `</div>`;
       }
-      if (imp != null && imp < 4999 && p.n1_import_limit_branch && p.n1_import_limit_branch !== p.n1_export_limit_branch) {
+      if (imp != null && imp < N1_SENT && p.n1_import_limit_branch && p.n1_import_limit_branch !== p.n1_export_limit_branch) {
         html += `<div style="font-size:10px;color:#8b949e;margin-top:4px">`;
         html += `Import limit: ${p.n1_import_limit_branch}<br>`;
         html += `Contingency: ${p.n1_import_limit_contingency || '–'}<br>`;
@@ -1913,8 +1949,8 @@ function bindMapEvents() {
         html += `<div style="display:none;margin-top:4px"><table style="width:100%;border-collapse:collapse;font-size:10px">`;
         html += `<tr style="color:#8b949e"><th style="text-align:left;padding:2px 4px">Case</th><th style="text-align:right;padding:2px 4px">Export</th><th style="text-align:right;padding:2px 4px">Import</th></tr>`;
         subCases.forEach(c => {
-          const eStr = c.e >= 4999 ? '–' : c.e.toLocaleString() + ' MW';
-          const iStr = c.i >= 4999 ? '–' : c.i.toLocaleString() + ' MW';
+          const eStr = c.e >= N1_SENT ? '–' : c.e.toLocaleString() + ' MW';
+          const iStr = c.i >= N1_SENT ? '–' : c.i.toLocaleString() + ' MW';
           const eC = c.e < 50 ? '#f85149' : c.e < 200 ? '#d29922' : '#3fb950';
           html += `<tr><td style="padding:2px 4px;color:#e6edf3">${c.c}</td><td style="text-align:right;padding:2px 4px;color:${eC};font-weight:600">${eStr}</td><td style="text-align:right;padding:2px 4px;color:#8b949e">${iStr}</td></tr>`;
         });
@@ -2936,41 +2972,138 @@ new MutationObserver(() => {
 // already in the DOM (or one set without a mutation) is not left untouched.
 document.querySelectorAll('.maplibregl-popup-content').forEach(collapsifyPopup);
 
-function n1CurveHtml(raw, title) {
+// Escape data-sourced text before it enters the popup HTML. Branch labels come
+// from PSS/E site codes, but they are now printed per curve row, so they get
+// the same treatment any interpolated value should have had.
+function n1Esc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+// Per-curve-point provenance written by enrich_aus_n1_geojson.py: which case
+// set each point, the branch and contingency that bound it, and a trust flag.
+// prefix is the curve's own field name (e.g. 'n1_import_curve_hi').
+function n1CurveDetail(p, prefix) {
+  const split = k => (p[prefix + k] ? String(p[prefix + k]).split(';') : []);
+  return { c: split('_case'), br: split('_branch'), cg: split('_cont'),
+           f: p[prefix + '_flag'] || '' };
+}
+
+// Capacity-vs-redispatch curve.
+//
+// Each row is an INDEPENDENT worst case, so from 2026-08-31 the case and the
+// binding element are carried per point. Before that the popup showed four
+// numbers and named the element of the last one only, so the firm row could
+// not be explained \u2014 at Hazelwood 500 the firm import row comes from WinterLo
+// on a Hunter Valley circuit while the row beneath it names the Snowy corridor
+// in SummerLo.
+//
+// Flags, one character per point:
+//   F  the element that sets this point lies beyond the 300 km geographic
+//      guard \u2014 the same test the headline figure has always had to pass.
+//   S  the value is shared by 25+ unrelated sites: a NEM-wide floor produced by
+//      the distributed-slack convention, not a property of this site.
+// firmNA suppresses the firm (zero-redispatch) VALUE. Set it for a LOAD.
+// AEMO has no option to leave a load unserved, so it must redispatch to supply
+// one: a zero-redispatch load figure describes a dispatch that never occurs.
+// On these snapshots that row was also the distributed-slack floor — 424 nodes
+// were held there by one Hunter Valley circuit, and 86% of them move to a
+// different element as soon as ANY redispatch is allowed (median 93 -> 401 MW).
+// A generator is different and keeps its firm row: it sits on the constraint
+// LHS and competes for redispatch on price, with no entitlement to it. So does
+// a battery, whose charging is a scheduled, curtailable load.
+function n1CurveHtml(raw, title, detail, subtitle, opts) {
   if (!raw) return '';
+  opts = opts || {};
+  const firmNA = !!opts.firmNA;
   const pts = String(raw).split('|').map(function (seg) {
     const bits = seg.split(':');
     return { b: bits[0], v: parseFloat(bits[1]) };
   }).filter(function (o) { return isFinite(o.v); });
   if (pts.length < 2) return '';
-  const cap = function (v) { return v >= 4999 ? 'Unconstrained' : Math.round(v).toLocaleString(); };
-  const max = Math.max.apply(null, pts.map(function (o) { return Math.min(o.v, 4999); }).concat([1]));
+  const shown = opts.hideInf ? pts.filter(function (o) { return o.b !== 'inf'; }) : pts;
+  if (!shown.length) return '';
+  const d = detail || {};
+  // detail arrays stay aligned to the FULL point list, so remember the offset
+  const idxOf = function (o) { return pts.indexOf(o); };
+  const cap = function (v) { return v >= N1_SENT ? 'Unconstrained' : Math.round(v).toLocaleString(); };
+  const max = Math.max.apply(null, shown.map(function (o) { return Math.min(o.v, N1_SENT); }).concat([1]));
   const label = function (b) {
     if (b === '0')   return 'Firm \u2014 no redispatch';
     if (b === 'inf') return 'Unlimited redispatch';
     return 'with ' + Number(b).toLocaleString() + ' MW moved';
   };
+  let sawF = false, sawS = false;
   let h = '<div style="font-size:10px;color:#8b949e;margin:7px 0 3px">' + title + '</div>';
-  pts.forEach(function (o, i) {
-    const firm = (i === 0);
-    const w = Math.max(2, Math.min(o.v, 4999) / max * 100);
-    const col = firm ? '#58a6ff' : '#3fb950';
+  if (subtitle) {
+    h += '<div style="font-size:9px;color:#6e7681;margin:-2px 0 4px;line-height:1.3">'
+       + subtitle + '</div>';
+  }
+  shown.forEach(function (o, n) {
+    const i    = idxOf(o);
+    const firm = (o.b === '0');
+    const na   = firm && firmNA;          // not applicable, not "zero capacity"
+    const flag = na ? '.' : ((d.f || '').charAt(i) || '.');
+    if (flag === 'F') sawF = true;
+    if (flag === 'S') sawS = true;
+    const w = na ? 0 : Math.max(2, Math.min(o.v, N1_SENT) / max * 100);
+    const col = flag === 'F' ? '#d29922' : firm ? '#58a6ff' : '#3fb950';
+    const num = na ? '#6e7681' : flag === 'F' ? '#d29922' : firm ? '#58a6ff' : '#e6edf3';
     h += '<div style="display:grid;grid-template-columns:120px 1fr 66px;gap:6px;'
        + 'align-items:center;font-size:10px;margin-bottom:2px">'
-       + '<span style="color:' + (firm ? '#e6edf3' : '#8b949e') + ';'
-       + (firm ? 'font-weight:600' : '') + '">' + label(o.b) + '</span>'
+       + '<span style="color:' + (na ? '#6e7681' : firm ? '#e6edf3' : '#8b949e') + ';'
+       + (firm && !na ? 'font-weight:600' : '') + '">' + label(o.b) + '</span>'
        + '<span style="background:#21262d;border-radius:2px;height:7px;display:block;position:relative">'
-       + '<span style="position:absolute;left:0;top:0;bottom:0;width:' + w + '%;'
-       + 'background:' + col + ';border-radius:2px"></span></span>'
-       + '<span style="text-align:right;color:' + (firm ? '#58a6ff' : '#e6edf3') + ';'
-       + (firm ? 'font-weight:700' : '') + '">' + cap(o.v) + '</span>'
+       + (na ? '' : '<span style="position:absolute;left:0;top:0;bottom:0;width:' + w + '%;'
+       + 'background:' + col + ';border-radius:2px"></span>')
+       + '</span>'
+       + '<span style="text-align:right;color:' + num + ';'
+       + (firm && !na ? 'font-weight:700' : '') + '">' + (na ? 'N/A' : cap(o.v)) + '</span>'
        + '</div>';
+    if (na) {
+      h += '<div style="font-size:9px;color:#6e7681;margin:-1px 0 4px 126px;'
+         + 'line-height:1.3;font-style:italic">Not applicable to a load \u2014 AEMO '
+         + 'cannot leave a load unserved, so it must redispatch to supply one. '
+         + 'Start at the row below.</div>';
+      return;
+    }
+    // Provenance line: what set THIS row. Built from parts so a missing piece
+    // (an older geojson has no element columns) leaves no dangling separator.
+    const br = (d.br || [])[i] || '', cg = (d.cg || [])[i] || '', cs = (d.c || [])[i] || '';
+    const parts = [];
+    if (flag === 'F') parts.push('\u26a0 beyond 300 km');
+    else if (flag === 'S') parts.push('\u26a0 NEM-wide floor');
+    if (cs) parts.push(n1Esc(cs));
+    if (br) parts.push(n1Esc(br) + (cg ? ' under ' + n1Esc(cg) : ''));
+    if (parts.length) {
+      h += '<div style="font-size:9px;color:' + (flag === '.' ? '#6e7681' : '#d29922')
+         + ';margin:-1px 0 4px 126px;line-height:1.3">' + parts.join(' \u00b7 ') + '</div>';
+    }
   });
   h += '<div style="font-size:9px;color:#6e7681;margin-top:3px;font-style:italic">'
      + 'Existing plant is backed off in constraint-coefficient order \u2014 the units with '
-     + 'most effect on the limiting circuit first. A new generator competes for that '
-     + 'redispatch on price and is not entitled to it, so the firm row is the '
-     + 'conservative basis for curtailment risk.</div>';
+     + 'most effect on the limiting circuit first. '
+     + (firmNA
+        ? 'A load is not a dispatchable term: AEMO must redispatch to serve it, so the '
+        + 'zero-redispatch row is not a load figure. '
+        : 'A new generator competes for that redispatch on price and is not entitled '
+        + 'to it, so the firm row is the conservative basis for curtailment risk. ')
+     + 'Each row is its own worst case, so the case and the limiting circuit can '
+     + 'change from row to row.</div>';
+  if (sawS) {
+    h += '<div style="font-size:9px;color:#d29922;margin-top:3px;line-height:1.3">'
+       + '\u26a0 <b>NEM-wide floor.</b> This figure is identical at 25 or more unrelated '
+       + 'substations. A new load is balanced against the whole dispatched fleet '
+       + '(distributed slack), much of it in the Hunter Valley, so one remote corridor '
+       + 'sets the same number across the network. Read it as the floor of the snapshot, '
+       + 'not as a property of this site.</div>';
+  }
+  if (sawF) {
+    h += '<div style="font-size:9px;color:#d29922;margin-top:3px;line-height:1.3">'
+       + '\u26a0 <b>Remote limiting circuit.</b> The element setting this row is more than '
+       + '300 km away, which is the distance at which the tool stops trusting a match. '
+       + 'Treat the row as a floor.</div>';
+  }
   return h;
 }
 
