@@ -687,6 +687,31 @@ function addLayers() {
     type: 'geojson',
     data: { type: 'FeatureCollection', features: [] }
   });
+  // Arrow glyphs are drawn to a canvas and registered as IMAGES, not text.
+  // A text-field of '▶' does not work here: the style's glyph server
+  // (fonts.openmaptiles.org) serves Open Sans, which has no geometric-shapes
+  // block, so the symbol silently renders as nothing. One image per colour
+  // band avoids both the font dependency and SDF recolouring.
+  (function addArrowImages() {
+    const BANDS = ['#3fb950', '#d29922', '#f85149'];
+    BANDS.forEach((colour, i) => {
+      const id = 'flow-arrow-' + i;
+      if (map.hasImage(id)) return;
+      const W = 24, H = 24;
+      const cv = document.createElement('canvas');
+      cv.width = W; cv.height = H;
+      const g = cv.getContext('2d');
+      g.beginPath();
+      g.moveTo(4, 3); g.lineTo(21, 12); g.lineTo(4, 21); g.closePath();
+      g.fillStyle = colour;
+      g.fill();
+      g.strokeStyle = 'rgba(13,17,23,0.9)';
+      g.lineWidth = 2;
+      g.stroke();
+      map.addImage(id, g.getImageData(0, 0, W, H));
+    });
+  })();
+
   map.addLayer({
     id: 'flow-arrows',
     type: 'symbol',
@@ -694,30 +719,25 @@ function addLayers() {
     layout: {
       'symbol-placement': 'line',
       'symbol-spacing': 55,
-      'text-field': '▶',
+      'icon-image': ['case',
+        ['>', ['get', 'load'], 0.85], 'flow-arrow-2',
+        ['>', ['get', 'load'], 0.65], 'flow-arrow-1',
+        'flow-arrow-0'],
       // size grows with |MW|; p95 of the fleet is ~350 MW, max ~1,020
-      'text-size': ['interpolate', ['linear'], ['get', 'mw'],
-                    0, 7,  100, 10,  350, 15,  1000, 24],
+      'icon-size': ['interpolate', ['linear'], ['get', 'mw'],
+                    0, 0.30,  100, 0.45,  350, 0.68,  1000, 1.05],
       // symbol-placement:line orients along the DRAWN direction, so a flow
-      // running against the drawing gets flipped 180. keep-upright must be
-      // off or MapLibre re-flips symbols it thinks are upside down and the
+      // running against the drawing is flipped 180. keep-upright must be off
+      // or MapLibre re-flips symbols it thinks are upside down and the
       // direction encoding is silently lost.
-      'text-rotate': ['case', ['get', 'flip'], 180, 0],
-      'text-rotation-alignment': 'map',
-      'text-keep-upright': false,
-      'text-allow-overlap': true,
-      'text-ignore-placement': true,
+      'icon-rotate': ['case', ['get', 'flip'], 180, 0],
+      'icon-rotation-alignment': 'map',
+      'icon-keep-upright': false,
+      'icon-allow-overlap': true,
+      'icon-ignore-placement': true,
       visibility: 'none'
     },
-    paint: {
-      'text-color': ['case',
-        ['>', ['get', 'load'], 0.85], '#f85149',
-        ['>', ['get', 'load'], 0.65], '#d29922',
-        '#3fb950'],
-      'text-halo-color': '#0d1117',
-      'text-halo-width': 1.2,
-      'text-opacity': 0.95
-    }
+    paint: { 'icon-opacity': 0.95 }
   });
 
   // Congestion binding % layer (hidden by default, covers all lines)

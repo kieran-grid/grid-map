@@ -312,9 +312,9 @@ function hidePopup() { popupEl.style.display = 'none'; }
 //  DATA LOADING
 // ══════════════════════════════════════════════════════════════════════════════
 Promise.all([
-  fetch('transmission_lines.geojson?v=20260822').then(r => r.json()),
-  fetch('substations.geojson?v=20260822').then(r => r.json()),
-  fetch('competing_projects.geojson?v=20260822').then(r => r.json()),
+  fetch('transmission_lines.geojson?v=20260908').then(r => r.json()),
+  fetch('substations.geojson?v=20260908').then(r => r.json()),
+  fetch('competing_projects.geojson?v=20260908').then(r => r.json()),
   fetch('data/mlf_2026_27.json').then(r => r.json()).catch(() => []),
 ]).then(([l, s, p, m]) => {
   allLines = l; allSubs = s; allProjects = p; allMlf = m;
