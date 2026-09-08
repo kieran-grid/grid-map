@@ -342,7 +342,7 @@
     <div class="section-title">Legend – Flow arrows</div>
     <div style="font-size:10px;color:#8b949e;line-height:1.5;margin-bottom:6px">
       Arrows point the way power flows in the selected AEMO seasonal case.
-      Size grows with MW; colour is loading against RATE1
+      Colour is loading against RATE1
       (<span style="color:#3fb950">&lt;65%</span>,
        <span style="color:#d29922">65–85%</span>,
        <span style="color:#f85149">&gt;85%</span>).
@@ -723,9 +723,12 @@ function addLayers() {
         ['>', ['get', 'load'], 0.85], 'flow-arrow-2',
         ['>', ['get', 'load'], 0.65], 'flow-arrow-1',
         'flow-arrow-0'],
-      // size grows with |MW|; p95 of the fleet is ~350 MW, max ~1,020
-      'icon-size': ['interpolate', ['linear'], ['get', 'mw'],
-                    0, 0.30,  100, 0.45,  350, 0.68,  1000, 1.05],
+      // Uniform size (2026-09-08, user-directed): was scaled by |MW| from 0.30
+      // to 1.05, which made anything under a few hundred MW too small to read.
+      // Now every arrow is drawn at what used to be the top of that ramp, and
+      // loading is carried by colour alone. 'mw' is still in the source for the
+      // popup and for anyone who wants the ramp back.
+      'icon-size': 1.05,
       // symbol-placement:line orients along the DRAWN direction, so a flow
       // running against the drawing is flipped 180. keep-upright must be off
       // or MapLibre re-flips symbols it thinks are upside down and the
