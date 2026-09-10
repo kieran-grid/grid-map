@@ -339,10 +339,27 @@
       </tbody>
     </table>
 
+<style>
+/* '?' help marker: keeps the long explanation out of the popup body but one
+   hover away. Pure CSS so it works inside MapLibre popup HTML, which is
+   injected as a string and has no JS handlers of its own. */
+.hlp{display:inline-block;width:13px;height:13px;line-height:13px;text-align:center;
+     border-radius:50%;background:#21262d;color:#8b949e;font-size:9px;font-weight:700;
+     cursor:help;position:relative;margin-left:4px;border:1px solid #30363d;vertical-align:1px}
+.hlp:hover{background:#1f3a5f;color:#79c0ff;border-color:#58a6ff}
+.hlp .hlp-t{visibility:hidden;opacity:0;position:absolute;z-index:99;right:0;top:18px;
+     width:270px;background:#0d1117;border:1px solid #30363d;border-radius:5px;
+     padding:7px 9px;font-size:10px;font-weight:400;line-height:1.45;color:#c9d1d9;
+     text-align:left;cursor:default;box-shadow:0 4px 14px rgba(0,0,0,.6);
+     transition:opacity .12s}
+.hlp:hover .hlp-t{visibility:visible;opacity:1}
+.hlp .hlp-t b{color:#e6edf3}
+</style>
     <div class="section-title">Legend – Flow arrows</div>
     <div style="font-size:10px;color:#8b949e;line-height:1.5;margin-bottom:6px">
       Arrows point the way power flows in the selected AEMO seasonal case.
-      Colour is loading against RATE1
+      The label gives MW and loading. Labels appear from zoom 6 and thin out
+      when crowded. Colour is loading against RATE1
       (<span style="color:#3fb950">&lt;65%</span>,
        <span style="color:#d29922">65–85%</span>,
        <span style="color:#f85149">&gt;85%</span>).
@@ -741,6 +758,39 @@ function addLayers() {
       visibility: 'none'
     },
     paint: { 'icon-opacity': 0.95 }
+  });
+
+  // One value label per line, at its centre. Separate layer from the arrows
+  // because the arrows repeat along the line (symbol-placement 'line') while
+  // the label should appear once ('line-center').
+  // text-font MUST be set: the style's glyph server serves Open Sans, and an
+  // unset font is what silently broke the first version of the arrows.
+  // Digits and Latin letters are present, so text renders - unlike '▶'.
+  map.addLayer({
+    id: 'flow-arrow-labels',
+    type: 'symbol',
+    source: 'flow-arrows-src',
+    minzoom: 6,
+    layout: {
+      'symbol-placement': 'line-center',
+      'text-field': ['get', 'label'],
+      'text-font': ['Open Sans Bold'],
+      'text-size': 10,
+      'text-rotation-alignment': 'viewport',
+      'text-pitch-alignment': 'viewport',
+      'text-padding': 3,
+      'text-allow-overlap': false,   // let MapLibre thin them out when crowded
+      visibility: 'none'
+    },
+    paint: {
+      'text-color': ['case',
+        ['>', ['get', 'load'], 0.85], '#f85149',
+        ['>', ['get', 'load'], 0.65], '#d29922',
+        '#7ee787'],
+      'text-halo-color': '#0d1117',
+      'text-halo-width': 1.8,
+      'text-halo-blur': 0.4
+    }
   });
 
   // Congestion binding % layer (hidden by default, covers all lines)
@@ -1692,7 +1742,7 @@ function bindMapEvents() {
       const impCol = imp == null ? '#8b949e' : imp < 50 ? '#f85149' : imp < 200 ? '#d29922' : '#3fb950';
       html += `<div class="popup-section"><div class="popup-section-title">N-1 Midpoint Hosting Capacity <span style="font-size:9px;font-weight:600;color:#58a6ff;background:#1f3a5f;border-radius:3px;padding:1px 5px;vertical-align:1px">2026 MODEL</span></div>`;
       html += `<div style="font-size:10px;color:#8b949e;margin-bottom:3px">50% tap along line · worst 8-case PSS/E · RATE1 · 2025–26 dispatch · DC linearised</div>`;
-      html += `<div style="font-size:10px;color:#6e7681;margin-bottom:5px;font-style:italic">Marginal single-project capacity. Export is net of the attrition-weighted local connection queue (≤2 substation hops — see "Generation modelled here" on nearby substations); import is as-modelled — loads don't queue behind generation. <b>Mid-span import is still reduced by the queue's physical flow:</b> this line's own thermal limit is measured against the flow it would carry with the local connection queue generating, so queued projects take up part of the circuit even though no queue debit is applied to the import figure itself. Substation-node import does not carry this effect, so the two sit on slightly different bases. <b>Capacity is reported against the redispatch it requires</b> — see the curve below. Existing plant is backed off in constraint-coefficient order, so the units with most effect on the limiting circuit move first. A single figure assumed an unlimited budget: on these snapshots that meant curtailing 4.5–6.8 GW of a 10.3 GW dispatched pool, and at one node it paid 11 MW of curtailment per 1 MW of relief. Relief is assessed per constraint and simultaneous feasibility is not enforced — treat multi-GW figures as ceilings; system-strength must-run not modelled.</div>`;
+      html += `<div style="font-size:10px;color:#6e7681;margin-bottom:5px">Marginal capacity for one new project, at the middle of this line.${hlp('<b>What this is.</b> The MW a new project can add at the middle of this line. One project only. Other connections share the same headroom.<br><br><b>Method.</b> Worst of 8 PSS/E cases, 2025-26 dispatch. RATE1 limits. DC model, accuracy +/-10 to 20 per cent.<br><br><b>Export.</b> The local connection queue is subtracted (2 substation hops). See &#39;Generation modelled here&#39; on a nearby substation.<br><br><b>Import.</b> A load does not queue behind generation, so no queue is subtracted. But the queue still uses part of the circuit, because the thermal limit is measured with the queue generating. A substation node does not do this, so the two figures use slightly different bases.<br><br><b>Redispatch.</b> Existing plant is turned down in constraint-coefficient order. Each constraint is examined alone. <b>Treat figures above 1 GW as a ceiling.</b> System strength and must-run are not modelled.')}</div>`;
       html += `<div class="popup-grid">`;
       if (r1) html += `<span class="popup-label">Line rating</span><span class="popup-value">${r1.toLocaleString()} MVA</span>`;
       if (p.n1_mid_loading_pct != null) {
@@ -2001,7 +2051,7 @@ function bindMapEvents() {
       const expBar = exp == null ? 0 : Math.min(exp >= N1_SENT ? 100 : exp / 10, 100);
       html += `<div class="popup-section"><div class="popup-section-title">N-1 Hosting Capacity (bus) <span style="font-size:9px;font-weight:600;color:#58a6ff;background:#1f3a5f;border-radius:3px;padding:1px 5px;vertical-align:1px">2026 MODEL</span></div>`;
       html += `<div style="font-size:10px;color:#8b949e;margin-bottom:3px">Worst 8-case PSS/E · RATE1 · 2025–26 dispatch · DC linearised model (±10–20%)</div>`;
-      html += `<div style="font-size:10px;color:#6e7681;margin-bottom:5px;font-style:italic">Marginal net-new MW. Export is net of the attrition-weighted local connection queue (≤2 substation hops — see "Generation modelled here" below); import is as-modelled — loads don't queue behind generation. <b>Capacity is reported against the redispatch it requires</b> — see the curve below. Existing plant, excluding this site's own, is backed off in constraint-coefficient order, so the units with most effect on the limiting circuit move first. A single figure assumed an unlimited budget: on these snapshots that meant curtailing 4.5–6.8 GW of a 10.3 GW dispatched pool, and at one node it paid 11 MW of curtailment per 1 MW of relief. Relief is assessed per constraint and simultaneous feasibility is not enforced — treat multi-GW figures as ceilings; system-strength must-run not modelled.</div>`;
+      html += `<div style="font-size:10px;color:#6e7681;margin-bottom:5px">Marginal capacity for one new project at this substation.${hlp('<b>What this is.</b> The MW a new project can add at this substation. One project only. Other connections share the same headroom.<br><br><b>Method.</b> Worst of 8 PSS/E cases, 2025-26 dispatch. RATE1 limits. DC model, accuracy +/-10 to 20 per cent.<br><br><b>Export.</b> The local connection queue is subtracted (2 substation hops). See &#39;Generation modelled here&#39; below.<br><br><b>Import.</b> As modelled. A load does not queue behind generation.<br><br><b>Redispatch.</b> Existing plant, but not this site&#39;s own, is turned down in constraint-coefficient order. Each constraint is examined alone. <b>Treat figures above 1 GW as a ceiling.</b> System strength and must-run are not modelled.')}</div>`;
       html += `<div class="popup-grid">`;
       html += `<span class="popup-label">Max export (gen)</span><span class="popup-value" style="color:${expCol};font-weight:700">${expLim}</span>`;
       html += `<span class="popup-label">Max import (battery)</span><span class="popup-value" style="color:${impCol};font-weight:700">${impLim}</span>`;
@@ -2441,7 +2491,7 @@ function bindMapEvents() {
       const impCol = imp < 100 ? '#f85149' : imp < 300 ? '#d29922' : '#3fb950';
       html += `<div class="popup-section"><div class="popup-section-title">N-1 Midpoint Hosting Capacity</div>`;
       html += `<div style="font-size:10px;color:#8b949e;margin-bottom:3px">50% tap along line · worst PSS/E case · RATE1 · Aug 2020 dispatch</div>`;
-      html += `<div style="font-size:10px;color:#6e7681;margin-bottom:5px;font-style:italic">Marginal single-project capacity — competing connections share this headroom; system services / must-run not modelled.</div>`;
+      html += `<div style="font-size:10px;color:#6e7681;margin-bottom:5px">Marginal capacity for one new project.${hlp('Other connections share this headroom. System services and must-run plant are not modelled.')}</div>`;
       html += `<div class="popup-grid">`;
       if (r1) html += `<span class="popup-label">Line rating</span><span class="popup-value">${r1.toLocaleString()} MVA</span>`;
       html += `<span class="popup-label">Max export (gen)</span><span class="popup-value" style="color:${expCol};font-weight:700">${expLim}</span>`;
@@ -2509,7 +2559,7 @@ function bindMapEvents() {
       const impBar = Math.min(imp >= 4999 ? 100 : imp / 10, 100);
       html += `<div class="popup-section"><div class="popup-section-title">N-1 Hosting Capacity (bus)</div>`;
       html += `<div style="font-size:10px;color:#8b949e;margin-bottom:3px">Worst PSS/E case · RATE1 · Aug 2020 dispatch · DC linearised model (±10–20%)</div>`;
-      html += `<div style="font-size:10px;color:#6e7681;margin-bottom:5px;font-style:italic">Marginal single-project net-new MW. Redispatch relief is taken in constraint-coefficient order and excludes this bus’s own plant. Competing connections share this headroom; system services / must-run not modelled.</div>`;
+      html += `<div style="font-size:10px;color:#6e7681;margin-bottom:5px">Marginal capacity for one new project.${hlp('Redispatch relief is taken in constraint-coefficient order. The units with the most effect on the limiting circuit move first.<br><br>Other connections share this headroom. System services and must-run plant are not modelled.')}</div>`;
       html += `<div class="popup-grid">`;
       html += `<span class="popup-label">Max export (gen)</span><span class="popup-value" style="color:${expCol};font-weight:700">${expLim}</span>`;
       html += `<span class="popup-label">Max import (battery)</span><span class="popup-value" style="color:${impCol};font-weight:700">${impLim}</span>`;
@@ -2853,6 +2903,7 @@ function bindSidebar() {
       const v = sel.value;
       if (!v) {
         map.setLayoutProperty('flow-arrows', 'visibility', 'none');
+        map.setLayoutProperty('flow-arrow-labels', 'visibility', 'none');
         return;
       }
       const [iStr, basis] = v.split('|');
@@ -2873,11 +2924,19 @@ function bindSidebar() {
         feats.push({
           type: 'Feature',
           geometry: src.geometry,
-          properties: { mw: Math.abs(mw), load: load == null ? 0 : load, flip: flip }
+          properties: {
+            mw: Math.abs(mw),
+            load: load == null ? 0 : load,
+            flip: flip,
+            // e.g. '309 MW · 22%'. Loading omitted when the branch has no rating.
+            label: Math.round(Math.abs(mw)).toLocaleString() + ' MW'
+                 + (load == null ? '' : ' · ' + Math.round(load * 100) + '%')
+          }
         });
       });
       map.getSource('flow-arrows-src').setData({ type: 'FeatureCollection', features: feats });
       map.setLayoutProperty('flow-arrows', 'visibility', 'visible');
+      map.setLayoutProperty('flow-arrow-labels', 'visibility', 'visible');
     });
   })();
 
@@ -3145,6 +3204,13 @@ document.querySelectorAll('.maplibregl-popup-content').forEach(collapsifyPopup);
 // Escape data-sourced text before it enters the popup HTML. Branch labels come
 // from PSS/E site codes, but they are now printed per curve row, so they get
 // the same treatment any interpolated value should have had.
+// '?' marker with a hover explanation. Long context lives here rather than in
+// the popup body, which was becoming unreadable. Body text is Simplified
+// Technical English; the tooltip carries the caveats and the method.
+function hlp(text) {
+  return '<span class="hlp">?<span class="hlp-t">' + text + '</span></span>';
+}
+
 function n1Esc(s) {
   return String(s == null ? '' : s)
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -3203,7 +3269,7 @@ function n1CurveHtml(raw, title, detail, subtitle, opts) {
     if (b === 'inf') return 'Unlimited redispatch';
     return 'with ' + Number(b).toLocaleString() + ' MW moved';
   };
-  let sawF = false, sawS = false;
+  let sawF = false, sawS = false, lastSig = null;
   let h = '<div style="font-size:10px;color:#8b949e;margin:7px 0 3px">' + title + '</div>';
   if (subtitle) {
     h += '<div style="font-size:9px;color:#6e7681;margin:-2px 0 4px;line-height:1.3">'
@@ -3231,48 +3297,68 @@ function n1CurveHtml(raw, title, detail, subtitle, opts) {
        + (firm && !na ? 'font-weight:700' : '') + '">' + (na ? 'N/A' : cap(o.v)) + '</span>'
        + '</div>';
     if (na) {
-      h += '<div style="font-size:9px;color:#6e7681;margin:-1px 0 4px 126px;'
-         + 'line-height:1.3;font-style:italic">Not applicable to a load \u2014 AEMO '
-         + 'cannot leave a load unserved, so it must redispatch to supply one. '
-         + 'Start at the row below.</div>';
+      h += '<div style="font-size:9px;color:#6e7681;margin:-1px 0 4px 126px">'
+         + 'Not applicable to a load. Start at the row below.'
+         + hlp('AEMO cannot leave a load unserved. It must redispatch to supply '
+             + 'one. Therefore a zero-redispatch figure does not apply to a load.'
+             + '<br><br>A generator keeps its firm row: it competes for redispatch '
+             + 'on price and is not entitled to it.')
+         + '</div>';
       return;
     }
     // Provenance line: what set THIS row. Built from parts so a missing piece
     // (an older geojson has no element columns) leaves no dangling separator.
     const br = (d.br || [])[i] || '', cg = (d.cg || [])[i] || '', cs = (d.c || [])[i] || '';
+    // Print the provenance only when it CHANGES. Consecutive rows very often
+    // share one case and one limiting circuit, and repeating it on every row
+    // was most of the clutter in this block.
+    const sig = cs + '|' + br + '|' + cg + '|' + flag;
+    const same = (sig === lastSig);
+    lastSig = sig;
     const parts = [];
     if (flag === 'F') parts.push('\u26a0 beyond 300 km');
     else if (flag === 'S') parts.push('\u26a0 NEM-wide floor');
     if (cs) parts.push(n1Esc(cs));
     if (br) parts.push(n1Esc(br) + (cg ? ' under ' + n1Esc(cg) : ''));
-    if (parts.length) {
+    if (parts.length && !same) {
       h += '<div style="font-size:9px;color:' + (flag === '.' ? '#6e7681' : '#d29922')
          + ';margin:-1px 0 4px 126px;line-height:1.3">' + parts.join(' \u00b7 ') + '</div>';
     }
   });
-  h += '<div style="font-size:9px;color:#6e7681;margin-top:3px;font-style:italic">'
-     + 'Existing plant is backed off in constraint-coefficient order \u2014 the units with '
-     + 'most effect on the limiting circuit first. '
-     + (firmNA
-        ? 'A load is not a dispatchable term: AEMO must redispatch to serve it, so the '
-        + 'zero-redispatch row is not a load figure. '
-        : 'A new generator competes for that redispatch on price and is not entitled '
-        + 'to it, so the firm row is the conservative basis for curtailment risk. ')
-     + 'Each row is its own worst case, so the case and the limiting circuit can '
-     + 'change from row to row.</div>';
+  h += '<div style="font-size:9px;color:#6e7681;margin-top:3px">'
+     + (firmNA ? 'Each row is its own worst case.'
+               : 'Firm is the conservative basis. Each row is its own worst case.')
+     + hlp('<b>How to read this.</b> Each row gives the capacity when the market '
+         + 'moves that many MW of existing plant.<br><br>Plant is turned down in '
+         + 'constraint-coefficient order. The units with the most effect on the '
+         + 'limiting circuit move first.<br><br>'
+         + (firmNA
+            ? '<b>Why the firm row is N/A.</b> A load is not a dispatchable term. '
+            + 'AEMO cannot leave a load unserved, so it must redispatch to supply '
+            + 'one. A zero-redispatch figure is not a load figure.'
+            : '<b>Firm.</b> A new generator competes for redispatch on price. It is '
+            + 'not entitled to it. Use the firm row for curtailment risk.')
+         + '<br><br><b>Caution.</b> Each row is an independent worst case. The '
+         + 'seasonal case and the limiting circuit can change from row to row.')
+     + '</div>';
   if (sawS) {
-    h += '<div style="font-size:9px;color:#d29922;margin-top:3px;line-height:1.3">'
-       + '\u26a0 <b>NEM-wide floor.</b> This figure is identical at 25 or more unrelated '
-       + 'substations. A new load is balanced against the whole dispatched fleet '
-       + '(distributed slack), much of it in the Hunter Valley, so one remote corridor '
-       + 'sets the same number across the network. Read it as the floor of the snapshot, '
-       + 'not as a property of this site.</div>';
+    h += '<div style="font-size:9px;color:#d29922;margin-top:3px">'
+       + '⚠ NEM-wide floor, not a property of this site'
+       + hlp('<b>NEM-wide floor.</b> This figure is the same at 25 or more unrelated '
+           + 'substations.<br><br>The model balances a new load against the whole '
+           + 'dispatched fleet. Much of that fleet is in the Hunter Valley. Therefore '
+           + 'one remote corridor sets the same number across the network.<br><br>'
+           + 'Read it as the floor of the snapshot. It is not a limit that belongs '
+           + 'to this site.')
+       + '</div>';
   }
   if (sawF) {
-    h += '<div style="font-size:9px;color:#d29922;margin-top:3px;line-height:1.3">'
-       + '\u26a0 <b>Remote limiting circuit.</b> The element setting this row is more than '
-       + '300 km away, which is the distance at which the tool stops trusting a match. '
-       + 'Treat the row as a floor.</div>';
+    h += '<div style="font-size:9px;color:#d29922;margin-top:3px">'
+       + '⚠ Remote limiting circuit'
+       + hlp('The circuit that sets this row is more than 300 km away. That is the '
+           + 'distance at which the tool stops trusting a match. Treat the row as a '
+           + 'floor, not as a firm figure.')
+       + '</div>';
   }
   return h;
 }
