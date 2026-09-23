@@ -366,6 +366,13 @@
       Shown for the ~690 lines matched to the PSS/E model.
       <b>Worst N-1</b> is the highest flow over every single outage, so its
       direction can be the reverse of normal operation.
+      <b>Annual hourly</b> is a different basis: the loading each circuit
+      actually saw over 8,645 hourly snapshots, not one case. P50 is the
+      median hour; P90 and P95 are the levels passed in only 10% and 5% of
+      hours. A percentile has no direction, so the arrow points the dominant
+      way across the eight cases, and a <b>double head</b> marks the 343 lines
+      where that direction is not the same in all of them. Available for 576
+      lines.
     </div>
 
     <div class="section-title">Legend – % Loading</div>
@@ -588,7 +595,7 @@ popup.on('close', () => { document.getElementById('constr-modal')?.remove(); });
 
 Promise.all([
   fetch('transmission_lines.geojson?v=20260908').then(r => r.json()),
-  fetch('flows_by_case.json?v=20260908').then(r => r.json()).catch(() => null),
+  fetch('flows_by_case.json?v=20260923').then(r => r.json()).catch(() => null),
   fetch('substations.geojson?v=20260908').then(r => r.json()),
   fetch('mlf_2026_27.json').then(r => r.json()),
   fetch('hhci.json').then(r => r.json()).catch(() => ({})),
@@ -711,21 +718,33 @@ function addLayers() {
   // band avoids both the font dependency and SDF recolouring.
   (function addArrowImages() {
     const BANDS = ['#3fb950', '#d29922', '#f85149'];
-    BANDS.forEach((colour, i) => {
-      const id = 'flow-arrow-' + i;
+    const draw = (id, colour, shapes) => {
       if (map.hasImage(id)) return;
       const W = 24, H = 24;
       const cv = document.createElement('canvas');
       cv.width = W; cv.height = H;
       const g = cv.getContext('2d');
-      g.beginPath();
-      g.moveTo(4, 3); g.lineTo(21, 12); g.lineTo(4, 21); g.closePath();
-      g.fillStyle = colour;
-      g.fill();
-      g.strokeStyle = 'rgba(13,17,23,0.9)';
-      g.lineWidth = 2;
-      g.stroke();
+      shapes.forEach(pts => {
+        g.beginPath();
+        g.moveTo(pts[0][0], pts[0][1]);
+        pts.slice(1).forEach(pt => g.lineTo(pt[0], pt[1]));
+        g.closePath();
+        g.fillStyle = colour;
+        g.fill();
+        g.strokeStyle = 'rgba(13,17,23,0.9)';
+        g.lineWidth = 2;
+        g.stroke();
+      });
       map.addImage(id, g.getImageData(0, 0, W, H));
+    };
+    BANDS.forEach((colour, i) => {
+      draw('flow-arrow-' + i, colour, [[[4, 3], [21, 12], [4, 21]]]);
+      // Back-to-back heads, used only by the hourly-percentile basis. A
+      // percentile is a magnitude with no sign, and on 343 of the 576 lines
+      // that carry one the direction is not even unanimous across the eight
+      // cases - so a single head would claim more than the data supports.
+      draw('flow-arrow-bi-' + i, colour,
+           [[[2, 12], [11, 4], [11, 20]], [[22, 12], [13, 4], [13, 20]]]);
     });
   })();
 
@@ -737,9 +756,15 @@ function addLayers() {
       'symbol-placement': 'line',
       'symbol-spacing': 55,
       'icon-image': ['case',
-        ['>', ['get', 'load'], 0.85], 'flow-arrow-2',
-        ['>', ['get', 'load'], 0.65], 'flow-arrow-1',
-        'flow-arrow-0'],
+        ['to-boolean', ['get', 'bi']],
+          ['case',
+            ['>', ['get', 'load'], 0.85], 'flow-arrow-bi-2',
+            ['>', ['get', 'load'], 0.65], 'flow-arrow-bi-1',
+            'flow-arrow-bi-0'],
+        ['case',
+          ['>', ['get', 'load'], 0.85], 'flow-arrow-2',
+          ['>', ['get', 'load'], 0.65], 'flow-arrow-1',
+          'flow-arrow-0']],
       // Uniform size (2026-09-08, user-directed): was scaled by |MW| from 0.30
       // to 1.05, which made anything under a few hundred MW too small to read.
       // Now every arrow is drawn at what used to be the top of that ramp, and
@@ -1503,11 +1528,41 @@ function bindMapEvents() {
       const loadPct     = p.best_loading_pct || p.dsn_loading_pct_n;
       const loadPctN1   = p.dsn_loading_pct_n1;
       const ratingSource = p.rating_source || '';
+      // Provenance. A TER rating is keyed on an AEMO circuit id, so name it: the
+      // join used to be by site name with a "largest rating at this site"
+      // fallback, which put the Dederang-Murray 1,524 MVA circuit on Upper Tumut
+      // - Murray (really equipment 65, 715-915 MVA). Showing the circuit makes a
+      // bad join visible here instead of needing a dig through the TER CSV.
+      const terEq  = p.ter_equipment_id;
+      const srcTxt = ratingSource + (ratingSource === 'TER' && terEq ? ' circuit ' + terEq : '');
+      // Seasonal spread. TER NORM runs summer-day to winter-night; the engine
+      // uses the per-case seasonal value, so printing only the max read high.
+      const nMin = p.best_norm_min_mva, nMax = p.best_norm_max_mva;
+      const normTxt = (nMin != null && nMax != null && Math.abs(nMax - nMin) > 1)
+        ? parseFloat(nMin).toLocaleString() + '–' + parseFloat(nMax).toLocaleString() + ' MVA'
+        : (normRating ? parseFloat(normRating).toLocaleString() + ' MVA' : '–');
 
-      html += `<div class="popup-section"><div class="popup-section-title">Ratings & Loading${ratingSource ? ` <span style="color:#8b949e;font-weight:400">(${ratingSource})</span>` : ''}</div>`;
+      html += `<div class="popup-section"><div class="popup-section-title">Ratings & Loading${srcTxt ? ` <span style="color:#8b949e;font-weight:400">(${srcTxt})</span>` : ''}</div>`;
       html += `<div class="popup-grid">`;
-      html += `<span class="popup-label">Normal (N)</span><span class="popup-value">${normRating ? parseFloat(normRating).toLocaleString() + ' MVA' : '–'}</span>`;
-      html += `<span class="popup-label">Short-term (N-1)</span><span class="popup-value">${emergRating ? parseFloat(emergRating).toLocaleString() + ' MVA' : '–'}</span>`;
+      html += `<span class="popup-label">Normal (N)</span><span class="popup-value">${normTxt}</span>`;
+      // The short-term row can fall back to a DIFFERENT source than the normal
+      // row (TER carries no LDSH entry for every circuit). Say so rather than
+      // letting it sit silently under the header's source label.
+      const emergIsSameSrc = !!(p.best_emerg_rating_mva || p.dsn_st_rating_n1_mva || p.emergency_rating_mva);
+      const emergTxt = emergRating
+        ? parseFloat(emergRating).toLocaleString() + ' MVA'
+          + (emergIsSameSrc ? '' : ' <span style="color:#8b949e;font-weight:400">(PSS/E)</span>')
+        : '–';
+      html += `<span class="popup-label">Short-term (N-1)</span><span class="popup-value">${emergTxt}</span>`;
+      // Cross-check against the ratings the N-1 engine actually uses. They come
+      // from a different source (the PSS/E snapshots), so a wide gap means one
+      // of the two is describing a different circuit.
+      const psseMax = p.psse_norm_max_mva ? parseFloat(p.psse_norm_max_mva) : null;
+      const shownMax = nMax != null ? parseFloat(nMax) : (normRating ? parseFloat(normRating) : null);
+      if (ratingSource === 'TER' && psseMax && shownMax && shownMax > psseMax * 1.25) {
+        html += `<span class="popup-label" style="color:#d29922">⚠ vs PSS/E</span>`
+             + `<span class="popup-value" style="color:#d29922">${psseMax.toLocaleString()} MVA max</span>`;
+      }
       if (loadMW)  html += `<span class="popup-label">Max Demand Load</span><span class="popup-value">${loadMW.toFixed(0)} MW</span>`;
       html += `</div>`;
 
@@ -1753,21 +1808,22 @@ function bindMapEvents() {
         html += `<span class="popup-label">Base loading (${p.n1_mid_export_case || '?'})</span><span class="popup-value" style="color:${lCol}">${load.toFixed(1)}%${fbStr}</span>`;
       }
       html += `<span class="popup-label">Max export (gen)</span><span class="popup-value" style="color:${expCol};font-weight:700">${expLim}</span>`;
-      html += `<span class="popup-label">Max import (battery)</span><span class="popup-value" style="color:${impCol};font-weight:700">${impLim}</span>`;
+      html += `<span class="popup-label">Max import (battery, bid-neutral)</span><span class="popup-value" style="color:${impCol};font-weight:700">${impLim}</span>`;
       html += `</div>`;
-      html += n1CurveHtml(p.n1_mid_export_curve, 'Export capacity vs redispatch required',
-                          n1CurveDetail(p, 'n1_mid_export_curve'));
+      // ── One curve only (2026-09-22) ──────────────────────────────────
+      // Export and battery import are published as SCALARS in the rows above.
+      // Under the bid-neutral pool their curve is two points, and at 56.5% of
+      // nodes those two points are the same number - a two-row chart showing
+      // one value twice is noise. The data-centre curve is the one that still
+      // carries information, because a non-dispatchable load gets the full
+      // merit-ordered pool and its capacity really does move with the budget.
       html += n1CurveHtml(p.n1_mid_import_curve_hi,
-                          'Import capacity vs redispatch required — load basis',
+                          'Data centre import vs redispatch required',
                           n1CurveDetail(p, 'n1_mid_import_curve_hi'),
-                          'High-demand cases only. A light-load snapshot carries '
-                        + 'demand-side headroom and cannot limit a new load.',
+                          'High-demand cases only, and the full merit-ordered '
+                        + 'relief pool — AEMO cannot leave a load unserved, so it '
+                        + 'redispatches whatever is cheapest to supply one.',
                           { firmNA: true, hideInf: true });   // see n1CurveHtml
-      html += n1CurveHtml(p.n1_mid_import_curve,
-                          'Import capacity — all 8 cases',
-                          n1CurveDetail(p, 'n1_mid_import_curve'),
-                          'Includes the light-load cases. Use this for a battery, '
-                        + 'which charges in exactly those conditions.');
       html += `<div class="popup-grid">`;
       // ── Per-section breakdown (corridor matches) ──────────────────────────
       // A long feature is several PSS/E sections whose capacity differs a lot
@@ -2054,7 +2110,7 @@ function bindMapEvents() {
       html += `<div style="font-size:10px;color:#6e7681;margin-bottom:5px">Marginal capacity for one new project at this substation.${hlp('<b>What this is.</b> The MW a new project can add at this substation. One project only. Other connections share the same headroom.<br><br><b>Method.</b> Worst of 8 PSS/E cases, 2025-26 dispatch. RATE1 limits. DC model, accuracy +/-10 to 20 per cent.<br><br><b>Export.</b> The local connection queue is subtracted (2 substation hops). See &#39;Generation modelled here&#39; below.<br><br><b>Import.</b> As modelled. A load does not queue behind generation.<br><br><b>Redispatch.</b> Existing plant, but not this site&#39;s own, is turned down in constraint-coefficient order. Each constraint is examined alone. <b>Treat figures above 1 GW as a ceiling.</b> System strength and must-run are not modelled.')}</div>`;
       html += `<div class="popup-grid">`;
       html += `<span class="popup-label">Max export (gen)</span><span class="popup-value" style="color:${expCol};font-weight:700">${expLim}</span>`;
-      html += `<span class="popup-label">Max import (battery)</span><span class="popup-value" style="color:${impCol};font-weight:700">${impLim}</span>`;
+      html += `<span class="popup-label">Max import (battery, bid-neutral)</span><span class="popup-value" style="color:${impCol};font-weight:700">${impLim}</span>`;
       if (p.n1_max_import_hi_mw != null) {
         // Worst HIGH-DEMAND case — the right basis for load (DC) screening;
         // light-load cases carry demand-side headroom and can't bind a load.
@@ -2063,24 +2119,20 @@ function bindMapEvents() {
         html += `<span class="popup-label">Import (high-demand)</span><span class="popup-value" style="color:${hiCol}">${impHi.toLocaleString()} MW <span style="color:#8b949e;font-weight:400;font-size:10px">(${p.n1_import_hi_case || '–'})</span></span>`;
       }
       html += `</div>`;
-      html += n1CurveHtml(p.n1_export_curve, 'Export capacity vs redispatch required',
-                          n1CurveDetail(p, 'n1_export_curve'));
-      // Import is shown on BOTH bases. The high-demand basis is the load basis
-      // and matches the 'Import (high-demand)' figure above; the all-case basis
-      // includes light-load snapshots, which is the right read for a battery
-      // that must be able to charge in any condition. They differ a lot: at
-      // Hazelwood 500 the firm row is 376 MW high-demand and 93 MW all-case.
+      // ── One curve only (2026-09-22) ──────────────────────────────────
+      // Export and battery import are published as SCALARS in the rows above.
+      // Under the bid-neutral pool their curve is two points, and at 56.5% of
+      // nodes those two points are the same number - a two-row chart showing
+      // one value twice is noise. The data-centre curve is the one that still
+      // carries information, because a non-dispatchable load gets the full
+      // merit-ordered pool and its capacity really does move with the budget.
       html += n1CurveHtml(p.n1_import_curve_hi,
-                          'Import capacity vs redispatch required — load basis',
+                          'Data centre import vs redispatch required',
                           n1CurveDetail(p, 'n1_import_curve_hi'),
-                          'High-demand cases only. A light-load snapshot carries '
-                        + 'demand-side headroom and cannot limit a new load.',
+                          'High-demand cases only, and the full merit-ordered '
+                        + 'relief pool — AEMO cannot leave a load unserved, so it '
+                        + 'redispatches whatever is cheapest to supply one.',
                           { firmNA: true, hideInf: true });   // see n1CurveHtml
-      html += n1CurveHtml(p.n1_import_curve,
-                          'Import capacity — all 8 cases',
-                          n1CurveDetail(p, 'n1_import_curve'),
-                          'Includes the light-load cases. Use this for a battery, '
-                        + 'which charges in exactly those conditions.');
       if (exp != null && exp < N1_SENT) {
         html += `<div style="margin:4px 0 1px;height:5px;background:#21262d;border-radius:2px">`;
         html += `<div style="width:${expBar}%;height:100%;background:${expCol};border-radius:2px"></div></div>`;
@@ -2495,7 +2547,7 @@ function bindMapEvents() {
       html += `<div class="popup-grid">`;
       if (r1) html += `<span class="popup-label">Line rating</span><span class="popup-value">${r1.toLocaleString()} MVA</span>`;
       html += `<span class="popup-label">Max export (gen)</span><span class="popup-value" style="color:${expCol};font-weight:700">${expLim}</span>`;
-      html += `<span class="popup-label">Max import (battery)</span><span class="popup-value" style="color:${impCol};font-weight:700">${impLim}</span>`;
+      html += `<span class="popup-label">Max import (battery, bid-neutral)</span><span class="popup-value" style="color:${impCol};font-weight:700">${impLim}</span>`;
       html += `</div>`;
       if (exp < 4999 && p.n1_mid_export_limit_branch) {
         html += `<div style="font-size:10px;color:#8b949e;margin-top:4px">`;
@@ -2562,7 +2614,7 @@ function bindMapEvents() {
       html += `<div style="font-size:10px;color:#6e7681;margin-bottom:5px">Marginal capacity for one new project.${hlp('Redispatch relief is taken in constraint-coefficient order. The units with the most effect on the limiting circuit move first.<br><br>Other connections share this headroom. System services and must-run plant are not modelled.')}</div>`;
       html += `<div class="popup-grid">`;
       html += `<span class="popup-label">Max export (gen)</span><span class="popup-value" style="color:${expCol};font-weight:700">${expLim}</span>`;
-      html += `<span class="popup-label">Max import (battery)</span><span class="popup-value" style="color:${impCol};font-weight:700">${impLim}</span>`;
+      html += `<span class="popup-label">Max import (battery, bid-neutral)</span><span class="popup-value" style="color:${impCol};font-weight:700">${impLim}</span>`;
       html += `</div>`;
       if (exp < 4999) {
         html += `<div style="margin:4px 0 1px;height:5px;background:#21262d;border-radius:2px">`;
@@ -2898,6 +2950,14 @@ function bindSidebar() {
         sel.appendChild(o);
       });
     });
+    // Annual hourly basis. Not a case, so it has no case index - these read
+    // the percentile triple attached by add_hourly_pct_to_flows.py.
+    [['p50', 'P50 (median)'], ['p90', 'P90'], ['p95', 'P95']].forEach(([k, lbl]) => {
+      const o = document.createElement('option');
+      o.value = 'pct|' + k;
+      o.textContent = 'Annual hourly — ' + lbl;
+      sel.appendChild(o);
+    });
 
     sel.addEventListener('change', () => {
       const v = sel.value;
@@ -2907,6 +2967,34 @@ function bindSidebar() {
         return;
       }
       const [iStr, basis] = v.split('|');
+      if (iStr === 'pct') {
+        const pi = { p50: 0, p90: 1, p95: 2 }[basis];
+        const nm = basis.toUpperCase();
+        const pfeats = [];
+        Object.entries(fbc.lines).forEach(([idx, rec]) => {
+          const p = rec.p && rec.p[pi];
+          if (p == null) return;
+          const src = linesData.features[+idx];
+          if (!src || !src.geometry) return;
+          pfeats.push({
+            type: 'Feature',
+            geometry: src.geometry,
+            properties: {
+              load: p,
+              flip: !!rec.pd,
+              bi: !!rec.pm,
+              // No MW: a percentile is a loading, and the MW behind it differs
+              // hour to hour. Showing one case's MW beside it would mislead.
+              label: nm + ' ' + Math.round(p * 100) + '%'
+            }
+          });
+        });
+        map.getSource('flow-arrows-src').setData(
+          { type: 'FeatureCollection', features: pfeats });
+        map.setLayoutProperty('flow-arrows', 'visibility', 'visible');
+        map.setLayoutProperty('flow-arrow-labels', 'visibility', 'visible');
+        return;
+      }
       const i = parseInt(iStr, 10);
       const lkey = basis + 'l';
       const feats = [];

@@ -29,9 +29,10 @@
     "2026_03",
     "2026_04",
     "2026_05",
-    "2026_06"
+    "2026_06",
+    "2026_07"
   ],
-  "total_constraints": 9510,
+  "total_constraints": 9668,
   "lines_with_binding_data": 211,
   "top_binding": [
     {
@@ -172,7 +173,7 @@
       "binding_pct": 100.0,
       "total_intervals": 76,
       "line_matched": [],
-      "description": ""
+      "description": "Limit 0MW to Sun Metals Solar farm for system strength requirement"
     },
     {
       "constraintid": "#TIBG1_R1",
@@ -452,63 +453,63 @@
       "binding_pct": 100.0,
       "total_intervals": 204,
       "line_matched": [],
-      "description": ""
+      "description": "Constraint to violate if Reactive power output of Clare Solar farm is greater than +/10Mvar when it is limited at 0MW output, Swamp if MW >0 (DS only)"
     },
     {
       "constraintid": "Q-DAYSF_MVAR",
       "binding_pct": 100.0,
       "total_intervals": 78,
       "line_matched": [],
-      "description": ""
+      "description": "Constraint to violate if Reactive power output of Daydream Solar farm is greater than +/- 10Mvar at 0MW output, Swamp if MW >0 (DS only)"
     },
     {
       "constraintid": "Q-HAMSF_MVAR",
       "binding_pct": 100.0,
       "total_intervals": 204,
       "line_matched": [],
-      "description": ""
+      "description": "Constraint to violate if Reactive power output of Hamilton Solar farm is greater than +/10Mvar when it is limited at 0MW output, Swamp if MW >0 (DS only)"
     },
     {
       "constraintid": "Q-HAUSF_MVAR",
       "binding_pct": 100.0,
       "total_intervals": 78,
       "line_matched": [],
-      "description": ""
+      "description": "Constraint to violate if Reactive power output of Haughton Solar farm is greater than +/10Mvar when it is limited at 0MW output, Swamp if MW >0 (DS only)"
     },
     {
       "constraintid": "Q-HAYSF_MVAR",
       "binding_pct": 100.0,
       "total_intervals": 78,
       "line_matched": [],
-      "description": ""
+      "description": "Constraint to violate if Reactive power output of Hayman Solar farm is greater than +/10Mvar when it is limited at 0MW output, Swamp if MW >0 (DS only)"
     },
     {
       "constraintid": "Q-KIDSF_MVAR",
       "binding_pct": 100.0,
       "total_intervals": 78,
       "line_matched": [],
-      "description": ""
+      "description": "Constraint to violate if Reactive power output of Kidston Solar farm is greater than +/10Mvar when it is limited at 0MW output, Swamp if MW >0 (DS only)"
     },
     {
       "constraintid": "Q-MEWF_MVAR",
       "binding_pct": 100.0,
       "total_intervals": 78,
       "line_matched": [],
-      "description": ""
+      "description": "Constraint to violate if Reactive power output of Mt Emerald Wind farm Solar farm is greater than +/10Mvar when it is limited at 0MW output, Swamp if MW >0 (DS only)"
     },
     {
       "constraintid": "Q-RGBSF_MVAR",
       "binding_pct": 100.0,
       "total_intervals": 78,
       "line_matched": [],
-      "description": ""
+      "description": "Constraint to violate if Reactive power output of Rugby Run Solar farm is greater than +/10Mvar when it is limited at 0MW output, Swamp if MW >0 (DS only)"
     },
     {
       "constraintid": "Q-RRSF_MVAR",
       "binding_pct": 100.0,
       "total_intervals": 78,
       "line_matched": [],
-      "description": ""
+      "description": "Constraint to violate if Reactive power output of Ross River Solar farm is greater than +/10Mvar when it is limited at 0MW output, Swamp if MW >0 (DS only)"
     },
     {
       "constraintid": "Q-SMSF_MVAR",
@@ -522,7 +523,7 @@
       "binding_pct": 100.0,
       "total_intervals": 204,
       "line_matched": [],
-      "description": ""
+      "description": "Constraint to violate if Reactive power output of Whitsundays Solar farm is greater than +/10Mvar when it is limited at 0MW output, Swamp if MW >0 (DS only)"
     },
     {
       "constraintid": "#N-Q-MNSP1_RAMP_E_F",
@@ -567,13 +568,6 @@
       "description": "VCPT1C.ENERGY * 1 <= 0 (Wt = 360)"
     },
     {
-      "constraintid": "$SWANBBF1",
-      "binding_pct": 100.0,
-      "total_intervals": 1101,
-      "line_matched": [],
-      "description": ""
-    },
-    {
       "constraintid": "#MOLNGSF1_E1",
       "binding_pct": 100.0,
       "total_intervals": 4,
@@ -616,16 +610,9 @@
       "description": ""
     },
     {
-      "constraintid": "$QPSFB2",
-      "binding_pct": 100.0,
-      "total_intervals": 17,
-      "line_matched": [],
-      "description": ""
-    },
-    {
       "constraintid": "$QPSFB1",
       "binding_pct": 100.0,
-      "total_intervals": 90,
+      "total_intervals": 160,
       "line_matched": [],
       "description": ""
     },
@@ -651,9 +638,58 @@
       "description": "Molong solar farm upper limit of 0 MW to manage risk of islanding on the next contingency"
     },
     {
+      "constraintid": "#SSE_PPCCGT_1",
+      "binding_pct": 100.0,
+      "total_intervals": 666,
+      "line_matched": [],
+      "description": "Minimum unit target for DUID PPCCGT required to provide system security for SSM Contract TS1_S00006 on 1/07/2026 12:05:00 AM"
+    },
+    {
+      "constraintid": "$STABESS1",
+      "binding_pct": 100.0,
+      "total_intervals": 41,
+      "line_matched": [],
+      "description": ""
+    },
+    {
+      "constraintid": "#SSE_PPCCGT_2",
+      "binding_pct": 100.0,
+      "total_intervals": 990,
+      "line_matched": [],
+      "description": "Minimum unit target for DUID PPCCGT required to provide system security for SSM Contract TS1_S00006 on 11/07/2026 12:05:00 AM"
+    },
+    {
+      "constraintid": "V_CRWARP_FLT_0",
+      "binding_pct": 100.0,
+      "total_intervals": 129,
+      "line_matched": [],
+      "description": "Limit Carwarp solar farm upper limit to 0 MW to manage post contingent voltage oscillation"
+    },
+    {
+      "constraintid": "$WELLSF1",
+      "binding_pct": 100.0,
+      "total_intervals": 6,
+      "line_matched": [],
+      "description": ""
+    },
+    {
+      "constraintid": "#SSE_PPCCGT_4",
+      "binding_pct": 100.0,
+      "total_intervals": 17,
+      "line_matched": [],
+      "description": "Minimum unit target for DUID PPCCGT required to provide system security for SSM Contract TS1_S00006 on 22/07/2026 10:40:00 AM"
+    },
+    {
+      "constraintid": "#SSE_PPCCGT_5",
+      "binding_pct": 100.0,
+      "total_intervals": 504,
+      "line_matched": [],
+      "description": "Minimum unit target for DUID PPCCGT required to provide system security for SSM Contract TS1_S00006 on 27/07/2026 10:05:00 AM"
+    },
+    {
       "constraintid": "#TORRB2_D_E",
       "binding_pct": 99.98,
-      "total_intervals": 38076,
+      "total_intervals": 38526,
       "line_matched": [],
       "description": "STSB2.ENERGY * 1 = 40 (Wt = 755)"
     },
@@ -700,9 +736,16 @@
       "description": "Daydream solar farm upper limit of 0 MW"
     },
     {
+      "constraintid": "$SWANBBF1",
+      "binding_pct": 99.73,
+      "total_intervals": 1104,
+      "line_matched": [],
+      "description": ""
+    },
+    {
       "constraintid": "SVML_ZERO",
-      "binding_pct": 99.71,
-      "total_intervals": 22574,
+      "binding_pct": 99.7,
+      "total_intervals": 23165,
       "line_matched": [],
       "description": "SA to Vic on ML upper transfer limit of 0 MW 1102 (91.83) Interconnector Zero V::S_BDBU+TBSE1_03 Out = Bundey to Buronga 330kV line +  one South East to Tailem Bend 275kV line (Both Black Range series capacitors O/S or I/S); Vic to SA Transient Stability limit for loss of one of the Tailembend-South East 275kV lines."
     },
@@ -756,16 +799,16 @@
       "description": "Multiple NSW1 LHS <= 100 (Wt = 360)"
     },
     {
-      "constraintid": "$GESF1",
-      "binding_pct": 99.2,
-      "total_intervals": 1625,
+      "constraintid": "$WYASF1",
+      "binding_pct": 98.97,
+      "total_intervals": 291,
       "line_matched": [],
       "description": ""
     },
     {
-      "constraintid": "$WYASF1",
-      "binding_pct": 98.97,
-      "total_intervals": 291,
+      "constraintid": "$GESF1",
+      "binding_pct": 98.96,
+      "total_intervals": 1638,
       "line_matched": [],
       "description": ""
     },
@@ -791,6 +834,13 @@
       "description": ""
     },
     {
+      "constraintid": "CA_SYDS_597A8B26_2",
+      "binding_pct": 98.25,
+      "total_intervals": 57,
+      "line_matched": [],
+      "description": "Constraint Automation, O/L BATS_MLTS1_220:LML1:I:220@BATS@VIC for CTG LVDX on trip of ELTS-MLTS 220KV LINE.  Generated by STNET[NORCR2] Host NORREGEEMP7(EMPSYD)"
+    },
+    {
       "constraintid": "$WAGGNSF1",
       "binding_pct": 98.24,
       "total_intervals": 284,
@@ -812,6 +862,13 @@
       "description": "Constraint to violate if Reactive power output of Clarke Creek is greater than +/10Mvar when it is limited at 0MW output, Swamp if MW >0 (DS only)"
     },
     {
+      "constraintid": "Q_STR_ALDSF_ZERO",
+      "binding_pct": 97.29,
+      "total_intervals": 221,
+      "line_matched": [],
+      "description": "Limit Aldoga Solar farm to zero MW for system strength requirement"
+    },
+    {
       "constraintid": "A_S_MINTARO_40_E",
       "binding_pct": 97.29,
       "total_intervals": 258,
@@ -819,18 +876,18 @@
       "description": "Direction to greater than 40 MW for Mintaro GT"
     },
     {
-      "constraintid": "F_T+LREG_0050",
-      "binding_pct": 97.11,
-      "total_intervals": 262656,
-      "line_matched": [],
-      "description": ""
-    },
-    {
       "constraintid": "F_T+RREG_0050",
-      "binding_pct": 97.1,
-      "total_intervals": 262656,
+      "binding_pct": 97.13,
+      "total_intervals": 271584,
       "line_matched": [],
       "description": "Tasmania Raise Regulation Requirement greater than 50 MW"
+    },
+    {
+      "constraintid": "F_T+LREG_0050",
+      "binding_pct": 97.08,
+      "total_intervals": 271584,
+      "line_matched": [],
+      "description": ""
     },
     {
       "constraintid": "$CUSF1",
@@ -875,11 +932,11 @@
       "description": ""
     },
     {
-      "constraintid": "Q_STR_ALDSF_ZERO",
+      "constraintid": "VT_ZERO",
       "binding_pct": 95.62,
-      "total_intervals": 137,
+      "total_intervals": 2992,
       "line_matched": [],
-      "description": "Limit Aldoga Solar farm to zero MW for system strength requirement"
+      "description": "Vic to Tas on Basslink upper limit of 0 MW"
     },
     {
       "constraintid": "$SWAN_E",
@@ -889,16 +946,16 @@
       "description": ""
     },
     {
-      "constraintid": "VT_ZERO",
-      "binding_pct": 94.94,
-      "total_intervals": 2512,
-      "line_matched": [],
-      "description": "Vic to Tas on Basslink upper limit of 0 MW"
-    },
-    {
       "constraintid": "$GSTONE1",
       "binding_pct": 94.66,
       "total_intervals": 1799,
+      "line_matched": [],
+      "description": ""
+    },
+    {
+      "constraintid": "I_CTRL_ISSUE_ML",
+      "binding_pct": 94.65,
+      "total_intervals": 318,
       "line_matched": [],
       "description": ""
     },
@@ -924,18 +981,18 @@
       "description": ""
     },
     {
+      "constraintid": "$CHBESS1",
+      "binding_pct": 93.42,
+      "total_intervals": 304,
+      "line_matched": [],
+      "description": ""
+    },
+    {
       "constraintid": "V::S_TBSE+BDBU_12",
       "binding_pct": 93.3,
       "total_intervals": 194,
       "line_matched": [],
       "description": "Out=  Buronga - Bundey 330 kV line + one South East to Tailem Bend 275kV line (Both Black Range series cap O/S or I/S); Vic to SA Transient Stability limit for loss of one of the Tailem Bend-South East 275kV lines."
-    },
-    {
-      "constraintid": "$CHBESS1",
-      "binding_pct": 93.12,
-      "total_intervals": 218,
-      "line_matched": [],
-      "description": ""
     },
     {
       "constraintid": "CA_SYDS_582249B1_1",
@@ -966,11 +1023,11 @@
       "description": ""
     },
     {
-      "constraintid": "I_CTRL_ISSUE_ML",
-      "binding_pct": 92.24,
-      "total_intervals": 219,
+      "constraintid": "#BARKIPS1_D_E",
+      "binding_pct": 92.17,
+      "total_intervals": 690,
       "line_matched": [],
-      "description": ""
+      "description": "SBPS1B.ENERGY * 1 = 72 (Wt = 755)"
     },
     {
       "constraintid": "CA_BRIS_5667C22F_1",
@@ -978,13 +1035,6 @@
       "total_intervals": 292,
       "line_matched": [],
       "description": "Constraint Automation, O/L 967:L967:Z:132@KOOLKHAN@NSW for CTG LNPD on trip of COFFS-LISMORE 89 330KV LINE.  Generated by STNET[NORCR5] Host BNEREGEEMP6(EMPBRI)"
-    },
-    {
-      "constraintid": "#BARKIPS1_D_E",
-      "binding_pct": 91.33,
-      "total_intervals": 623,
-      "line_matched": [],
-      "description": "SBPS1B.ENERGY * 1 = 72 (Wt = 755)"
     },
     {
       "constraintid": "F_NSW_ER_RREG",
@@ -1036,55 +1086,6 @@
         "Robertstown to Tungkillo"
       ],
       "description": "Out= Waterloo-Templers 132kV line, avoid O/L of one Robertstown to Tungkillo 275kV line on trip of Robertstown to Tungkillo 275kV line 1 or 2, Feedback"
-    },
-    {
-      "constraintid": "N_TARALGAWF_005",
-      "binding_pct": 89.91,
-      "total_intervals": 109,
-      "line_matched": [],
-      "description": ""
-    },
-    {
-      "constraintid": "CA_BRIS_56747B2D_1",
-      "binding_pct": 88.89,
-      "total_intervals": 72,
-      "line_matched": [],
-      "description": "Constraint Automation, O/L XFMR 2H@DARL_PT@NSW for CTG LN7M on trip of DARL_PT-YANCO 99D 132KV LINE.  Generated by STNET[NORCR4] Host BNEREGEEMP6(EMPBRI)"
-    },
-    {
-      "constraintid": "$GSTONE6",
-      "binding_pct": 88.81,
-      "total_intervals": 1350,
-      "line_matched": [],
-      "description": ""
-    },
-    {
-      "constraintid": "$GSTONE2",
-      "binding_pct": 87.6,
-      "total_intervals": 1379,
-      "line_matched": [],
-      "description": ""
-    },
-    {
-      "constraintid": "CA_SYDS_565B8899_1",
-      "binding_pct": 86.96,
-      "total_intervals": 23,
-      "line_matched": [],
-      "description": "Constraint Automation, O/L MOBTAB_1:LMOB:Z:132@T_BEND@SA for CTG TSHY on trip of T_BEND 4 275/132KV TX & C64 CAP.  Generated by STNET[BNECR2] Host NORREGEEMP7(EMPSYD)"
-    },
-    {
-      "constraintid": "CA_BRIS_55306556_1",
-      "binding_pct": 86.84,
-      "total_intervals": 38,
-      "line_matched": [],
-      "description": "Constraint Automation, O/L XFMR T_4@T_BEND@SA for CTG LSIP on trip of TUNKIL - T_BEND #2 275KV LINE.  Generated by STNET[BNECR3] Host BNEREGEEMP5(EMPBRI)"
-    },
-    {
-      "constraintid": "CA_SYDS_5505DC4C_1",
-      "binding_pct": 86.67,
-      "total_intervals": 75,
-      "line_matched": [],
-      "description": "Constraint Automation, O/L WATTEM_1:LTEM:I:132@W_LOO@SA for CTG LSJA on trip of BLYT_W-MUNN_P 275KV LINE.  Generated by STNET[BNEVM3] Host NORREGEEMP7(EMPSYD)"
     }
   ]
 }
