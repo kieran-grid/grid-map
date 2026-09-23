@@ -1807,8 +1807,10 @@ function bindMapEvents() {
         const fbStr = fb != null ? ` (${fb >= 0 ? '+' : ''}${fb.toLocaleString()} MW)` : '';
         html += `<span class="popup-label">Base loading (${p.n1_mid_export_case || '?'})</span><span class="popup-value" style="color:${lCol}">${load.toFixed(1)}%${fbStr}</span>`;
       }
-      html += `<span class="popup-label">Max export (gen)</span><span class="popup-value" style="color:${expCol};font-weight:700">${expLim}</span>`;
-      html += `<span class="popup-label">Max import (battery, bid-neutral)</span><span class="popup-value" style="color:${impCol};font-weight:700">${impLim}</span>`;
+      const expPairM = n1PairHtml(p.n1_mid_export_curve, exp);
+      const impPairM = n1PairHtml(p.n1_mid_import_curve, imp);
+      html += `<span class="popup-label">Export (generation)</span><span class="popup-value">${expPairM || expLim}</span>`;
+      html += `<span class="popup-label">Import (battery, bid-neutral)</span><span class="popup-value">${impPairM || impLim}</span>`;
       html += `</div>`;
       // ── One curve only (2026-09-22) ──────────────────────────────────
       // Export and battery import are published as SCALARS in the rows above.
@@ -2109,8 +2111,10 @@ function bindMapEvents() {
       html += `<div style="font-size:10px;color:#8b949e;margin-bottom:3px">Worst 8-case PSS/E · RATE1 · 2025–26 dispatch · DC linearised model (±10–20%)</div>`;
       html += `<div style="font-size:10px;color:#6e7681;margin-bottom:5px">Marginal capacity for one new project at this substation.${hlp('<b>What this is.</b> The MW a new project can add at this substation. One project only. Other connections share the same headroom.<br><br><b>Method.</b> Worst of 8 PSS/E cases, 2025-26 dispatch. RATE1 limits. DC model, accuracy +/-10 to 20 per cent.<br><br><b>Export.</b> The local connection queue is subtracted (2 substation hops). See &#39;Generation modelled here&#39; below.<br><br><b>Import.</b> As modelled. A load does not queue behind generation.<br><br><b>Redispatch.</b> Existing plant, but not this site&#39;s own, is turned down in constraint-coefficient order. Each constraint is examined alone. <b>Treat figures above 1 GW as a ceiling.</b> System strength and must-run are not modelled.')}</div>`;
       html += `<div class="popup-grid">`;
-      html += `<span class="popup-label">Max export (gen)</span><span class="popup-value" style="color:${expCol};font-weight:700">${expLim}</span>`;
-      html += `<span class="popup-label">Max import (battery, bid-neutral)</span><span class="popup-value" style="color:${impCol};font-weight:700">${impLim}</span>`;
+      const expPair = n1PairHtml(p.n1_export_curve, exp);
+      const impPair = n1PairHtml(p.n1_import_curve, imp);
+      html += `<span class="popup-label">Export (generation)</span><span class="popup-value">${expPair || expLim}</span>`;
+      html += `<span class="popup-label">Import (battery, bid-neutral)</span><span class="popup-value">${impPair || impLim}</span>`;
       if (p.n1_max_import_hi_mw != null) {
         // Worst HIGH-DEMAND case — the right basis for load (DC) screening;
         // light-load cases carry demand-side headroom and can't bind a load.
@@ -3313,6 +3317,67 @@ function n1CurveDetail(p, prefix) {
            f: p[prefix + '_flag'] || '' };
 }
 
+// Hosting capacity is published as a PAIR: what is available with NO
+// redispatch at all, and what is available once the market moves plant.
+// Until 2026-09-24 the popup showed only the second (the unlimited-budget
+// scalar), which hid the gap entirely - Yass 330 reads 718 MW with redispatch
+// and 0 MW without. Showing only the first is the opposite error: 61% of
+// assessable nodes sit at 0 MW there, which would read as "dead" at sites that
+// are fine in normal operation. Neither number means anything on its own.
+//
+// 'Firm' is deliberately NOT used. There is no firm access in the NEM - every
+// generator is curtailable for a network constraint - so the word claims an
+// entitlement that does not exist.
+function n1PairHtml(raw, scalar) {
+  const pts = {};
+  String(raw || '').split('|').forEach(function (seg) {
+    const bits = seg.split(':');
+    const v = parseFloat(bits[1]);
+    if (isFinite(v)) pts[bits[0]] = v;
+  });
+  const a = pts['0'];
+  // The second number is the ASYMPTOTE, not a fixed budget point. 93% of rows
+  // plateau by 500 MW, but Yass 330 - the case this pair exists to expose -
+  // only moves at 2,000 (0 | 0 | 718 | 718). Keying on 500 would have printed
+  // "unchanged by redispatch" at precisely the wrong site.
+  const ORDER = ['0', '500', '2000', 'inf'];
+  let z = scalar, zb = null;
+  for (let i = ORDER.length - 1; i >= 0; i--) {
+    if (pts[ORDER[i]] != null) { z = pts[ORDER[i]]; break; }
+  }
+  // ...and name the CHEAPEST budget that already reaches it, so the reader
+  // knows whether it costs 500 MW of curtailment or 2,000.
+  for (let i = 0; i < ORDER.length; i++) {
+    const v = pts[ORDER[i]];
+    if (v != null && Math.abs(v - z) < 0.5) { zb = ORDER[i]; break; }
+  }
+  if (a == null && z == null) return null;
+  const fmt = function (v) {
+    return v == null ? '\u2013'
+         : v >= N1_SENT ? 'Unconstrained'
+         : Math.round(v).toLocaleString() + ' MW';
+  };
+  const col = function (v) {
+    return v == null ? '#8b949e' : v >= N1_SENT ? '#3fb950'
+         : v < 50 ? '#f85149' : v < 200 ? '#d29922' : '#3fb950';
+  };
+  const strong = function (v) {
+    return '<span style="color:' + col(v) + ';font-weight:700">' + fmt(v) + '</span>';
+  };
+  // The two points are the same number at a large share of nodes - say so once
+  // rather than printing one value twice.
+  if (a != null && z != null && Math.abs(a - z) < 0.5) {
+    return strong(a) + '<span style="color:#6e7681;font-size:9px">'
+         + ' \u00b7 unchanged by redispatch</span>';
+  }
+  const budg = (zb == null || zb === '0') ? ''
+             : zb === 'inf' ? ' (unlimited)'
+             : ' (' + Number(zb).toLocaleString() + ' MW moved)';
+  return strong(a) + '<span style="color:#6e7681;font-size:9px"> without</span> \u00b7 '
+       + strong(z) + '<span style="color:#6e7681;font-size:9px"> with redispatch'
+       + budg + '</span>';
+}
+
 // Capacity-vs-redispatch curve.
 //
 // Each row is an INDEPENDENT worst case, so from 2026-08-31 the case and the
@@ -3345,7 +3410,12 @@ function n1CurveHtml(raw, title, detail, subtitle, opts) {
     return { b: bits[0], v: parseFloat(bits[1]) };
   }).filter(function (o) { return isFinite(o.v); });
   if (pts.length < 2) return '';
-  const shown = opts.hideInf ? pts.filter(function (o) { return o.b !== 'inf'; }) : pts;
+  // Drop the unlimited point only (2026-09-24): it equalled the 2,000 point at
+  // 100% of rows, so it never carried information. 500 and 2,000 both stay -
+  // 7% of rows move between them, Yass 330 among them. hideInf is now
+  // redundant but harmless.
+  const KEEP = { '0': 1, '500': 1, '2000': 1 };
+  const shown = pts.filter(function (o) { return KEEP[o.b]; });
   if (!shown.length) return '';
   const d = detail || {};
   // detail arrays stay aligned to the FULL point list, so remember the offset
@@ -3353,9 +3423,9 @@ function n1CurveHtml(raw, title, detail, subtitle, opts) {
   const cap = function (v) { return v >= N1_SENT ? 'Unconstrained' : Math.round(v).toLocaleString(); };
   const max = Math.max.apply(null, shown.map(function (o) { return Math.min(o.v, N1_SENT); }).concat([1]));
   const label = function (b) {
-    if (b === '0')   return 'Firm \u2014 no redispatch';
+    if (b === '0')   return 'Without redispatch';
     if (b === 'inf') return 'Unlimited redispatch';
-    return 'with ' + Number(b).toLocaleString() + ' MW moved';
+    return 'With redispatch (' + Number(b).toLocaleString() + ' MW)';
   };
   let sawF = false, sawS = false, lastSig = null;
   let h = '<div style="font-size:10px;color:#8b949e;margin:7px 0 3px">' + title + '</div>';
@@ -3415,17 +3485,19 @@ function n1CurveHtml(raw, title, detail, subtitle, opts) {
   });
   h += '<div style="font-size:9px;color:#6e7681;margin-top:3px">'
      + (firmNA ? 'Each row is its own worst case.'
-               : 'Firm is the conservative basis. Each row is its own worst case.')
+               : 'The first row allows no redispatch at all. Each row is its '
+               + 'own worst case.')
      + hlp('<b>How to read this.</b> Each row gives the capacity when the market '
          + 'moves that many MW of existing plant.<br><br>Plant is turned down in '
          + 'constraint-coefficient order. The units with the most effect on the '
          + 'limiting circuit move first.<br><br>'
          + (firmNA
-            ? '<b>Why the firm row is N/A.</b> A load is not a dispatchable term. '
+            ? '<b>Why the no-redispatch row is N/A.</b> A load is not a dispatchable term. '
             + 'AEMO cannot leave a load unserved, so it must redispatch to supply '
             + 'one. A zero-redispatch figure is not a load figure.'
-            : '<b>Firm.</b> A new generator competes for redispatch on price. It is '
-            + 'not entitled to it. Use the firm row for curtailment risk.')
+            : '<b>Without redispatch.</b> A new generator competes for redispatch '
+            + 'on price and is not entitled to it, so the no-redispatch row is '
+            + 'the curtailment-risk case. There is no firm access in the NEM.')
          + '<br><br><b>Caution.</b> Each row is an independent worst case. The '
          + 'seasonal case and the limiting circuit can change from row to row.')
      + '</div>';
