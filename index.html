@@ -1856,20 +1856,7 @@ function bindMapEvents() {
         html += `<span class="popup-label">Import (high-demand)</span><span class="popup-value" style="color:${hiCol}">${impHi.toLocaleString()} MW <span style="color:#8b949e;font-weight:400;font-size:10px">(${p.n1_mid_import_hi_case || '–'})</span></span>`;
       }
       html += `</div>`;
-      if (exp != null && exp < N1_SENT && p.n1_mid_export_limit_branch) {
-        html += `<div style="font-size:10px;color:#8b949e;margin-top:4px">`;
-        html += `Export limit: ${p.n1_mid_export_limit_branch}<br>`;
-        html += `Contingency: ${p.n1_mid_export_limit_contingency || '–'}<br>`;
-        html += `Binding case: ${p.n1_mid_export_case || '–'}`;
-        html += `</div>`;
-      }
-      if (imp != null && imp < N1_SENT && p.n1_mid_import_limit_branch && p.n1_mid_import_limit_branch !== p.n1_mid_export_limit_branch) {
-        html += `<div style="font-size:10px;color:#8b949e;margin-top:4px">`;
-        html += `Import limit: ${p.n1_mid_import_limit_branch}<br>`;
-        html += `Contingency: ${p.n1_mid_import_limit_contingency || '–'}<br>`;
-        html += `Binding case: ${p.n1_mid_import_case || '–'}`;
-        html += `</div>`;
-      }
+      html += n1WhyPairBlock(p, 'n1_mid_export_curve', 'n1_mid_import_curve', exp, imp);
       const lineCases = p.n1_cases ? tryParse(p.n1_cases) : null;
       if (lineCases && lineCases.length > 1) {
         html += `<button onclick="var t=this.nextElementSibling;var open=t.style.display!=='none';t.style.display=open?'none':'block';this.textContent=open?'All cases ▾':'All cases ▴';" style="margin-top:6px;background:none;border:none;color:#58a6ff;cursor:pointer;font-size:10px;padding:0;text-align:left">All cases ▾</button>`;
@@ -2141,20 +2128,7 @@ function bindMapEvents() {
         html += `<div style="margin:4px 0 1px;height:5px;background:#21262d;border-radius:2px">`;
         html += `<div style="width:${expBar}%;height:100%;background:${expCol};border-radius:2px"></div></div>`;
       }
-      if (exp != null && exp < N1_SENT && p.n1_export_limit_branch) {
-        html += `<div style="font-size:10px;color:#8b949e;margin-top:4px">`;
-        html += `Export limit: ${p.n1_export_limit_branch}<br>`;
-        html += `Contingency: ${p.n1_export_limit_contingency || '–'}<br>`;
-        html += `Binding case: ${p.n1_export_case || '–'}`;
-        html += `</div>`;
-      }
-      if (imp != null && imp < N1_SENT && p.n1_import_limit_branch && p.n1_import_limit_branch !== p.n1_export_limit_branch) {
-        html += `<div style="font-size:10px;color:#8b949e;margin-top:4px">`;
-        html += `Import limit: ${p.n1_import_limit_branch}<br>`;
-        html += `Contingency: ${p.n1_import_limit_contingency || '–'}<br>`;
-        html += `Binding case: ${p.n1_import_case || '–'}`;
-        html += `</div>`;
-      }
+      html += n1WhyPairBlock(p, 'n1_export_curve', 'n1_import_curve', exp, imp);
       const subCases = p.n1_sub_cases ? tryParse(p.n1_sub_cases) : null;
       if (subCases && subCases.length > 1) {
         html += `<button onclick="var t=this.nextElementSibling;var open=t.style.display!=='none';t.style.display=open?'none':'block';this.textContent=open?'All cases ▾':'All cases ▴';" style="margin-top:6px;background:none;border:none;color:#58a6ff;cursor:pointer;font-size:10px;padding:0;text-align:left">All cases ▾</button>`;
@@ -3328,7 +3302,15 @@ function n1CurveDetail(p, prefix) {
 // 'Firm' is deliberately NOT used. There is no firm access in the NEM - every
 // generator is curtailable for a network constraint - so the word claims an
 // entitlement that does not exist.
-function n1PairHtml(raw, scalar) {
+const N1_PAIR_ORDER = ['0', '500', '2000', 'inf'];
+
+// Which two points the pair shows, AND their index in the 4-point detail
+// arrays. The two are computed together because they must agree: at Yass the
+// no-redispatch figure comes from ARMIDL-NEWEN at N-0 in SummerLo while the
+// with-redispatch figure comes from MARULN-YASS under BANABY-CROOKW N-1 in
+// AutumnLo. Printing one element beside both numbers - which this popup did
+// until 2026-09-24 - explains the wrong one.
+function n1PairParts(raw, scalar) {
   const pts = {};
   String(raw || '').split('|').forEach(function (seg) {
     const bits = seg.split(':');
@@ -3336,21 +3318,60 @@ function n1PairHtml(raw, scalar) {
     if (isFinite(v)) pts[bits[0]] = v;
   });
   const a = pts['0'];
-  // The second number is the ASYMPTOTE, not a fixed budget point. 93% of rows
-  // plateau by 500 MW, but Yass 330 - the case this pair exists to expose -
-  // only moves at 2,000 (0 | 0 | 718 | 718). Keying on 500 would have printed
-  // "unchanged by redispatch" at precisely the wrong site.
-  const ORDER = ['0', '500', '2000', 'inf'];
   let z = scalar, zb = null;
-  for (let i = ORDER.length - 1; i >= 0; i--) {
-    if (pts[ORDER[i]] != null) { z = pts[ORDER[i]]; break; }
+  for (let i = N1_PAIR_ORDER.length - 1; i >= 0; i--) {
+    if (pts[N1_PAIR_ORDER[i]] != null) { z = pts[N1_PAIR_ORDER[i]]; break; }
   }
-  // ...and name the CHEAPEST budget that already reaches it, so the reader
-  // knows whether it costs 500 MW of curtailment or 2,000.
-  for (let i = 0; i < ORDER.length; i++) {
-    const v = pts[ORDER[i]];
-    if (v != null && Math.abs(v - z) < 0.5) { zb = ORDER[i]; break; }
+  for (let i = 0; i < N1_PAIR_ORDER.length; i++) {
+    const v = pts[N1_PAIR_ORDER[i]];
+    if (v != null && Math.abs(v - z) < 0.5) { zb = N1_PAIR_ORDER[i]; break; }
   }
+  return { a: a, z: z, zb: zb, zi: N1_PAIR_ORDER.indexOf(zb),
+           same: (a != null && z != null && Math.abs(a - z) < 0.5) };
+}
+
+// One line per number: what set it, under which contingency, in which case.
+function n1PairWhyHtml(p, prefix, parts, what) {
+  if (!parts) return '';
+  const d = n1CurveDetail(p, prefix);
+  const line = function (i, lab) {
+    const br = (d.br || [])[i] || '';
+    if (!br) return '';
+    const cg = (d.cg || [])[i] || '';
+    const cs = (d.c || [])[i] || '';
+    return '<div><span style="color:#6e7681">' + lab + '</span> ' + br
+         + (cg ? '<span style="color:#6e7681"> \u00b7 </span>' + cg : '')
+         + (cs ? '<span style="color:#6e7681"> \u00b7 ' + cs + '</span>' : '')
+         + '</div>';
+  };
+  let h = '';
+  if (parts.same) {
+    h += line(0, what + ' limit:');
+  } else {
+    h += line(0, what + ', without redispatch:');
+    if (parts.zi >= 0) h += line(parts.zi, what + ', with redispatch:');
+  }
+  if (!h) return '';
+  return '<div style="font-size:10px;color:#8b949e;margin-top:4px;line-height:1.45">'
+       + h + '</div>';
+}
+
+// Export and import are limited by the same element at 51 of 442 nodes. Print
+// the provenance once there rather than repeating it verbatim under a
+// different heading.
+function n1WhyPairBlock(p, expKey, impKey, exp, imp) {
+  const e = p[expKey] ? n1PairWhyHtml(p, expKey, n1PairParts(p[expKey], exp), 'Export') : '';
+  const i = p[impKey] ? n1PairWhyHtml(p, impKey, n1PairParts(p[impKey], imp), 'Import') : '';
+  if (e && i && e.split('Export').join('\\u0000') === i.split('Import').join('\\u0000')) {
+    return e.split('Export').join('Export and import');
+  }
+  return e + i;
+}
+
+function n1PairHtml(raw, scalar) {
+  const parts = n1PairParts(raw, scalar);
+  const a = parts.a;
+  const z = parts.z, zb = parts.zb;
   if (a == null && z == null) return null;
   const fmt = function (v) {
     return v == null ? '\u2013'
@@ -3366,7 +3387,7 @@ function n1PairHtml(raw, scalar) {
   };
   // The two points are the same number at a large share of nodes - say so once
   // rather than printing one value twice.
-  if (a != null && z != null && Math.abs(a - z) < 0.5) {
+  if (parts.same) {
     return strong(a) + '<span style="color:#6e7681;font-size:9px">'
          + ' \u00b7 unchanged by redispatch</span>';
   }
