@@ -357,22 +357,30 @@
 </style>
     <div class="section-title">Legend – Flow arrows</div>
     <div style="font-size:10px;color:#8b949e;line-height:1.5;margin-bottom:6px">
-      Arrows point the way power flows in the selected AEMO seasonal case.
-      The label gives MW and loading. Labels appear from zoom 6 and thin out
-      when crowded. Colour is loading against RATE1
+      Arrows point the way power flows. The label gives MW and loading.
+      Labels appear from zoom 6 and thin out when crowded. Colour is loading
+      against RATE1
       (<span style="color:#3fb950">&lt;65%</span>,
        <span style="color:#d29922">65–85%</span>,
        <span style="color:#f85149">&gt;85%</span>).
       Shown for the ~690 lines matched to the PSS/E model.
-      <b>Worst N-1</b> is the highest flow over every single outage, so its
-      direction can be the reverse of normal operation.
-      <b>Annual hourly</b> is a different basis: the loading each circuit
-      actually saw over 8,645 hourly snapshots, not one case. P50 is the
-      median hour; P90 and P95 are the levels passed in only 10% and 5% of
-      hours. A percentile has no direction, so the arrow points the dominant
-      way across the eight cases, and a <b>double head</b> marks the 343 lines
-      where that direction is not the same in all of them. Available for 576
-      lines.
+      <br><br>
+      <b>Worst of all cases</b> is the top option: for each line separately,
+      the highest loading it reaches in any of the eight cases, on either
+      basis, with that case's own MW and direction. The label names the case,
+      so different arrows can come from different seasons. Use it to see where
+      the network is tight without stepping through sixteen snapshots.
+      <br><br>
+      <b>Annual hourly — P99</b> is a different basis again: not a snapshot,
+      but the loading each circuit actually reached in its busiest 1% of
+      hours, measured over 8,645 hourly snapshots. A percentile has no
+      direction, so the arrow points the dominant way across the eight cases,
+      and a <b>double head</b> marks the 343 lines where that direction is not
+      the same in all of them. Available for 577 lines.
+      <br><br>
+      The eight seasonal cases follow. <b>Worst N-1</b> is the highest flow
+      over every single outage, so its direction can be the reverse of normal
+      operation.
     </div>
 
     <div class="section-title">Legend – % Loading</div>
@@ -595,7 +603,7 @@ popup.on('close', () => { document.getElementById('constr-modal')?.remove(); });
 
 Promise.all([
   fetch('transmission_lines.geojson?v=20260908').then(r => r.json()),
-  fetch('flows_by_case.json?v=20260923').then(r => r.json()).catch(() => null),
+  fetch('flows_by_case.json?v=20260924').then(r => r.json()).catch(() => null),
   fetch('substations.geojson?v=20260908').then(r => r.json()),
   fetch('mlf_2026_27.json').then(r => r.json()),
   fetch('hhci.json').then(r => r.json()).catch(() => ({})),
@@ -1812,6 +1820,10 @@ function bindMapEvents() {
       html += `<span class="popup-label">Export (generation)</span><span class="popup-value">${expPairM || expLim}</span>`;
       html += `<span class="popup-label">Import (battery, bid-neutral)</span><span class="popup-value">${impPairM || impLim}</span>`;
       html += `</div>`;
+      // The binding element sits DIRECTLY under the numbers it explains.
+      // It used to print after the data-centre curve and the export bar,
+      // far enough down the popup that it read as belonging to those.
+      html += n1WhyPairBlock(p, 'n1_mid_export_curve', 'n1_mid_import_curve', exp, imp);
       // ── One curve only (2026-09-22) ──────────────────────────────────
       // Export and battery import are published as SCALARS in the rows above.
       // Under the bid-neutral pool their curve is two points, and at 56.5% of
@@ -1856,10 +1868,10 @@ function bindMapEvents() {
         html += `<span class="popup-label">Import (high-demand)</span><span class="popup-value" style="color:${hiCol}">${impHi.toLocaleString()} MW <span style="color:#8b949e;font-weight:400;font-size:10px">(${p.n1_mid_import_hi_case || '–'})</span></span>`;
       }
       html += `</div>`;
-      html += n1WhyPairBlock(p, 'n1_mid_export_curve', 'n1_mid_import_curve', exp, imp);
       const lineCases = p.n1_cases ? tryParse(p.n1_cases) : null;
       if (lineCases && lineCases.length > 1) {
-        html += `<button onclick="var t=this.nextElementSibling;var open=t.style.display!=='none';t.style.display=open?'none':'block';this.textContent=open?'All cases ▾':'All cases ▴';" style="margin-top:6px;background:none;border:none;color:#58a6ff;cursor:pointer;font-size:10px;padding:0;text-align:left">All cases ▾</button>`;
+        const caseLbl = `All cases (${lineCases.length} of 8)`;
+        html += `<button onclick="var t=this.nextElementSibling;var open=t.style.display!=='none';t.style.display=open?'none':'block';this.textContent=open?'${caseLbl} ▾':'${caseLbl} ▴';" style="margin-top:6px;background:none;border:none;color:#58a6ff;cursor:pointer;font-size:10px;padding:0;text-align:left">${caseLbl} ▾</button>`;
         html += `<div style="display:none;margin-top:4px"><table style="width:100%;border-collapse:collapse;font-size:10px">`;
         html += `<tr style="color:#8b949e"><th style="text-align:left;padding:2px 4px">Case</th><th style="text-align:right;padding:2px 4px">Loading</th><th style="text-align:right;padding:2px 4px">Export</th><th style="text-align:right;padding:2px 4px">Import</th></tr>`;
         lineCases.forEach(c => {
@@ -2110,6 +2122,10 @@ function bindMapEvents() {
         html += `<span class="popup-label">Import (high-demand)</span><span class="popup-value" style="color:${hiCol}">${impHi.toLocaleString()} MW <span style="color:#8b949e;font-weight:400;font-size:10px">(${p.n1_import_hi_case || '–'})</span></span>`;
       }
       html += `</div>`;
+      // The binding element sits DIRECTLY under the numbers it explains.
+      // It used to print after the data-centre curve and the export bar,
+      // far enough down the popup that it read as belonging to those.
+      html += n1WhyPairBlock(p, 'n1_export_curve', 'n1_import_curve', exp, imp);
       // ── One curve only (2026-09-22) ──────────────────────────────────
       // Export and battery import are published as SCALARS in the rows above.
       // Under the bid-neutral pool their curve is two points, and at 56.5% of
@@ -2128,10 +2144,10 @@ function bindMapEvents() {
         html += `<div style="margin:4px 0 1px;height:5px;background:#21262d;border-radius:2px">`;
         html += `<div style="width:${expBar}%;height:100%;background:${expCol};border-radius:2px"></div></div>`;
       }
-      html += n1WhyPairBlock(p, 'n1_export_curve', 'n1_import_curve', exp, imp);
       const subCases = p.n1_sub_cases ? tryParse(p.n1_sub_cases) : null;
       if (subCases && subCases.length > 1) {
-        html += `<button onclick="var t=this.nextElementSibling;var open=t.style.display!=='none';t.style.display=open?'none':'block';this.textContent=open?'All cases ▾':'All cases ▴';" style="margin-top:6px;background:none;border:none;color:#58a6ff;cursor:pointer;font-size:10px;padding:0;text-align:left">All cases ▾</button>`;
+        const caseLbl = `All cases (${subCases.length} of 8)`;
+        html += `<button onclick="var t=this.nextElementSibling;var open=t.style.display!=='none';t.style.display=open?'none':'block';this.textContent=open?'${caseLbl} ▾':'${caseLbl} ▴';" style="margin-top:6px;background:none;border:none;color:#58a6ff;cursor:pointer;font-size:10px;padding:0;text-align:left">${caseLbl} ▾</button>`;
         html += `<div style="display:none;margin-top:4px"><table style="width:100%;border-collapse:collapse;font-size:10px">`;
         html += `<tr style="color:#8b949e"><th style="text-align:left;padding:2px 4px">Case</th><th style="text-align:right;padding:2px 4px">Export</th><th style="text-align:right;padding:2px 4px">Import</th></tr>`;
         subCases.forEach(c => {
@@ -2920,21 +2936,19 @@ function bindSidebar() {
                      SpringHi: 'Spring high', SpringLo: 'Spring light',
                      SummerHi: 'Summer high', SummerLo: 'Summer light',
                      WinterHi: 'Winter high', WinterLo: 'Winter light' };
+    const addOpt = (value, text) => {
+      const o = document.createElement('option');
+      o.value = value; o.textContent = text; sel.appendChild(o);
+    };
+    // Two summary views first - they answer "where is this network tight?"
+    // without making the reader step through sixteen snapshots. The per-case
+    // options stay below for anyone who needs a specific one.
+    addOpt('worst|all', 'Worst of all cases — merged');
+    addOpt('pct|p99', 'Annual hourly — P99');
     fbc.cases.forEach((c, i) => {
       [['n0', 'normal'], ['n1', 'worst N-1']].forEach(([basis, lbl]) => {
-        const o = document.createElement('option');
-        o.value = i + '|' + basis;
-        o.textContent = (PRETTY[c] || c) + ' — ' + lbl;
-        sel.appendChild(o);
+        addOpt(i + '|' + basis, (PRETTY[c] || c) + ' — ' + lbl);
       });
-    });
-    // Annual hourly basis. Not a case, so it has no case index - these read
-    // the percentile triple attached by add_hourly_pct_to_flows.py.
-    [['p50', 'P50 (median)'], ['p90', 'P90'], ['p95', 'P95']].forEach(([k, lbl]) => {
-      const o = document.createElement('option');
-      o.value = 'pct|' + k;
-      o.textContent = 'Annual hourly — ' + lbl;
-      sel.appendChild(o);
     });
 
     sel.addEventListener('change', () => {
@@ -2945,12 +2959,49 @@ function bindSidebar() {
         return;
       }
       const [iStr, basis] = v.split('|');
+      if (iStr === 'worst') {
+        // Per LINE, the highest loading it reaches in ANY case on EITHER basis,
+        // with that case's own MW and direction. Each arrow is therefore its
+        // own worst case - the same convention the hosting-capacity headline
+        // uses, so the two views agree about which circuits are tight.
+        const wfeats = [];
+        Object.entries(fbc.lines).forEach(([idx, rec]) => {
+          let best = -1, bMw = null, bCase = -1, bBasis = null;
+          ['n0', 'n1'].forEach(b => {
+            const ls = rec[b + 'l'] || [], ms = rec[b] || [];
+            ls.forEach((l, i2) => {
+              if (l == null || ms[i2] == null) return;
+              if (l > best) { best = l; bMw = ms[i2]; bCase = i2; bBasis = b; }
+            });
+          });
+          if (bMw == null || Math.abs(bMw) < 1.0) return;
+          const src = linesData.features[+idx];
+          if (!src || !src.geometry) return;
+          wfeats.push({
+            type: 'Feature',
+            geometry: src.geometry,
+            properties: {
+              mw: Math.abs(bMw),
+              load: best,
+              flip: (bMw < 0) !== !!rec.rev,
+              label: Math.round(Math.abs(bMw)).toLocaleString() + ' MW · '
+                   + Math.round(best * 100) + '% · '
+                   + (fbc.cases[bCase] || '?')
+                   + (bBasis === 'n1' ? ' N-1' : '')
+            }
+          });
+        });
+        map.getSource('flow-arrows-src').setData(
+          { type: 'FeatureCollection', features: wfeats });
+        map.setLayoutProperty('flow-arrows', 'visibility', 'visible');
+        map.setLayoutProperty('flow-arrow-labels', 'visibility', 'visible');
+        return;
+      }
       if (iStr === 'pct') {
-        const pi = { p50: 0, p90: 1, p95: 2 }[basis];
         const nm = basis.toUpperCase();
         const pfeats = [];
         Object.entries(fbc.lines).forEach(([idx, rec]) => {
-          const p = rec.p && rec.p[pi];
+          const p = rec.p;   // scalar since 2026-09-24: P99 only
           if (p == null) return;
           const src = linesData.features[+idx];
           if (!src || !src.geometry) return;
@@ -3391,9 +3442,16 @@ function n1PairHtml(raw, scalar) {
     return strong(a) + '<span style="color:#6e7681;font-size:9px">'
          + ' \u00b7 unchanged by redispatch</span>';
   }
+  // "up to" is deliberate. zb is the BUDGET the merit stack was allowed, not
+  // the MW actually curtailed. The engine computes the amount used inside
+  // _merit_relief and discards it - only the eligible pool is published - so
+  // the honest claim is the allowance, not the consumption. Manildra reaching
+  // 2 MW at a 500 MW budget shows the gap: a 2 MW gain cannot cost 500 MW of
+  // curtailment when coefficients are <= ~1, so most of that budget went
+  // unused before a different element became binding.
   const budg = (zb == null || zb === '0') ? ''
-             : zb === 'inf' ? ' (unlimited)'
-             : ' (' + Number(zb).toLocaleString() + ' MW moved)';
+             : zb === 'inf' ? ' (unlimited redispatch)'
+             : ' (needs up to ' + Number(zb).toLocaleString() + ' MW redispatch)';
   return strong(a) + '<span style="color:#6e7681;font-size:9px"> without</span> \u00b7 '
        + strong(z) + '<span style="color:#6e7681;font-size:9px"> with redispatch'
        + budg + '</span>';
