@@ -1834,9 +1834,9 @@ function bindMapEvents() {
       html += n1CurveHtml(p.n1_mid_import_curve_hi,
                           'Data centre import vs redispatch required',
                           n1CurveDetail(p, 'n1_mid_import_curve_hi'),
-                          'High-demand cases only, and the full merit-ordered '
-                        + 'relief pool — AEMO cannot leave a load unserved, so it '
-                        + 'redispatches whatever is cheapest to supply one.',
+                          'High-demand snapshots only, and every generator that '
+                        + 'can be constrained off — AEMO cannot leave a load '
+                        + 'unserved, so it redispatches to supply one.',
                           { firmNA: true, hideInf: true });   // see n1CurveHtml
       html += `<div class="popup-grid">`;
       // ── Per-section breakdown (corridor matches) ──────────────────────────
@@ -2136,9 +2136,9 @@ function bindMapEvents() {
       html += n1CurveHtml(p.n1_import_curve_hi,
                           'Data centre import vs redispatch required',
                           n1CurveDetail(p, 'n1_import_curve_hi'),
-                          'High-demand cases only, and the full merit-ordered '
-                        + 'relief pool — AEMO cannot leave a load unserved, so it '
-                        + 'redispatches whatever is cheapest to supply one.',
+                          'High-demand snapshots only, and every generator that '
+                        + 'can be constrained off — AEMO cannot leave a load '
+                        + 'unserved, so it redispatches to supply one.',
                           { firmNA: true, hideInf: true });   // see n1CurveHtml
       if (exp != null && exp < N1_SENT) {
         html += `<div style="margin:4px 0 1px;height:5px;background:#21262d;border-radius:2px">`;
@@ -3353,7 +3353,17 @@ function n1CurveDetail(p, prefix) {
 // 'Firm' is deliberately NOT used. There is no firm access in the NEM - every
 // generator is curtailable for a network constraint - so the word claims an
 // entitlement that does not exist.
-const N1_PAIR_ORDER = ['0', '500', '2000', 'inf'];
+const N1_PAIR_ORDER = ['0', '250', '1000', 'inf'];
+
+// 'SummerLo' is the snapshot's file-name shorthand, not a term anyone outside
+// this tool uses. Spell it out wherever it reaches the reader.
+const N1_CASE_NAMES = {
+  AutumnHi: 'autumn, high demand',  AutumnLo: 'autumn, light load',
+  SpringHi: 'spring, high demand',  SpringLo: 'spring, light load',
+  SummerHi: 'summer, high demand',  SummerLo: 'summer, light load',
+  WinterHi: 'winter, high demand',  WinterLo: 'winter, light load'
+};
+function n1CaseName(c) { return N1_CASE_NAMES[c] || c || ''; }
 
 // Which two points the pair shows, AND their index in the 4-point detail
 // arrays. The two are computed together because they must agree: at Yass the
@@ -3392,7 +3402,7 @@ function n1PairWhyHtml(p, prefix, parts, what) {
     const cs = (d.c || [])[i] || '';
     return '<div><span style="color:#6e7681">' + lab + '</span> ' + br
          + (cg ? '<span style="color:#6e7681"> \u00b7 </span>' + cg : '')
-         + (cs ? '<span style="color:#6e7681"> \u00b7 ' + cs + '</span>' : '')
+         + (cs ? '<span style="color:#6e7681"> \u00b7 ' + n1CaseName(cs) + '</span>' : '')
          + '</div>';
   };
   let h = '';
@@ -3442,16 +3452,28 @@ function n1PairHtml(raw, scalar) {
     return strong(a) + '<span style="color:#6e7681;font-size:9px">'
          + ' \u00b7 unchanged by redispatch</span>';
   }
-  // "up to" is deliberate. zb is the BUDGET the merit stack was allowed, not
-  // the MW actually curtailed. The engine computes the amount used inside
-  // _merit_relief and discards it - only the eligible pool is published - so
-  // the honest claim is the allowance, not the consumption. Manildra reaching
-  // 2 MW at a 500 MW budget shows the gap: a 2 MW gain cannot cost 500 MW of
-  // curtailment when coefficients are <= ~1, so most of that budget went
-  // unused before a different element became binding.
+  // The MW actually turned down on the element that bound, published by the
+  // engine since 2026-09-25. Before that this could only quote the BUDGET the
+  // merit stack was allowed, which is usually far larger and told the reader
+  // nothing - Manildra read "500 MW" against a 2 MW gain. Fall back to the
+  // budget wording only where the curtailment series is absent.
+  // The MW constrained off to reach this figure CANNOT be stated from what is
+  // published, so the label quotes the budget as an upper bound instead.
+  // Two candidates were tried and both mislead:
+  //   * the value at the point shown - Bendigo publishes 87.5 MW with 0 MW
+  //     against it, yet 250 MW had to be constrained off one budget earlier to
+  //     clear Armidale-Tamworth before that point could be reached;
+  //   * the running maximum over the curve - Yass then reads 1,000 MW, which
+  //     belongs to the summer light-load snapshot, against 718 MW set by the
+  //     autumn light-load snapshot, where nothing is constrained off at all.
+  // The real quantity is the most any single element must be relieved to
+  // support the published figure, in the case that set it: a maximum across
+  // elements the engine does not yet carry. Until it does, "needs up to" is
+  // true and the exact cost is not claimed.
   const budg = (zb == null || zb === '0') ? ''
-             : zb === 'inf' ? ' (unlimited redispatch)'
-             : ' (needs up to ' + Number(zb).toLocaleString() + ' MW redispatch)';
+             : zb === 'inf' ? ' (redispatch not limited)'
+             : ' (needs up to ' + Number(zb).toLocaleString()
+               + ' MW constrained off)';
   return strong(a) + '<span style="color:#6e7681;font-size:9px"> without</span> \u00b7 '
        + strong(z) + '<span style="color:#6e7681;font-size:9px"> with redispatch'
        + budg + '</span>';
@@ -3493,7 +3515,7 @@ function n1CurveHtml(raw, title, detail, subtitle, opts) {
   // 100% of rows, so it never carried information. 500 and 2,000 both stay -
   // 7% of rows move between them, Yass 330 among them. hideInf is now
   // redundant but harmless.
-  const KEEP = { '0': 1, '500': 1, '2000': 1 };
+  const KEEP = { '0': 1, '250': 1, '1000': 1 };
   const shown = pts.filter(function (o) { return KEEP[o.b]; });
   if (!shown.length) return '';
   const d = detail || {};
