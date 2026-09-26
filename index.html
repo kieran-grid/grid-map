@@ -1817,8 +1817,10 @@ function bindMapEvents() {
       }
       const expPairM = n1PairHtml(p.n1_mid_export_curve, exp);
       const impPairM = n1PairHtml(p.n1_mid_import_curve, imp);
-      html += `<span class="popup-label">Export (generation)</span><span class="popup-value">${expPairM || expLim}</span>`;
-      html += `<span class="popup-label">Import (battery, bid-neutral)</span><span class="popup-value">${impPairM || impLim}</span>`;
+      const expHeldM = n1WithheldHtml(p.n1_mid_export_withheld);
+      const impHeldM = n1WithheldHtml(p.n1_mid_import_withheld);
+      html += `<span class="popup-label">Export (generation)</span><span class="popup-value">${expPairM || expHeldM || expLim}</span>`;
+      html += `<span class="popup-label">Import (battery, bid-neutral)</span><span class="popup-value">${impPairM || impHeldM || impLim}</span>`;
       html += `</div>`;
       // The binding element sits DIRECTLY under the numbers it explains.
       // It used to print after the data-centre curve and the export bar,
@@ -2112,8 +2114,10 @@ function bindMapEvents() {
       html += `<div class="popup-grid">`;
       const expPair = n1PairHtml(p.n1_export_curve, exp);
       const impPair = n1PairHtml(p.n1_import_curve, imp);
-      html += `<span class="popup-label">Export (generation)</span><span class="popup-value">${expPair || expLim}</span>`;
-      html += `<span class="popup-label">Import (battery, bid-neutral)</span><span class="popup-value">${impPair || impLim}</span>`;
+      const expHeld = n1WithheldHtml(p.n1_export_withheld);
+      const impHeld = n1WithheldHtml(p.n1_import_withheld);
+      html += `<span class="popup-label">Export (generation)</span><span class="popup-value">${expPair || expHeld || expLim}</span>`;
+      html += `<span class="popup-label">Import (battery, bid-neutral)</span><span class="popup-value">${impPair || impHeld || impLim}</span>`;
       if (p.n1_max_import_hi_mw != null) {
         // Worst HIGH-DEMAND case — the right basis for load (DC) screening;
         // light-load cases carry demand-side headroom and can't bind a load.
@@ -3427,6 +3431,26 @@ function n1WhyPairBlock(p, expKey, impKey, exp, imp) {
     return e.split('Export').join('Export and import');
   }
   return e + i;
+}
+
+// A withheld direction is not a zero and not an absence of capacity. Two
+// causes produce it and they call for different responses, so say which.
+function n1WithheldHtml(reason) {
+  if (!reason) return null;
+  const txt = reason === 'no_rating'
+    ? 'Not assessed' : 'Withheld';
+  const why = reason === 'no_rating'
+    ? 'Nothing connecting this node carries a rating in the source model, so '
+      + 'its local limit is unknown. A figure would be a guess, not a number.'
+    : 'A figure exists, but the element that sets it lies more than 500 km '
+      + 'away. That is usually a modelling artefact rather than real coupling, '
+      + 'so it is not published. Some of these are genuine long-distance '
+      + 'coupling and are withheld anyway.';
+  const sub = reason === 'no_rating'
+    ? 'no rated local connection' : 'limiting element over 500 km away';
+  return '<span style="color:#8b949e">' + txt + '</span>'
+       + '<span style="color:#6e7681;font-size:9px"> · ' + sub + '</span>'
+       + hlp(why);
 }
 
 function n1PairHtml(raw, scalar) {
