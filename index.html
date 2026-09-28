@@ -391,12 +391,11 @@
 
     <div id="congestion-legend" style="display:none">
       <div class="section-title">Legend – Congestion Binding %</div>
-      <div class="legend-item"><div class="legend-line" style="background:#f85149;height:4px"></div>&gt; 50% of intervals</div>
-      <div class="legend-item"><div class="legend-line" style="background:#f0883e;height:4px"></div>20 – 50%</div>
-      <div class="legend-item"><div class="legend-line" style="background:#d29922;height:4px"></div>5 – 20%</div>
-      <div class="legend-item"><div class="legend-line" style="background:#79c0ff;height:4px"></div>1 – 5%</div>
-      <div class="legend-item"><div class="legend-line" style="background:#30363d;height:4px"></div>&lt; 1% or no data</div>
-      <div style="font-size:11px;color:#8b949e;margin-top:3px">Jan 2024 to Jun 2026. The percentage of the<br>5-minute periods when a limit was active.</div>
+      <div class="legend-item"><div class="legend-line" style="background:#f85149;height:4px"></div>&gt; 10% of the time</div>
+      <div class="legend-item"><div class="legend-line" style="background:#f0883e;height:4px"></div>5 – 10%</div>
+      <div class="legend-item"><div class="legend-line" style="background:#d29922;height:4px"></div>1 – 5%</div>
+      <div class="legend-item"><div class="legend-line" style="background:#79c0ff;height:4px"></div>&lt; 1%</div>
+      <div style="font-size:11px;color:#8b949e;margin-top:3px">Jan 2024 to Jul 2026. The percentage of ALL<br>5-minute periods in which a limit on the line<br>was active. Lines with no matched limit are not drawn.</div>
     </div>
 
     <div id="subs-voltage-legend" style="display:none"></div>
@@ -844,18 +843,21 @@ function addLayers() {
     layout: { 'line-join': 'round', 'line-cap': 'round', 'visibility': 'none' },
     filter: ['>', congPct, 0],
     paint: {
+      // Calendar-time scale (2026-09-27). binding_pct is now a share of ALL
+      // periods; the busiest line is ~20%, so the old 50/20/5 bands left the
+      // whole map blue.
       'line-color': [
         'case',
-        ['>', congPct, 50], '#f85149',
-        ['>', congPct, 20], '#f0883e',
-        ['>', congPct, 5],  '#d29922',
+        ['>', congPct, 10], '#f85149',
+        ['>', congPct, 5],  '#f0883e',
+        ['>', congPct, 1],  '#d29922',
         '#79c0ff'
       ],
       'line-width': [
         'interpolate', ['linear'], ['zoom'],
-        4,  ['case', ['>', congPct, 50], 4,  ['>', congPct, 20], 3,   2],
-        8,  ['case', ['>', congPct, 50], 7,  ['>', congPct, 20], 5,   3.5],
-        12, ['case', ['>', congPct, 50], 10, ['>', congPct, 20], 8,   5]
+        4,  ['case', ['>', congPct, 10], 4,  ['>', congPct, 5], 3,   2],
+        8,  ['case', ['>', congPct, 10], 7,  ['>', congPct, 5], 5,   3.5],
+        12, ['case', ['>', congPct, 10], 10, ['>', congPct, 5], 8,   5]
       ],
       'line-opacity': 0.92
     }
@@ -1504,7 +1506,9 @@ function bindMapEvents() {
       weekly,
       cache.lineName || '',
       cache.constrs || [],
-      cache.lineBpct
+      cache.lineBpct,
+      row.dataset.wpct,
+      row.dataset.inv
     );
   });
 
@@ -1648,14 +1652,15 @@ function bindMapEvents() {
     if (p.binding_pct == null) {
       const volt = parseFloat(p.voltage_kv || 0);
       if (volt >= 132) {
-        html += `<div class="popup-section" style="color:#8b949e;font-size:12px">There is no constraint data for this line (Jan 2024 to Jun 2026).</div>`;
+        html += `<div class="popup-section" style="color:#8b949e;font-size:12px">There is no constraint data for this line (Jan 2024 to Jul 2026).</div>`;
       }
     }
     if (p.binding_pct != null) {
       const bpct = parseFloat(p.binding_pct);
-      const peakPct = p.peak_contingency_pct != null ? parseFloat(p.peak_contingency_pct) : null;
-      const bColour = bpct > 50 ? '#f85149' : bpct > 20 ? '#f0883e' : bpct > 5 ? '#d29922' : bpct > 1 ? '#79c0ff' : '#8b949e';
-      html += `<div class="popup-section"><div class="popup-section-title">Congestion (Jan 2024 – Jun 2026)</div>`;
+      const nilPct = p.binding_nil_pct != null ? parseFloat(p.binding_nil_pct) : null;
+      const outPct = p.binding_outage_pct != null ? parseFloat(p.binding_outage_pct) : null;
+      const bColour = congColour(bpct);
+      html += `<div class="popup-section"><div class="popup-section-title">Congestion (Jan 2024 – Jul 2026)</div>`;
       // Lead with what the numbers MEAN. A first-time reader otherwise meets
       // "Normal ops 16.9% of intervals" with no idea what an interval is or
       // what binding implies for them.
@@ -1663,12 +1668,18 @@ function bindMapEvents() {
             + `AEMO calculates the power flow every 5 minutes. Sometimes a limit prevents `
             + `an increase of the flow. The limit is then active. AEMO calls this &quot;binding&quot;.</div>`;
       html += `<div class="popup-grid">`;
-      html += `<span class="popup-label" title="This value is the percentage of the 5-minute periods when a limit on this line was active. All equipment was in service.">Limit active, all equipment in service</span>`
-            + `<span class="popup-value" style="color:${bColour};font-weight:700">${bpct.toFixed(1)}% of the time</span>`;
-      if (peakPct != null && peakPct > bpct + 0.5) {
-        const pkColour = peakPct > 50 ? '#f85149' : peakPct > 20 ? '#f0883e' : peakPct > 5 ? '#d29922' : '#79c0ff';
-        html += `<span class="popup-label" title="This value is the same measurement, but for the periods when other equipment was out of service. Congestion is usually worse during an outage.">Limit active during an outage</span>`
-              + `<span class="popup-value" style="color:${pkColour}">${peakPct.toFixed(1)}% of the time</span>`;
+      // All three are shares of EVERY 5-minute period from Jan 2024 to Jul 2026.
+      // Before 2026-09-27 an outage rule's figure was a share of the outage only
+      // (Woolooga-Gympie read 53.9%; in real time it is under 0.2%).
+      html += `<span class="popup-label" title="The percentage of all 5-minute periods in which at least one AEMO limit on this line was active.">Limit active</span>`
+            + `<span class="popup-value" style="color:${bColour};font-weight:700">${fmtPct(bpct)} of the time</span>`;
+      if (nilPct != null) {
+        html += `<span class="popup-label" title="The part that came from limits that AEMO applies when all equipment is in service.">… all equipment in service</span>`
+              + `<span class="popup-value" style="color:#8b949e">${fmtPct(nilPct)}</span>`;
+      }
+      if (outPct != null && outPct > 0) {
+        html += `<span class="popup-label" title="The part that came from limits that AEMO applies only while other equipment is out of service. The two parts can overlap, so they need not add up.">… during outages</span>`
+              + `<span class="popup-value" style="color:#8b949e">${fmtPct(outPct)}</span>`;
       }
       if (p.avg_mv_binding != null) {
         const mv = Math.abs(parseFloat(p.avg_mv_binding));
@@ -1711,14 +1722,14 @@ function bindMapEvents() {
         window._constrChartCache = {
           weekly: tryParse(p.weekly_stats) || tryParse(p.monthly_stats) || [],
           constrs: constrs,
-          lineBpct: p.peak_contingency_pct != null ? parseFloat(p.peak_contingency_pct) : (p.binding_pct != null ? parseFloat(p.binding_pct) : null),
+          lineBpct: p.binding_pct != null ? parseFloat(p.binding_pct) : null,
           lineName: p.name || 'Transmission Line'
         };
 
         html += `<div style="margin-top:9px;font-size:11px;color:#e6edf3;font-weight:600;margin-bottom:1px">
           Constraint equations that were active (${constrs.length})</div>`
               + `<div style="font-size:10px;color:#8b949e;margin-bottom:5px">`
-              + `These are the AEMO dispatch rules for this line. Each row shows the hours and the percentage of the time. Click a row to see more data.</div>`;
+              + `These are the AEMO dispatch rules for this line. Each row shows the hours the rule was active and the percentage of ALL periods. Click a row to see more data.</div>`;
         // Line-level time-of-day driver (binding_pct-weighted across constraints).
         // Tells a developer at a glance whether this congestion competes with
         // their technology's operating hours or not.
@@ -1734,9 +1745,13 @@ function bindMapEvents() {
 
         constrs.forEach(c => {
           if (!c.id) return;
-          const cpctNum = c.binding_pct != null ? parseFloat(c.binding_pct) : 0;
-          const cpctStr = c.binding_pct != null ? cpctNum.toFixed(1) + '%' : '–';
-          const barCol  = cpctNum > 50 ? '#f85149' : cpctNum > 20 ? '#f0883e' : cpctNum > 5 ? '#d29922' : '#79c0ff';
+          // Calendar share of the whole period. Older files carry only the
+          // invocation-window binding_pct, so fall back to it.
+          const calNum  = c.calendar_pct != null ? parseFloat(c.calendar_pct)
+                        : (c.binding_pct != null ? parseFloat(c.binding_pct) : 0);
+          const cpctNum = calNum;
+          const cpctStr = (c.calendar_pct != null || c.binding_pct != null) ? fmtPct(calNum) : '–';
+          const barCol  = congColour(cpctNum);
           // Time-of-day driver badge (from analyze_constraint_tod.py hour profiles)
           let todBadge = '';
           if (c.tod) {
@@ -1763,6 +1778,8 @@ function bindMapEvents() {
           html += `<div class="constr-row"
               data-cid="${c.id}"
               data-cpct="${cpctStr}"
+              data-wpct="${c.binding_pct != null ? parseFloat(c.binding_pct).toFixed(1) + '%' : ''}"
+              data-inv="${c.invoked_pct != null ? fmtPct(parseFloat(c.invoked_pct)) : ''}"
               data-desc="${descFull.replace(/"/g, '&quot;')}"
               style="display:flex;align-items:center;gap:8px;padding:5px 4px;border-bottom:1px solid #21262d;cursor:pointer">
             <div style="flex:1;min-width:0">
@@ -1771,7 +1788,7 @@ function bindMapEvents() {
                 <span style="flex-shrink:0;margin-left:8px;font-size:11px">${c.bind_h != null ? `<span style="color:#8b949e;font-weight:400">${Math.round(c.bind_h).toLocaleString()} h · </span>` : ''}<span style="color:${barCol};font-weight:700">${cpctStr}</span></span>
               </div>
               <div style="background:#21262d;border-radius:2px;height:3px;margin-bottom:2px">
-                <div style="width:${Math.min(100,cpctNum)}%;height:100%;background:${barCol};border-radius:2px"></div>
+                <div style="width:${Math.min(100, cpctNum * 5)}%;height:100%;background:${barCol};border-radius:2px"></div>
               </div>
               <div style="color:#8b949e;font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${rowDesc}</div>
             </div>
@@ -1805,7 +1822,7 @@ function bindMapEvents() {
       const impCol = imp == null ? '#8b949e' : imp < 50 ? '#f85149' : imp < 200 ? '#d29922' : '#3fb950';
       html += `<div class="popup-section"><div class="popup-section-title">N-1 Midpoint Hosting Capacity <span style="font-size:9px;font-weight:600;color:#58a6ff;background:#1f3a5f;border-radius:3px;padding:1px 5px;vertical-align:1px">2026 MODEL</span></div>`;
       html += `<div style="font-size:10px;color:#8b949e;margin-bottom:3px">50% tap along line · worst 8-case PSS/E · RATE1 · 2025–26 dispatch · DC linearised</div>`;
-      html += `<div style="font-size:10px;color:#6e7681;margin-bottom:5px">Marginal capacity for one new project, at the middle of this line.${hlp('<b>What this is.</b> The MW a new project can add at the middle of this line. One project only. Other connections share the same headroom.<br><br><b>Method.</b> Worst of 8 PSS/E cases, 2025-26 dispatch. RATE1 limits. DC model, accuracy +/-10 to 20 per cent.<br><br><b>Export.</b> The local connection queue is subtracted (2 substation hops). See &#39;Generation modelled here&#39; on a nearby substation.<br><br><b>Import.</b> A load does not queue behind generation, so no queue is subtracted. But the queue still uses part of the circuit, because the thermal limit is measured with the queue generating. A substation node does not do this, so the two figures use slightly different bases.<br><br><b>Redispatch.</b> Existing plant is turned down in constraint-coefficient order. Each constraint is examined alone. <b>Treat figures above 1 GW as a ceiling.</b> System strength and must-run are not modelled.')}</div>`;
+      html += `<div style="font-size:10px;color:#6e7681;margin-bottom:5px">Marginal capacity for one new project, at the middle of this line.${hlp('<b>What this is.</b> The MW a new project can add at the middle of this line. One project only. Other connections share the same headroom.<br><br><b>Method.</b> Worst of 8 PSS/E cases, 2025-26 dispatch. Base flows are from AEMO&#39;s solved AC case. Ratings are RATE1 converted to MW using the solved reactive flow. The increments from a new project and an outage are linearised. A new MW is balanced by generators in its own region.<br><br><b>Export.</b> The local connection queue is subtracted (2 substation hops). See &#39;Generation modelled here&#39; on a nearby substation.<br><br><b>Import.</b> A load does not queue behind generation, so no queue is subtracted. But the queue still uses part of the circuit, because the thermal limit is measured with the queue generating. A substation node does not do this, so the two figures use slightly different bases.<br><br><b>Redispatch.</b> Existing plant is turned down in constraint-coefficient order. Each constraint is examined alone. <b>Treat figures above 1 GW as a ceiling.</b> System strength and must-run are not modelled.')}</div>`;
       html += `<div class="popup-grid">`;
       if (r1) html += `<span class="popup-label">Line rating</span><span class="popup-value">${r1.toLocaleString()} MVA</span>`;
       if (p.n1_mid_loading_pct != null) {
@@ -2109,8 +2126,8 @@ function bindMapEvents() {
       const impCol = imp == null ? '#8b949e' : imp < 50 ? '#f85149' : imp < 200 ? '#d29922' : '#3fb950';
       const expBar = exp == null ? 0 : Math.min(exp >= N1_SENT ? 100 : exp / 10, 100);
       html += `<div class="popup-section"><div class="popup-section-title">N-1 Hosting Capacity (bus) <span style="font-size:9px;font-weight:600;color:#58a6ff;background:#1f3a5f;border-radius:3px;padding:1px 5px;vertical-align:1px">2026 MODEL</span></div>`;
-      html += `<div style="font-size:10px;color:#8b949e;margin-bottom:3px">Worst 8-case PSS/E · RATE1 · 2025–26 dispatch · DC linearised model (±10–20%)</div>`;
-      html += `<div style="font-size:10px;color:#6e7681;margin-bottom:5px">Marginal capacity for one new project at this substation.${hlp('<b>What this is.</b> The MW a new project can add at this substation. One project only. Other connections share the same headroom.<br><br><b>Method.</b> Worst of 8 PSS/E cases, 2025-26 dispatch. RATE1 limits. DC model, accuracy +/-10 to 20 per cent.<br><br><b>Export.</b> The local connection queue is subtracted (2 substation hops). See &#39;Generation modelled here&#39; below.<br><br><b>Import.</b> As modelled. A load does not queue behind generation.<br><br><b>Redispatch.</b> Existing plant, but not this site&#39;s own, is turned down in constraint-coefficient order. Each constraint is examined alone. <b>Treat figures above 1 GW as a ceiling.</b> System strength and must-run are not modelled.')}</div>`;
+      html += `<div style="font-size:10px;color:#8b949e;margin-bottom:3px">Worst 8-case PSS/E · AC base flows · MW ratings · regional balancing · linearised increments</div>`;
+      html += `<div style="font-size:10px;color:#6e7681;margin-bottom:5px">Marginal capacity for one new project at this substation.${hlp('<b>What this is.</b> The MW a new project can add at this substation. One project only. Other connections share the same headroom.<br><br><b>Method.</b> Worst of 8 PSS/E cases, 2025-26 dispatch. Base flows are from AEMO&#39;s solved AC case. Ratings are RATE1 converted to MW using the solved reactive flow. The increments from a new project and an outage are linearised. A new MW is balanced by generators in its own region.<br><br><b>Export.</b> The local connection queue is subtracted (2 substation hops). See &#39;Generation modelled here&#39; below.<br><br><b>Import.</b> As modelled. A load does not queue behind generation.<br><br><b>Redispatch.</b> Existing plant, but not this site&#39;s own, is turned down in constraint-coefficient order. Each constraint is examined alone. <b>Treat figures above 1 GW as a ceiling.</b> System strength and must-run are not modelled.')}</div>`;
       html += `<div class="popup-grid">`;
       const expPair = n1PairHtml(p.n1_export_curve, exp);
       const impPair = n1PairHtml(p.n1_import_curve, imp);
@@ -2130,6 +2147,11 @@ function bindMapEvents() {
       // It used to print after the data-centre curve and the export bar,
       // far enough down the popup that it read as belonging to those.
       html += n1WhyPairBlock(p, 'n1_export_curve', 'n1_import_curve', exp, imp);
+      // Regional-limit note (2026-09-27). The figures above balance a new MW
+      // inside its own region, as AEMO's constraint equations do. A limit on a
+      // corridor BETWEEN regions applies to every generator in the region,
+      // not to this site, so it is shown here instead of capping the site.
+      html += n1RegionalNoteHtml(p, exp, imp);
       // ── One curve only (2026-09-22) ──────────────────────────────────
       // Export and battery import are published as SCALARS in the rows above.
       // Under the bid-neutral pool their curve is two points, and at 56.5% of
@@ -3433,6 +3455,29 @@ function n1WhyPairBlock(p, expKey, impKey, exp, imp) {
   return e + i;
 }
 
+// Regional-limit note. Shown only when a corridor between regions is tighter
+// than the site figure: then it, not the site, is what a project here would
+// meet first - shared with every generator in the region.
+function n1RegionalNoteHtml(p, exp, imp) {
+  const rows = [];
+  const one = (d, label, site) => {
+    const v = p['n1_regional_' + d + '_mw'];
+    if (v == null) return;
+    const mw = parseFloat(v);
+    if (site != null && site < N1_SENT && mw >= site) return;   // not the tighter limit
+    rows.push(`<b>${label}:</b> ${mw.toLocaleString()} MW across `
+      + `${p['n1_regional_' + d + '_branch'] || 'a corridor between regions'}`
+      + (p['n1_regional_' + d + '_cont'] ? ` after losing ${p['n1_regional_' + d + '_cont'].replace(/ \(N-1\)$/, '')}` : '')
+      + (p['n1_regional_' + d + '_case'] ? ` (${n1CaseName(p['n1_regional_' + d + '_case'])})` : ''));
+  };
+  one('export', 'Export', exp);
+  one('import', 'Import', imp);
+  if (!rows.length) return '';
+  return '<div style="font-size:10px;color:#d29922;margin-top:5px;line-height:1.45">'
+       + '<b>Regional limit applies.</b>' + hlp('The site figures above assume a new MW is balanced by generators in its own region, which is how AEMO writes its constraint equations. A corridor between regions (for example Victoria to NSW) limits every generator in the region at once. When it binds, AEMO curtails generators in the region on price, and not this site in particular. The number here is the MW that could cross that corridor from this node, with no redispatch and no connection queue.')
+       + '<br>' + rows.join('<br>') + '</div>';
+}
+
 // A withheld direction is not a zero and not an absence of capacity. Two
 // causes produce it and they call for different responses, so say which.
 function n1WithheldHtml(reason) {
@@ -4013,12 +4058,24 @@ function chartColorLegend(opts) {
   </div>`;
 }
 
-function openConstraintModal(cid, cpct, desc, weeklyData, lineName, allConstrs, lineBpct) {
+// Congestion colour on the calendar-time scale (share of ALL periods).
+function congColour(pct) {
+  return pct > 10 ? '#f85149' : pct > 5 ? '#f0883e' : pct > 1 ? '#d29922' : '#79c0ff';
+}
+// Small percentages need more precision than one decimal: 0.09% is not "0.1%".
+function fmtPct(pct) {
+  if (pct == null || isNaN(pct)) return '–';
+  if (pct === 0) return '0%';
+  if (pct < 0.01) return '<0.01%';
+  return (pct < 1 ? pct.toFixed(2) : pct.toFixed(1)) + '%';
+}
+
+function openConstraintModal(cid, cpct, desc, weeklyData, lineName, allConstrs, lineBpct, wpct, invPct) {
   const existing = document.getElementById('constr-modal');
   if (existing) existing.remove();
 
   const bpctNum = parseFloat(cpct) || 0;
-  const bColour = bpctNum > 50 ? '#f85149' : bpctNum > 20 ? '#f0883e' : bpctNum > 5 ? '#d29922' : '#79c0ff';
+  const bColour = congColour(bpctNum);
 
   const hasTimeSeries = weeklyData.length >= 2;
 
@@ -4037,7 +4094,7 @@ function openConstraintModal(cid, cpct, desc, weeklyData, lineName, allConstrs, 
         <span style="display:inline-block;width:14px;border-top:2px dashed #58a6ff;vertical-align:middle;margin-right:4px;opacity:0.6"></span>Average headroom
         &nbsp;&nbsp;
         <span style="display:inline-block;width:8px;height:8px;background:#f0883e;border-radius:50%;vertical-align:middle;margin-right:4px"></span>Week with an active limit
-        <br>The limit was active in <strong>${bindingWeeks} of ${weeklyData.length} weeks</strong>. AEMO used this constraint in these weeks only. This is less than the full period from Jan 2024 to Jun 2026.
+        <br>The limit was active in <strong>${bindingWeeks} of ${weeklyData.length} weeks</strong>. AEMO used this constraint in these weeks only. This is less than the full period from Jan 2024 to Jul 2026.
       </div>
       ${buildCongestionChartLarge(weeklyData)}
       ${chartColorLegend({ large: true })}
@@ -4047,7 +4104,7 @@ function openConstraintModal(cid, cpct, desc, weeklyData, lineName, allConstrs, 
         RHS is the limit in the constraint equation. It is the rating of the line after AEMO makes adjustments for load and contingencies.
         LHS is the total of the generator and interconnector contributions.
         <strong>When the headroom is zero or less, the limit is active.</strong> The protected equipment is then at its limit.
-        The period is Jan 2024 to Jun 2026.
+        The period is Jan 2024 to Jul 2026.
       </div>`;
   } else if (allConstrs && allConstrs.length > 1) {
     // Fallback: bar chart comparing all constraints on this line by binding %
@@ -4077,13 +4134,14 @@ function openConstraintModal(cid, cpct, desc, weeklyData, lineName, allConstrs, 
         <div style="flex-shrink:0">
           <div style="font-size:10px;color:#8b949e;margin-bottom:2px">Binding frequency</div>
           <div style="font-size:26px;font-weight:700;color:${bColour};line-height:1">${cpct}</div>
-          <div style="font-size:10px;color:#8b949e;margin-top:2px">of dispatch intervals</div>
+          <div style="font-size:10px;color:#8b949e;margin-top:2px">of all periods</div>
         </div>
         <div style="flex:1">
           <div style="background:#30363d;height:10px;border-radius:5px;overflow:hidden;margin-bottom:6px">
-            <div style="width:${Math.min(100,bpctNum)}%;height:100%;background:${bColour};border-radius:5px"></div>
+            <div style="width:${Math.min(100, bpctNum * 5)}%;height:100%;background:${bColour};border-radius:5px"></div>
           </div>
-          ${lineBpct != null ? `<div style="font-size:11px;color:#8b949e">All constraints on this line: active ${lineBpct.toFixed(1)}% of the time</div>` : ''}
+          ${invPct ? `<div style="font-size:11px;color:#8b949e">AEMO used this rule in ${invPct} of all periods${wpct ? `. While in use, it was active ${wpct} of the time` : ''}.</div>` : ''}
+          ${lineBpct != null ? `<div style="font-size:11px;color:#8b949e">All rules on this line together: active ${fmtPct(lineBpct)} of all periods</div>` : ''}
           ${hasTimeSeries ? `<div style="font-size:11px;color:#8b949e;margin-top:2px">Active in ${bindingWeeks} of ${weeklyData.length} weeks</div>` : ''}
         </div>
       </div>
@@ -4104,8 +4162,9 @@ function openConstraintModal(cid, cpct, desc, weeklyData, lineName, allConstrs, 
 
 // Bar chart comparing all constraints on a line by binding %, highlighted by selected cid
 function buildConstraintBarChart(selectedCid, constrs, lineBpct, hasSeries) {
-  const sorted = [...constrs].filter(c => c.id).sort((a, b) => (b.binding_pct || 0) - (a.binding_pct || 0));
-  const maxPct  = Math.max(...sorted.map(c => c.binding_pct || 0), 1);
+  const calOf = c => c.calendar_pct != null ? parseFloat(c.calendar_pct) : (parseFloat(c.binding_pct) || 0);
+  const sorted = [...constrs].filter(c => c.id).sort((a, b) => calOf(b) - calOf(a));
+  const maxPct  = Math.max(...sorted.map(calOf), lineBpct || 0, 0.1);
 
   const ROW_H   = 28, LABEL_W = 160, BAR_AREA = 320, TOTAL_W = LABEL_W + BAR_AREA + 50;
   const H = sorted.length * ROW_H + 36;
@@ -4114,14 +4173,14 @@ function buildConstraintBarChart(selectedCid, constrs, lineBpct, hasSeries) {
 
   // Title row
   svg += `<text x="0" y="14" fill="#8b949e" font-size="10" font-weight="600" text-transform="uppercase">Constraint</text>`;
-  svg += `<text x="${LABEL_W}" y="14" fill="#8b949e" font-size="10">% of the time active (Jan 2024 to Jun 2026)</text>`;
+  svg += `<text x="${LABEL_W}" y="14" fill="#8b949e" font-size="10">% of all periods active (Jan 2024 to Jul 2026)</text>`;
 
   sorted.forEach((c, i) => {
     const y = 24 + i * ROW_H;
-    const pct = parseFloat(c.binding_pct) || 0;
+    const pct = calOf(c);
     const barW = (pct / maxPct) * BAR_AREA * 0.85;
     const isSelected = c.id === selectedCid;
-    const barCol = pct > 50 ? '#f85149' : pct > 20 ? '#f0883e' : pct > 5 ? '#d29922' : '#79c0ff';
+    const barCol = congColour(pct);
     const rowFill = isSelected ? 'rgba(88,166,255,0.07)' : 'none';
 
     // Row background highlight for selected
@@ -4137,14 +4196,14 @@ function buildConstraintBarChart(selectedCid, constrs, lineBpct, hasSeries) {
     svg += `<rect x="${LABEL_W}" y="${y+5}" width="${Math.max(2, barW)}" height="14" fill="${barCol}" opacity="${isSelected ? 1 : 0.6}" rx="2"/>`;
 
     // Percentage label
-    svg += `<text x="${LABEL_W + Math.max(2, barW) + 5}" y="${y+16}" fill="${isSelected ? barCol : '#8b949e'}" font-size="10" font-weight="${isSelected ? '700' : '400'}">${pct > 0 ? pct.toFixed(1) + '%' : '<1%'}</text>`;
+    svg += `<text x="${LABEL_W + Math.max(2, barW) + 5}" y="${y+16}" fill="${isSelected ? barCol : '#8b949e'}" font-size="10" font-weight="${isSelected ? '700' : '400'}">${fmtPct(pct)}</text>`;
   });
 
   // Line overall binding pct reference line
   if (lineBpct != null && lineBpct > 0) {
     const refX = LABEL_W + (lineBpct / maxPct) * BAR_AREA * 0.85;
     svg += `<line x1="${refX}" y1="22" x2="${refX}" y2="${H-4}" stroke="#8b949e" stroke-width="1" stroke-dasharray="3,2" opacity="0.5"/>`;
-    svg += `<text x="${refX+3}" y="21" fill="#8b949e" font-size="9">line avg ${lineBpct.toFixed(1)}%</text>`;
+    svg += `<text x="${refX+3}" y="21" fill="#8b949e" font-size="9">all rules ${fmtPct(lineBpct)}</text>`;
   }
 
   svg += `</svg>`;
@@ -4156,7 +4215,7 @@ function buildConstraintBarChart(selectedCid, constrs, lineBpct, hasSeries) {
       Each bar shows how frequently the constraint set the limit.
     </div>
     <div style="overflow-x:auto">${svg}</div>
-    ${hasSeries ? '' : `<div style="font-size:10px;color:#8b949e;margin-top:8px">There is no weekly headroom data for this line. This chart shows the total frequency for each constraint (Jan 2024 to Jun 2026).</div>`}`;
+    ${hasSeries ? '' : `<div style="font-size:10px;color:#8b949e;margin-top:8px">There is no weekly headroom data for this line. This chart shows the total frequency for each constraint (Jan 2024 to Jul 2026).</div>`}`;
 }
 
 // ─────────────────────────────────────────
