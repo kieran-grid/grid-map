@@ -89,9 +89,17 @@
       border: 1px solid #30363d !important; border-radius: 8px !important;
       padding: 14px 16px !important; max-width: 320px !important;
       box-shadow: 0 8px 24px rgba(0,0,0,0.5) !important; font-size: 13px;
+      /* Reader-chosen popup size (A- / A+ in the popup corner), remembered
+         per browser. CSS zoom scales text, charts and width together. */
+      zoom: var(--popup-scale, 1);
     }
+    .maplibregl-popup { max-width: none !important; }
+    .popup-zoom { position: absolute; top: 6px; right: 30px; display: flex; gap: 2px; z-index: 2; }
+    .popup-zoom button { background: #21262d; color: #c9d1d9; border: 1px solid #30363d; border-radius: 4px;
+      font-size: 11px; line-height: 1; padding: 3px 5px; cursor: pointer; }
+    .popup-zoom button:hover { background: #30363d; }
     .maplibregl-popup-close-button { color: #8b949e !important; font-size: 16px !important; right: 8px !important; top: 6px !important; }
-    .popup-title { font-size: 14px; font-weight: 700; color: #58a6ff; margin-bottom: 10px; padding-right: 20px; line-height: 1.3; }
+    .popup-title { font-size: 14px; font-weight: 700; color: #58a6ff; margin-bottom: 10px; padding-right: 76px; line-height: 1.3; }
     .popup-grid { display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; }
     .popup-label { color: #8b949e; font-size: 12px; white-space: nowrap; }
     .popup-value { color: #e6edf3; font-size: 12px; }
@@ -601,12 +609,12 @@ const popup = new maplibregl.Popup({ closeButton: true, maxWidth: '360px' });
 popup.on('close', () => { document.getElementById('constr-modal')?.remove(); });
 
 Promise.all([
-  fetch('transmission_lines.geojson?v=20260908').then(r => r.json()),
+  fetch('transmission_lines.geojson?v=20260930').then(r => r.json()),
   fetch('flows_by_case.json?v=20260924').then(r => r.json()).catch(() => null),
-  fetch('substations.geojson?v=20260908').then(r => r.json()),
+  fetch('substations.geojson?v=20260930').then(r => r.json()),
   fetch('mlf_2026_27.json').then(r => r.json()),
   fetch('hhci.json').then(r => r.json()).catch(() => ({})),
-  fetch('competing_projects.geojson?v=20260908').then(r => r.json()).catch(() => ({ type: 'FeatureCollection', features: [] })),
+  fetch('competing_projects.geojson?v=20260930').then(r => r.json()).catch(() => ({ type: 'FeatureCollection', features: [] })),
   fetch('nem_regions.geojson').then(r => r.json()).catch(() => ({ type: 'FeatureCollection', features: [] })),
   fetch('nem_interconnectors.geojson').then(r => r.json()).catch(() => ({ type: 'FeatureCollection', features: [] })),
   fetch('isp_upgrades.geojson').then(r => r.json()).catch(() => ({ type: 'FeatureCollection', features: [] })),
@@ -3338,8 +3346,38 @@ new MutationObserver(() => {
   setTimeout(() => {
     _popCollapsePending = false;
     document.querySelectorAll('.maplibregl-popup-content').forEach(collapsifyPopup);
+    document.querySelectorAll('.maplibregl-popup-content').forEach(addPopupZoom);
   }, 0);
 }).observe(document.body, { childList: true, subtree: true });
+
+// ── Popup size control (2026-09-30) ──────────────────────────────────────────
+// The popups carry a lot of small print. A- / A+ in each popup's corner scales
+// the whole popup (text, charts, width); the choice is remembered per browser.
+const POPUP_SCALES = [0.9, 1, 1.15, 1.3, 1.5, 1.75];
+function popupScale() {
+  try { const v = parseFloat(localStorage.getItem('popupScale')); return POPUP_SCALES.includes(v) ? v : 1; }
+  catch (e) { return 1; }
+}
+function setPopupScale(v) {
+  document.documentElement.style.setProperty('--popup-scale', v);
+  try { localStorage.setItem('popupScale', String(v)); } catch (e) { /* private window */ }
+}
+setPopupScale(popupScale());
+function addPopupZoom(el) {
+  if (el.querySelector(':scope > .popup-zoom')) return;
+  const bar = document.createElement('div');
+  bar.className = 'popup-zoom';
+  bar.innerHTML = '<button type="button" title="Smaller popup">A&minus;</button>'
+                + '<button type="button" title="Larger popup">A+</button>';
+  const [dn, up] = bar.querySelectorAll('button');
+  const step = d => {
+    const i = POPUP_SCALES.indexOf(popupScale());
+    setPopupScale(POPUP_SCALES[Math.max(0, Math.min(POPUP_SCALES.length - 1, i + d))]);
+  };
+  dn.addEventListener('click', ev => { ev.stopPropagation(); step(-1); });
+  up.addEventListener('click', ev => { ev.stopPropagation(); step(+1); });
+  el.appendChild(bar);
+}
 // The observer only reacts to changes. Sweep once at start-up so a popup that is
 // already in the DOM (or one set without a mutation) is not left untouched.
 document.querySelectorAll('.maplibregl-popup-content').forEach(collapsifyPopup);
