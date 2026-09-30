@@ -243,6 +243,7 @@
       <label style="font-size:11px;display:flex;align-items:center;gap:3px;cursor:pointer"><input type="checkbox" class="comp-status-cb" value="Application" /><span style="color:#79c0ff">Application</span></label>
       <label style="font-size:11px;display:flex;align-items:center;gap:3px;cursor:pointer"><input type="checkbox" class="comp-status-cb" value="Concept" /><span style="color:#8b949e">Concept</span></label>
       <label style="font-size:11px;display:flex;align-items:center;gap:3px;cursor:pointer"><input type="checkbox" class="comp-status-cb" value="Repowering" /><span style="color:#c080ff">Repowering</span></label>
+      <label style="font-size:11px;display:flex;align-items:center;gap:3px;cursor:pointer"><input type="checkbox" class="comp-status-cb" value="Withdrawn" /><span style="color:#6e7681">Withdrawn</span></label>
     </div>
 
     <div class="section-title">Substation View</div>
@@ -452,7 +453,7 @@
     <div class="legend-item"><div class="legend-line" style="background:#d29922;height:10px;border-radius:2px;width:10px;border:1.5px solid #fff"></div>Construction</div>
     <div class="legend-item"><div class="legend-line" style="background:#58a6ff;height:10px;border-radius:2px;width:10px;border:1.5px solid #fff"></div>Planned</div>
     <div class="legend-item"><div class="legend-line" style="background:#c080ff;height:10px;border-radius:2px;width:10px;border:1.5px solid #fff"></div>Repowering</div>
-    <div class="legend-item"><div class="legend-line" style="background:#6e7681;height:10px;border-radius:2px;width:10px;border:1.5px solid #fff"></div>Decommissioned / other</div>
+    <div class="legend-item"><div class="legend-line" style="background:#6e7681;height:10px;border-radius:2px;width:10px;border:1.5px solid #fff"></div>Decommissioned / withdrawn / other</div>
 
     <div id="nem-legend" style="display:none">
       <div class="section-title">Legend – NEM Spot Price</div>
@@ -614,7 +615,7 @@ Promise.all([
   fetch('substations.geojson?v=20260930').then(r => r.json()),
   fetch('mlf_2026_27.json').then(r => r.json()),
   fetch('hhci.json').then(r => r.json()).catch(() => ({})),
-  fetch('competing_projects.geojson?v=20260930').then(r => r.json()).catch(() => ({ type: 'FeatureCollection', features: [] })),
+  fetch('competing_projects.geojson?v=20260930b').then(r => r.json()).catch(() => ({ type: 'FeatureCollection', features: [] })),
   fetch('nem_regions.geojson').then(r => r.json()).catch(() => ({ type: 'FeatureCollection', features: [] })),
   fetch('nem_interconnectors.geojson').then(r => r.json()).catch(() => ({ type: 'FeatureCollection', features: [] })),
   fetch('isp_upgrades.geojson').then(r => r.json()).catch(() => ({ type: 'FeatureCollection', features: [] })),
@@ -938,6 +939,7 @@ function addLayers() {
         'Concept',            '#8b949e',
         'Repowering',         '#c080ff',
         'Decommissioned',     '#6e7681',
+        'Withdrawn',          '#484f58',
         '#8b949e'
       ],
       'circle-stroke-width': 1.5,
@@ -2221,6 +2223,7 @@ function bindMapEvents() {
       'Concept':            '#8b949e',
       'Repowering':         '#c080ff',
       'Decommissioned':     '#6e7681',
+      'Withdrawn':          '#6e7681',
     }[p.dev_status] || '#8b949e';
 
     const country = p.country || 'Australia';
@@ -2245,6 +2248,12 @@ function bindMapEvents() {
     if (p.startup_date)      html += `<span class="popup-label">Start-Up</span><span class="popup-value">${p.startup_date}</span>`;
     if (p.construction_date) html += `<span class="popup-label">Construction</span><span class="popup-value">${p.construction_date}</span>`;
     if (p.financial_close)   html += `<span class="popup-label">Fin. Close</span><span class="popup-value">${p.financial_close}</span>`;
+    if (p.cod_date)          html += `<span class="popup-label">In service</span><span class="popup-value">${p.cod_date}</span>`;
+    if (p.da_status)         html += `<span class="popup-label">Planning</span><span class="popup-value">${p.da_status}</span>`;
+    if (p.epbc_status)       html += `<span class="popup-label">EPBC</span><span class="popup-value">${p.epbc_status}</span>`;
+    if (p.support)           html += `<span class="popup-label">Support</span><span class="popup-value">${p.support}</span>`;
+    if (p.duid)              html += `<span class="popup-label">DUID</span><span class="popup-value">${p.duid}</span>`;
+    if (p.last_checked)      html += `<span class="popup-label">Checked</span><span class="popup-value">${p.last_checked}</span>`;
     html += `</div>`;
 
     // EPC / technology section
@@ -2701,7 +2710,7 @@ function bindMapEvents() {
       html += `</div>`;
       const gens = tryParse(p.connected_gens) || [];
       if (gens.length) {
-        const statusCol = { Operating:'#3fb950', 'Under Construction':'#d29922', 'Financial Close':'#f0883e', Approved:'#58a6ff', Application:'#79c0ff', Concept:'#8b949e', Repowering:'#c080ff', Decommissioned:'#6e7681' };
+        const statusCol = { Operating:'#3fb950', 'Under Construction':'#d29922', 'Financial Close':'#f0883e', Approved:'#58a6ff', Application:'#79c0ff', Concept:'#8b949e', Repowering:'#c080ff', Decommissioned:'#6e7681', Withdrawn:'#6e7681' };
         html += `<div style="margin-top:6px;max-height:140px;overflow-y:auto">`;
         gens.forEach(g => {
           const cap = g.capacity_mw ? `${parseFloat(g.capacity_mw).toLocaleString()} MW` : '–';
@@ -3838,12 +3847,12 @@ function buildGenProvenanceHtml(p) {
   if (!src.length) src.push('nothing — this node carries no generation in the snapshots');
   html += `<div style="font-size:10px;color:#8b949e;margin-bottom:4px">· ` + src.join('<br>· ') + `</div>`;
   if (inBase.length) {
-    html += `<div style="font-size:10px;color:#8b949e;margin-bottom:2px">Rystad projects this modelled plant accounts for:</div>`;
+    html += `<div style="font-size:10px;color:#8b949e;margin-bottom:2px">Projects this modelled plant accounts for:</div>`;
     html += collapse(inBase.map(x => row(x, '#3fb950', false)), 4, 'more');
   }
 
-  // ── 2. Not in the load flow (Rystad queue) ────────────────────────────────
-  html += `<div style="font-size:10px;color:#e6edf3;margin-top:7px;margin-bottom:2px"><b>Additional generation here — NOT in the load flow</b> <span style="color:#6e7681">(source: Rystad queue)</span></div>`;
+  // ── 2. Not in the load flow (project queue) ────────────────────────────────
+  html += `<div style="font-size:10px;color:#e6edf3;margin-top:7px;margin-bottom:2px"><b>Additional generation here — NOT in the load flow</b> <span style="color:#6e7681">(source: project database)</span></div>`;
   if (debited.length) {
     html += `<div style="font-size:10px;color:#58a6ff;margin-bottom:1px">Debited as competing generation: ${mw(sum.debited_nameplate_mw)} MW nameplate → ${mw(sum.debited_expected_mw)} MW expected</div>`;
     html += collapse(debited.map(x => row(x, '#58a6ff', true)), 5, 'more');
