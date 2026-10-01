@@ -265,13 +265,11 @@
     <button id="rez-mode-btn" class="toggle-btn" style="margin-bottom:4px">REZ Zones OFF</button>
     <div id="rez-legend" style="display:none">
       <div class="section-title">Renewable Energy Zones — Status</div>
-      <div class="legend-item"><span style="display:inline-block;width:14px;height:14px;border-radius:2px;background:#3fb950;opacity:0.7;margin-right:6px;flex-shrink:0"></span>Declared</div>
-      <div class="legend-item"><span style="display:inline-block;width:14px;height:14px;border-radius:2px;background:#58a6ff;opacity:0.7;margin-right:6px;flex-shrink:0"></span>Committed (ISP)</div>
-      <div class="legend-item"><span style="display:inline-block;width:14px;height:14px;border-radius:2px;background:#d29922;opacity:0.7;margin-right:6px;flex-shrink:0"></span>Actionable (ISP)</div>
-      <div class="legend-item"><span style="display:inline-block;width:14px;height:14px;border-radius:2px;background:#f0883e;opacity:0.7;margin-right:6px;flex-shrink:0"></span>Anticipated (ISP)</div>
-      <div class="legend-item"><span style="display:inline-block;width:14px;height:14px;border-radius:2px;background:#8b949e;opacity:0.7;margin-right:6px;flex-shrink:0"></span>Proposed</div>
-      <div class="legend-item"><span style="display:inline-block;width:14px;height:14px;border-radius:2px;background:#6e7681;opacity:0.7;margin-right:6px;flex-shrink:0"></span>Under Investigation</div>
-      <div style="font-size:11px;color:#8b949e;margin-top:6px;line-height:1.45">Dashed outline = Proposed / Under Investigation<br>Click zone for capacity &amp; timeline detail</div>
+      <div class="legend-item"><span style="display:inline-block;width:14px;height:14px;border-radius:2px;background:#3fb950;opacity:0.7;margin-right:6px;flex-shrink:0"></span>Declared (state law)</div>
+      <div class="legend-item"><span style="display:inline-block;width:14px;height:14px;border-radius:2px;background:#39c5cf;opacity:0.7;margin-right:6px;flex-shrink:0"></span>Declared offshore wind area</div>
+      <div class="legend-item"><span style="display:inline-block;width:14px;height:14px;border-radius:2px;background:#d29922;opacity:0.7;margin-right:6px;flex-shrink:0"></span>Proposed by state, not declared</div>
+      <div class="legend-item"><span style="display:inline-block;width:14px;height:14px;border-radius:2px;background:#8b949e;opacity:0.7;margin-right:6px;flex-shrink:0"></span>AEMO ISP candidate (indicative)</div>
+      <div style="font-size:11px;color:#8b949e;margin-top:6px;line-height:1.45">Dashed outline = not declared; outline is indicative<br>Codes = 2026 ISP. Click a zone for its network projects.</div>
     </div>
     <div id="isp-legend" style="display:none">
       <div class="section-title">ISP Upgrades — Status (line pattern)</div>
@@ -284,10 +282,14 @@
       <div class="legend-item">
         <svg width="32" height="10" style="flex-shrink:0"><line x1="0" y1="5" x2="32" y2="5" stroke="#58a6ff" stroke-width="2.5" stroke-dasharray="3,3"/></svg>Actionable (short dash, thinner)
       </div>
+      <div class="legend-item">
+        <svg width="32" height="10" style="flex-shrink:0"><line x1="0" y1="5" x2="32" y2="5" stroke="#8b949e" stroke-width="2" stroke-dasharray="8,8"/></svg>Future ISP project (long dash)
+      </div>
       <div style="font-size:11px;color:#8b949e;margin-top:6px;line-height:1.45">
         <strong style="color:#e6edf3">Line core colour</strong> = voltage<br>
         <strong style="color:#e6edf3">Glow halo + endpoint stroke</strong> = status<br>
-        &#9679; = substation/switching station
+        &#9679; = substation/switching station<br>
+        Source: AEMO 2026 ISP (final, June 2026). Routes are indicative.
       </div>
     </div>
 
@@ -618,10 +620,10 @@ Promise.all([
   fetch('competing_projects.geojson?v=20260930b').then(r => r.json()).catch(() => ({ type: 'FeatureCollection', features: [] })),
   fetch('nem_regions.geojson').then(r => r.json()).catch(() => ({ type: 'FeatureCollection', features: [] })),
   fetch('nem_interconnectors.geojson').then(r => r.json()).catch(() => ({ type: 'FeatureCollection', features: [] })),
-  fetch('isp_upgrades.geojson').then(r => r.json()).catch(() => ({ type: 'FeatureCollection', features: [] })),
+  fetch('isp_upgrades.geojson?v=20261001').then(r => r.json()).catch(() => ({ type: 'FeatureCollection', features: [] })),
   fetch('nz_lines.geojson').then(r => r.json()).catch(() => ({ type: 'FeatureCollection', features: [] })),
   fetch('nz_substations.geojson').then(r => r.json()).catch(() => ({ type: 'FeatureCollection', features: [] })),
-  fetch('rez.geojson').then(r => r.json()).catch(() => ({ type: 'FeatureCollection', features: [] })),
+  fetch('rez.geojson?v=20261001').then(r => r.json()).catch(() => ({ type: 'FeatureCollection', features: [] })),
 ]).then(([lines, flowsByCase, cps, mlf, hhci, comp, nemRegions, nemInter, ispUpgrades, nzLines, nzSubs, rezData]) => {
   linesData = lines;
   window.flowsByCase = flowsByCase;
@@ -1021,6 +1023,7 @@ function addLayers() {
     'Committed',   '#3fb950',
     'Anticipated', '#d29922',
     'Actionable',  '#58a6ff',
+    'Future',      '#8b949e',
     '#8b949e'
   ];
 
@@ -1181,7 +1184,7 @@ function addLayers() {
     id: 'rez-outline-solid',
     type: 'line',
     source: 'rez',
-    filter: ['!', ['in', ['get', 'status'], ['literal', ['Proposed', 'Under Investigation']]]],
+    filter: ['!', ['in', ['get', 'status'], ['literal', ['ISP candidate', 'Proposed (state)']]]],
     layout: { visibility: 'none', 'line-join': 'round' },
     paint: {
       'line-color': ['coalesce', ['get', 'status_colour'], '#8b949e'],
@@ -1193,7 +1196,7 @@ function addLayers() {
     id: 'rez-outline-dashed',
     type: 'line',
     source: 'rez',
-    filter: ['in', ['get', 'status'], ['literal', ['Proposed', 'Under Investigation']]],
+    filter: ['in', ['get', 'status'], ['literal', ['ISP candidate', 'Proposed (state)']]],
     layout: { visibility: 'none', 'line-join': 'round' },
     paint: {
       'line-color': ['coalesce', ['get', 'status_colour'], '#8b949e'],
@@ -1229,45 +1232,19 @@ function addLayers() {
   map.on('click', 'rez-fill', e => {
     const p = e.features[0].properties;
     const col = p.status_colour || '#8b949e';
-    const etypes = p.energy_types || '—';
-    const capNote = p.capacity_note ? `<div style="font-size:11px;color:#8b949e;margin-top:2px">${p.capacity_note}</div>` : '';
-    const netProj = p.network_project
-      ? `<div style="margin-top:8px"><span style="color:#8b949e;font-size:11px">Network project</span><br>${p.network_project}<br><span style="font-size:11px;color:#8b949e">${p.network_status || ''}</span></div>`
-      : '';
-    const timeline = p.first_connection
-      ? `<tr><td style="color:#8b949e">First connection</td><td>${p.first_connection}</td></tr>` : '';
-    const zoneTarget = p.zone_target
-      ? `<tr><td style="color:#8b949e">Zone target</td><td>${p.zone_target}</td></tr>` : '';
-    const capRow = p.capacity_target_mw
-      ? `<tr><td style="color:#8b949e">Capacity target</td><td>${Number(p.capacity_target_mw).toLocaleString()} MW</td></tr>` : '';
-    const desc = p.description
-      ? `<div style="margin-top:10px;font-size:11px;color:#8b949e;line-height:1.45;border-top:1px solid #30363d;padding-top:8px">${p.description}</div>` : '';
-
-    const html = `
-      <div style="font-family:monospace;font-size:13px;min-width:240px;max-width:320px">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-          <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${col};flex-shrink:0"></span>
-          <strong style="font-size:14px">${p.code} — ${p.name}</strong>
-        </div>
-        <div style="margin-bottom:8px">
-          <span style="background:${col};color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:bold">${p.status}</span>
-          &nbsp;<span style="color:#8b949e;font-size:12px">${p.state || ''}</span>
-        </div>
-        <table style="width:100%;border-collapse:collapse;font-size:12px">
-          ${capRow}
-          ${timeline}
-          ${zoneTarget}
-          <tr><td style="color:#8b949e">Energy types</td><td>${etypes}</td></tr>
-        </table>
-        ${capNote}
-        ${netProj}
-        ${desc}
-      </div>`;
-
-    new maplibregl.Popup({ maxWidth: '340px' })
-      .setLngLat(e.lngLat)
-      .setHTML(html)
-      .addTo(map);
+    let html = `<div class="popup-title">${p.code} — ${p.name}</div>`;
+    html += `<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap">`;
+    html += `<span style="background:${col}22;color:${col};border:1px solid ${col}80;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700">${p.status}</span>`;
+    html += `<span style="color:#8b949e;font-size:11px">${p.state || ''}</span></div>`;
+    if (p.declaration) html += `<div style="font-size:12px;color:#e6edf3;line-height:1.45;margin-bottom:6px">${p.declaration}</div>`;
+    if (p.network_projects) {
+      html += `<div class="popup-section"><div class="popup-section-title">Network projects (2026 ISP)</div>`;
+      html += p.network_projects.split(' | ').map(x => `<div style="font-size:11px;color:#e6edf3;line-height:1.45">· ${x}</div>`).join('');
+      html += `</div>`;
+    }
+    if (p.note) html += `<div style="font-size:11px;color:#d29922;margin-top:6px;line-height:1.45">${p.note}</div>`;
+    html += `<div style="font-size:10px;color:#6e7681;margin-top:8px;line-height:1.4">Boundary: ${p.boundary_source || '–'}<br>${p.source || ''}</div>`;
+    popup.setLngLat(e.lngLat).setHTML(html).addTo(map);
   });
   map.on('mouseenter', 'rez-fill', () => { map.getCanvas().style.cursor = 'pointer'; });
   map.on('mouseleave', 'rez-fill', () => { map.getCanvas().style.cursor = ''; });
@@ -2465,6 +2442,7 @@ function bindMapEvents() {
     if (p.project_type) html += `<span class="popup-label">Type</span><span class="popup-value">${p.project_type}</span>`;
     html += `<span class="popup-label">Region</span><span class="popup-value">${p.region || '–'}</span>`;
     if (p.proponents) html += `<span class="popup-label">Proponents</span><span class="popup-value">${p.proponents}</span>`;
+    if (p.framework)  html += `<span class="popup-label">Pathway</span><span class="popup-value">${p.framework}</span>`;
     html += `</div>`;
 
     // Capacity section
@@ -2480,7 +2458,9 @@ function bindMapEvents() {
     }
 
     // Footer
-    if (p.last_updated) html += `<div style="font-size:10px;color:#6e7681;margin-top:8px;text-align:right">AEMO data updated: ${p.last_updated}</div>`;
+    if (p.location_note) html += `<div style="font-size:10px;color:#8b949e;margin-top:8px;line-height:1.4">${p.location_note}</div>`;
+    if (p.source) html += `<div style="font-size:10px;color:#6e7681;margin-top:4px;text-align:right">${p.source}</div>`;
+    else if (p.last_updated) html += `<div style="font-size:10px;color:#6e7681;margin-top:8px;text-align:right">AEMO data updated: ${p.last_updated}</div>`;
 
     popup.setLngLat(e.lngLat).setHTML(html).addTo(map);
   }
